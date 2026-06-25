@@ -31,11 +31,18 @@ via `.mcp.json`. To use it:
 No API key or host credentials are stored in the repo; authentication happens
 through the interactive login.
 
-Claude Code session history and memory persist across container rebuilds: the
-container's `~/.claude/projects` directory is bind-mounted to
-`~/.claude-devcontainer/lean-playground/projects` on your host (see the `mounts`
-entry in `.devcontainer/devcontainer.json`). Login/auth state is *not* persisted,
-so you re-run the interactive login after a rebuild.
+Claude Code state persists across container rebuilds: the container's entire
+`~/.claude` directory is bind-mounted to `~/.claude-devcontainer/lean-playground`
+on your host (see the `mounts` entry in `.devcontainer/devcontainer.json`). This
+covers session history, memory, **login/auth, and installed plugins**, so you do
+not re-authenticate or reinstall plugins after a rebuild. Note that this means
+your Claude credentials live in that host folder — it is on your host disk, never
+in the repo.
+
+The [`superpowers`](https://github.com/obra/superpowers) plugin is declared in
+`.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`), so a fresh
+container is prompted to install it from the official marketplace rather than
+relying on it already being present.
 
 ## What's inside
 

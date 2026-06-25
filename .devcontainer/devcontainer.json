@@ -13,9 +13,9 @@
       ]
     }
   },
-  "initializeCommand": "mkdir -p ${localEnv:HOME}/.claude-devcontainer/lean-playground/projects",
+  "initializeCommand": "mkdir -p ${localEnv:HOME}/.claude-devcontainer/lean-playground",
   "mounts": [
-    "source=${localEnv:HOME}/.claude-devcontainer/lean-playground/projects,target=/home/vscode/.claude/projects,type=bind,consistency=cached"
+    "source=${localEnv:HOME}/.claude-devcontainer/lean-playground,target=/home/vscode/.claude,type=bind,consistency=cached"
   ],
   "onCreateCommand": "bash .devcontainer/on-create.sh",
   "postCreateCommand": "bash .devcontainer/post-create.sh",

@@ -10,9 +10,9 @@ set -euo pipefail
 lake exe cache get
 lake build
 
-# The ~/.claude/projects directory is a host bind mount (see devcontainer.json),
-# which persists Claude Code session history and memory across container rebuilds.
-# Ensure it is writable by the vscode user regardless of host ownership.
-sudo chown -R vscode:vscode "$HOME/.claude/projects" 2>/dev/null || true
+# ~/.claude is a host bind mount (see devcontainer.json) so Claude Code session
+# history, memory, login/auth, and installed plugins persist across container
+# rebuilds. Ensure it is writable by the vscode user regardless of host ownership.
+sudo chown -R vscode:vscode "$HOME/.claude" 2>/dev/null || true
 
 echo "Lean + Mathlib build complete."
