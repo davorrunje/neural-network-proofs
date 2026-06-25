@@ -1,0 +1,82 @@
+# lean-playground
+
+A playground for learning Lean 4, with [Mathlib](https://github.com/leanprover-community/mathlib4)
+available. Everything runs inside a VS Code dev container, so the only thing you
+need on your host machine is Docker (and VS Code with the Dev Containers
+extension).
+
+## Getting started
+
+1. Open this folder in VS Code.
+2. When prompted, choose **Reopen in Container** (or run the
+   *Dev Containers: Reopen in Container* command).
+3. Wait for the first build to finish. On the first run the container installs
+   the Lean toolchain (`elan`) and downloads the prebuilt Mathlib cache (a few
+   hundred MB). This is slow once and fast on every subsequent start.
+4. Open the sample Lean file. The Lean infoview should appear and report no
+   errors, confirming the worked example type-checks.
+
+## Using Claude for proofs
+
+The container ships with the Claude Code CLI and the
+[`lean-lsp-mcp`](https://github.com/oOo0oOo/lean-lsp-mcp) server already wired up
+via `.mcp.json`. To use it:
+
+1. In the container terminal, run `claude` and complete the interactive login
+   the first time.
+2. Ask Claude for help with a proof. Through `lean-lsp-mcp` it can see live goal
+   states and diagnostics and search Mathlib (LeanSearch, Loogle, Lean State
+   Search, Lean Hammer) rather than guessing lemma names.
+
+No API key or host credentials are stored in the repo; authentication happens
+through the interactive login.
+
+Claude Code state persists across container rebuilds: the container's entire
+`~/.claude` directory is bind-mounted to `~/.claude-devcontainer/lean-playground`
+on your host (see the `mounts` entry in `.devcontainer/devcontainer.json`). This
+covers session history, memory, **login/auth, and installed plugins**, so you do
+not re-authenticate or reinstall plugins after a rebuild. Note that this means
+your Claude credentials live in that host folder — it is on your host disk, never
+in the repo.
+
+The [`superpowers`](https://github.com/obra/superpowers) plugin is declared in
+`.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`), so a fresh
+container is prompted to install it from the official marketplace rather than
+relying on it already being present.
+
+## What's inside
+
+- **`.devcontainer/`** — dev container definition and setup scripts
+  (`on-create.sh` installs elan and uv; `post-create.sh` runs
+  `lake exe cache get` and `lake build`; `setup-git-signing.sh` configures SSH
+  commit signing — see below). The Node.js, GitHub CLI (`gh`), and Claude Code
+  CLI come from dev container features.
+- **`.mcp.json`** — registers the `lean-lsp-mcp` MCP server (run via `uvx`).
+- **`lean-toolchain`** — pins the Lean version (matched to the committed
+  Mathlib revision).
+- **`lakefile.toml`** / **`lake-manifest.json`** — the Lake package definition
+  and its pinned dependency revisions.
+- A sample `.lean` source file with a small Mathlib-backed proof.
+
+## Git commit signing
+
+Commits made inside the container are SSH-signed using the key from your host's
+SSH agent. The Dev Containers extension forwards your host agent into the
+container automatically, so a hardware/Secure-Enclave-backed agent such as
+[Secretive](https://github.com/maxgoedjen/secretive) works without exposing any
+private key to the container.
+
+The catch is that the `~/.gitconfig` copied from your host points
+`user.signingkey` at a host path (e.g. `/Users/<you>/.ssh/...`) that does not
+exist in the container. `setup-git-signing.sh` (run as `postStartCommand`) fixes
+this: it writes a public-key file derived from the forwarded agent — matching
+`~/.ssh/allowed_signers` when present — and repoints `user.signingkey` at it. If
+no agent is forwarded, it leaves your config untouched and commits are simply
+unsigned.
+
+## Working in the project
+
+- Build everything: `lake build`
+- Refresh the Mathlib cache after changing the Mathlib revision:
+  `lake exe cache get`
+- Update dependencies: `lake update` (then re-run `lake exe cache get`).

@@ -1,0 +1,23 @@
+{
+  "name": "Lean 4 + Mathlib",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "leanprover.lean4"
+      ]
+    }
+  },
+  "initializeCommand": "mkdir -p ${localEnv:HOME}/.claude-devcontainer/lean-playground",
+  "mounts": [
+    "source=${localEnv:HOME}/.claude-devcontainer/lean-playground,target=/home/vscode/.claude,type=bind,consistency=cached"
+  ],
+  "onCreateCommand": "bash .devcontainer/on-create.sh",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/setup-git-signing.sh"
+}

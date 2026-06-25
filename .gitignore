@@ -1,1 +1,9 @@
+# Lean/Lake build artifacts and downloaded dependencies
 .lake/
+
+# Subagent-driven-development working directory (scratch, not part of the project)
+.superpowers/
+
+# Per-user local Claude Code overrides (machine-specific; not shared).
+# The shared, committed config lives in .claude/settings.json.
+.claude/settings.local.json
