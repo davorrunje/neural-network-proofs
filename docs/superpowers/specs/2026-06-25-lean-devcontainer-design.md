@@ -18,28 +18,38 @@ environment with editor support.
 
 ## Components
 
-### 1. `.devcontainer/Dockerfile`
+### 1. `.devcontainer/devcontainer.json`
 
-- Base image: `mcr.microsoft.com/devcontainers/base:ubuntu`.
-- Installs `elan` (Lean's toolchain manager) via the official installer script,
-  non-interactively, and ensures the elan bin directory is on `PATH` for the
-  container user.
-- Does **not** hardcode a Lean version: elan reads `lean-toolchain` at build/use
-  time and fetches the matching Lean automatically.
-- Installs `curl`/`git` if not already present in the base image.
-
-### 2. `.devcontainer/devcontainer.json`
-
-- References the Dockerfile via `build.dockerfile`.
+- Uses a stock base image directly via the `image` field:
+  `mcr.microsoft.com/devcontainers/base:ubuntu`. No custom Dockerfile.
 - Installs the official VS Code extension `leanprover.lean4`.
-- `postCreateCommand`: downloads the prebuilt Mathlib cache and builds the
-  project, e.g. `lake exe cache get && lake build`. This avoids compiling
-  Mathlib from source (~1hr); the cache download is a few hundred MB, slow once
-  and fast thereafter.
+- `onCreateCommand`: runs `.devcontainer/on-create.sh` (environment setup —
+  install elan).
+- `postCreateCommand`: runs `.devcontainer/post-create.sh` (project setup —
+  download Mathlib cache and build).
 - Sets the workspace folder appropriately so the Lean extension picks up the
   Lake project at the repo root.
+- Rationale for scripts over inline commands: shell logic lives in versioned,
+  readable, independently runnable files rather than JSON string literals.
 
-### 3. Lean project files (repo root)
+### 2. `.devcontainer/on-create.sh`
+
+- Installs `elan` (Lean's toolchain manager) via the official installer script,
+  non-interactively, and ensures the elan bin directory is on `PATH` for the
+  container user (e.g. via the shell profile).
+- Does **not** hardcode a Lean version: elan reads `lean-toolchain` and fetches
+  the matching Lean automatically.
+- Installs `curl`/`git` first if not already present in the base image.
+- Idempotent and `set -euo pipefail` so failures surface clearly.
+
+### 3. `.devcontainer/post-create.sh`
+
+- Downloads the prebuilt Mathlib cache and builds the project:
+  `lake exe cache get && lake build`. This avoids compiling Mathlib from source
+  (~1hr); the cache download is a few hundred MB, slow once and fast thereafter.
+- `set -euo pipefail` so a failed build surfaces clearly.
+
+### 4. Lean project files (repo root)
 
 - `lean-toolchain` — pins the Lean version to the one matching the chosen
   Mathlib release. The version must be consistent with the Mathlib revision in
@@ -55,11 +65,11 @@ environment with editor support.
   `LeanPlayground.lean` importing the modules), matching whatever `lake new`
   with the math template produces.
 
-### 4. `.gitignore`
+### 5. `.gitignore`
 
 - Ignores `.lake/` (build artifacts and downloaded dependencies).
 
-### 5. `README.md`
+### 6. `README.md`
 
 - Short instructions: "Reopen in Container", wait for the first build to finish
   (Mathlib cache download), then open the sample file and watch the Lean
@@ -68,12 +78,13 @@ environment with editor support.
 ## Data / control flow
 
 1. User opens repo in VS Code and chooses "Reopen in Container".
-2. Docker builds the image from the Dockerfile (installs elan).
-3. Container starts; `postCreateCommand` runs `lake exe cache get` (Mathlib
+2. Docker pulls the stock base image and starts the container.
+3. `onCreateCommand` runs `on-create.sh`, installing elan.
+4. `postCreateCommand` runs `post-create.sh`: `lake exe cache get` (Mathlib
    prebuilt cache) then `lake build`.
-4. elan resolves `lean-toolchain` and downloads the matching Lean version on
+5. elan resolves `lean-toolchain` and downloads the matching Lean version on
    first Lake invocation.
-5. The `leanprover.lean4` extension connects to the Lean server; opening a
+6. The `leanprover.lean4` extension connects to the Lean server; opening a
    `.lean` file shows the infoview.
 
 ## Error handling / edge cases
@@ -96,7 +107,15 @@ environment with editor support.
 ## Trade-offs considered
 
 - **Mathlib cache vs. compile from source:** chose cache download for speed.
-- **Dockerfile + elan vs. a prebuilt Lean image / devcontainer feature:** chose
-  Dockerfile + official elan installer because it is the canonical, version-
-  agnostic way to get Lean and does not depend on a third-party image staying
-  current.
+- **Stock image + post-create scripts vs. custom Dockerfile:** chose the stock
+  image with `onCreateCommand`/`postCreateCommand` scripts. The install runs once
+  at container creation either way, so the Dockerfile's layer-caching advantage
+  is marginal for a single-user learning repo; the scripts approach keeps the
+  whole setup in one readable `devcontainer.json` plus two small shell scripts,
+  with no custom image to maintain.
+- **Scripts vs. inline commands in `devcontainer.json`:** chose scripts so shell
+  logic is readable, versioned, and runnable by hand.
+- **elan installer vs. a prebuilt `leanprovercommunity/*` image:** chose the
+  elan installer because it is the canonical, version-agnostic way to get Lean
+  and gives us a real Lake project whose Lean/Mathlib versions we control
+  directly, rather than depending on a third-party image's baked-in versions.
