@@ -41,14 +41,31 @@ so you re-run the interactive login after a rebuild.
 
 - **`.devcontainer/`** — dev container definition and setup scripts
   (`on-create.sh` installs elan and uv; `post-create.sh` runs
-  `lake exe cache get` and `lake build`). The Node.js, GitHub CLI (`gh`), and
-  Claude Code CLI come from dev container features.
+  `lake exe cache get` and `lake build`; `setup-git-signing.sh` configures SSH
+  commit signing — see below). The Node.js, GitHub CLI (`gh`), and Claude Code
+  CLI come from dev container features.
 - **`.mcp.json`** — registers the `lean-lsp-mcp` MCP server (run via `uvx`).
 - **`lean-toolchain`** — pins the Lean version (matched to the committed
   Mathlib revision).
 - **`lakefile.toml`** / **`lake-manifest.json`** — the Lake package definition
   and its pinned dependency revisions.
 - A sample `.lean` source file with a small Mathlib-backed proof.
+
+## Git commit signing
+
+Commits made inside the container are SSH-signed using the key from your host's
+SSH agent. The Dev Containers extension forwards your host agent into the
+container automatically, so a hardware/Secure-Enclave-backed agent such as
+[Secretive](https://github.com/maxgoedjen/secretive) works without exposing any
+private key to the container.
+
+The catch is that the `~/.gitconfig` copied from your host points
+`user.signingkey` at a host path (e.g. `/Users/<you>/.ssh/...`) that does not
+exist in the container. `setup-git-signing.sh` (run as `postStartCommand`) fixes
+this: it writes a public-key file derived from the forwarded agent — matching
+`~/.ssh/allowed_signers` when present — and repoints `user.signingkey` at it. If
+no agent is forwarded, it leaves your config untouched and commits are simply
+unsigned.
 
 ## Working in the project
 
