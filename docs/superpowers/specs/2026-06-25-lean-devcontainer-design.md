@@ -8,13 +8,15 @@
 Provide a self-contained VS Code dev container for learning Lean, with Mathlib
 available, so that nothing (Lean, elan, Mathlib) needs to be installed on the
 host machine. Opening the repo in the container yields a working Lean + Mathlib
-environment with editor support.
+environment with editor support, plus Claude Code and the `lean-lsp-mcp` server
+so Claude can assist with proofs using live goal state and Mathlib search.
 
 ## Non-goals
 
 - No CI, publishing, or multi-package workspace.
 - No host-level Lean install or instructions for one.
-- No custom Lean tooling beyond the standard `leanprover.lean4` extension.
+- No secrets committed to the repo: Claude Code authenticates via interactive
+  login inside the container (no API keys or mounted host credentials).
 
 ## Components
 
@@ -23,20 +25,29 @@ environment with editor support.
 - Uses a stock base image directly via the `image` field:
   `mcr.microsoft.com/devcontainers/base:ubuntu`. No custom Dockerfile.
 - Installs the official VS Code extension `leanprover.lean4`.
+- Adds two dev container **features** (so we don't hand-roll their installs):
+  - `ghcr.io/devcontainers/features/node:1` — provides Node.js + npm.
+  - `ghcr.io/anthropics/devcontainer-features/claude-code:1` — installs the
+    `claude` CLI (depends on Node, hence the feature above).
 - `onCreateCommand`: runs `.devcontainer/on-create.sh` (environment setup —
-  install elan).
+  install elan and uv).
 - `postCreateCommand`: runs `.devcontainer/post-create.sh` (project setup —
   download Mathlib cache and build).
 - Sets the workspace folder appropriately so the Lean extension picks up the
   Lake project at the repo root.
 - Rationale for scripts over inline commands: shell logic lives in versioned,
   readable, independently runnable files rather than JSON string literals.
+  Features are used for Node/Claude Code because they are maintained, declarative
+  installs; elan and uv are installed in a script because that is their canonical
+  install path and keeps version control in our hands.
 
 ### 2. `.devcontainer/on-create.sh`
 
 - Installs `elan` (Lean's toolchain manager) via the official installer script,
   non-interactively, and ensures the elan bin directory is on `PATH` for the
   container user (e.g. via the shell profile).
+- Installs `uv` (Astral) via its official installer, and ensures its bin
+  directory is on `PATH`. `uv` provides `uvx`, used to run `lean-lsp-mcp`.
 - Does **not** hardcode a Lean version: elan reads `lean-toolchain` and fetches
   the matching Lean automatically.
 - Installs `curl`/`git` first if not already present in the base image.
@@ -65,38 +76,61 @@ environment with editor support.
   `LeanPlayground.lean` importing the modules), matching whatever `lake new`
   with the math template produces.
 
-### 5. `.gitignore`
+### 5. `.mcp.json` (repo root)
+
+- Project-scoped Model Context Protocol config that Claude Code reads
+  automatically when run from the repo. Registers the `lean-lsp-mcp` server:
+  command `uvx`, args `["lean-lsp-mcp"]`. `uvx` fetches and runs the server on
+  first use; no separate install step is needed beyond having `uv` on PATH.
+- This gives Claude live access to Lean goal states, diagnostics, hover/term
+  info, and Mathlib search tools (LeanSearch, Loogle, Lean State Search, Lean
+  Hammer) when helping with proofs.
+
+### 6. `.gitignore`
 
 - Ignores `.lake/` (build artifacts and downloaded dependencies).
 
-### 6. `README.md`
+### 7. `README.md`
 
 - Short instructions: "Reopen in Container", wait for the first build to finish
   (Mathlib cache download), then open the sample file and watch the Lean
   infoview confirm the proof checks.
+- A note on using Claude in the container: run `claude` and complete the
+  interactive login on first use; `lean-lsp-mcp` is already wired up via
+  `.mcp.json`.
 
 ## Data / control flow
 
 1. User opens repo in VS Code and chooses "Reopen in Container".
-2. Docker pulls the stock base image and starts the container.
-3. `onCreateCommand` runs `on-create.sh`, installing elan.
+2. Docker pulls the stock base image and starts the container; the Node and
+   Claude Code features install during container creation.
+3. `onCreateCommand` runs `on-create.sh`, installing elan and uv.
 4. `postCreateCommand` runs `post-create.sh`: `lake exe cache get` (Mathlib
    prebuilt cache) then `lake build`.
 5. elan resolves `lean-toolchain` and downloads the matching Lean version on
    first Lake invocation.
 6. The `leanprover.lean4` extension connects to the Lean server; opening a
    `.lean` file shows the infoview.
+7. The user runs `claude` in the container terminal, logs in interactively, and
+   Claude picks up `lean-lsp-mcp` from `.mcp.json`, which in turn drives the Lean
+   language server against the built project.
 
 ## Error handling / edge cases
 
 - **Toolchain ↔ Mathlib mismatch:** the `lean-toolchain` version must match the
-  Mathlib revision pinned in `lake-manifest.json`. The implementation will derive
-  both from a single `lake new ... math` scaffold so they are consistent.
+  Mathlib revision pinned in `lake-manifest.json`. The implementation derives
+  both from a single `lake +leanprover-community/mathlib4:lean-toolchain init …
+  math` scaffold (which pins the Lean toolchain to Mathlib's own) so they are
+  consistent by construction.
 - **Cache miss:** if `lake exe cache get` cannot find a prebuilt cache for the
   pinned revision, `lake build` falls back to compiling from source (slow but
   correct). Acceptable.
 - **First build is slow:** documented in the README so it is expected, not
   surprising.
+- **lean-lsp-mcp needs a built project:** the server drives the Lean language
+  server, which requires the project to build. Since `post-create.sh` already
+  runs `lake build`, the project is ready before Claude is used. If a build is
+  broken, the MCP server will surface the diagnostics rather than fail silently.
 
 ## Testing / verification
 
@@ -119,3 +153,12 @@ environment with editor support.
   elan installer because it is the canonical, version-agnostic way to get Lean
   and gives us a real Lake project whose Lean/Mathlib versions we control
   directly, rather than depending on a third-party image's baked-in versions.
+- **Dev container features vs. scripted install for Node/Claude Code:** chose the
+  official `node` and `claude-code` features — they are maintained, declarative,
+  and avoid hand-rolling an npm global install.
+- **Including lean-lsp-mcp vs. plain file-edit + `lake build`:** chose to include
+  it. It gives Claude live goal states, diagnostics, and Mathlib search, which
+  materially improves proof assistance; the cost is just `uv` plus a small
+  committed `.mcp.json`.
+- **Interactive Claude login vs. mounted credentials / API key:** chose
+  interactive login so no secrets live in the repo or are coupled to the host.
