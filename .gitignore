@@ -1,3 +1,5 @@
+# Lean/Lake build artifacts and downloaded dependencies
 .lake/
+
+# Subagent-driven-development working directory (scratch, not part of the project)
 .superpowers/
-/.lake
