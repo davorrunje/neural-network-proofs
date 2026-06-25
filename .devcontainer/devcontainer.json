@@ -3,6 +3,7 @@
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
   },
   "customizations": {
@@ -12,6 +13,10 @@
       ]
     }
   },
+  "initializeCommand": "mkdir -p ${localEnv:HOME}/.claude-devcontainer/lean-playground/projects",
+  "mounts": [
+    "source=${localEnv:HOME}/.claude-devcontainer/lean-playground/projects,target=/home/vscode/.claude/projects,type=bind,consistency=cached"
+  ],
   "onCreateCommand": "bash .devcontainer/on-create.sh",
   "postCreateCommand": "bash .devcontainer/post-create.sh"
 }
