@@ -20,7 +20,7 @@ approximation scaffold:
 namespace UniversalApproximation.Leshno
 
 open MeasureTheory
-open scoped RealInnerProductSpace
+open scoped RealInnerProductSpace ContDiff
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
@@ -31,23 +31,18 @@ noncomputable def mollify (σ φ : ℝ → ℝ) : ℝ → ℝ :=
 /-- E (leaf, this cycle). The mollification of an `M`-class `σ` by a smooth compactly-supported
 kernel is smooth.
 
-Intended proof: `mollify σ φ = MeasureTheory.convolution φ σ (ContinuousLinearMap.mul ℝ ℝ) volume`
+Intended proof (reserved as a leaf this cycle): `mollify σ φ` is the convolution
+`MeasureTheory.convolution φ σ (ContinuousLinearMap.mul ℝ ℝ) volume`
 (since `convolution φ σ L x = ∫ t, L (φ t) (σ (x - t)) = ∫ t, φ t * σ (x - t)` and
-`σ (x - y) * φ y = φ y * σ (x - y)`), then apply `HasCompactSupport.contDiff_convolution_left`
-(needs `HasCompactSupport φ`, `ContDiff ℝ n φ`, and `LocallyIntegrable σ volume`); local
+`σ (x - y) * φ y = φ y * σ (x - y)`), so `HasCompactSupport.contDiff_convolution_left`
+yields `C^∞` (the smoothness order is now `∞ = ↑(⊤ : ℕ∞)`, which is exactly what that lemma
+delivers — `ω`/analyticity is not claimed and would be false in general). The lemma needs
+`HasCompactSupport φ` and `ContDiff ℝ ∞ φ` (have both) and `LocallyIntegrable σ volume`; local
 integrability of an `M`-class `σ` follows from local boundedness (`ClassM.locBdd`) + a.e. continuity
-(`ClassM.discNull`).
-
-Blocker recorded this cycle: the smoothness order `⊤` in `ContDiff ℝ ⊤` elaborates as
-`(⊤ : WithTop ℕ∞)`, i.e. the *analytic* (`ω`) level, **not** `C^∞ = ↑(∞ : ℕ∞)`. Mathlib's
-`HasCompactSupport.contDiff_convolution_left` only delivers `ContDiff 𝕜 (↑n)` for `n : ℕ∞`, i.e. at
-most `C^∞`; there is no lemma promoting `C^∞` to `ω` (analyticity is strictly stronger, and a
-general mollified `M`-class `σ` is not analytic), so the convolution lemma cannot reach this `⊤`.
-The signature is kept verbatim (Task 8 depends on it); the leaf will be discharged once the
-intended smoothness order is fixed (a `↑(⊤ : ℕ∞)` / `∞` target rather than `ω`, or via a downstream
-`ContDiff.of_le`-style bridge). -/
-theorem contDiff_mollify {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff ℝ ⊤ φ)
-    (hφc : HasCompactSupport φ) : ContDiff ℝ ⊤ (mollify σ φ) := by
+(`ClassM.discNull`). The remaining work is the `mollify = convolution` rewrite plus deriving
+`LocallyIntegrable σ` from `ClassM`; left as a documented `sorry` for this cycle. -/
+theorem contDiff_mollify {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff ℝ ∞ φ)
+    (hφc : HasCompactSupport φ) : ContDiff ℝ ∞ (mollify σ φ) := by
   sorry
 
 /-- D (leaf). A non-a.e.-polynomial `M`-class `σ` admits a smooth compactly-supported kernel whose
@@ -64,7 +59,7 @@ polynomials of uniformly bounded degree `≤ N` is itself (a.e.) a polynomial of
 (test against the approximate identity and pass to the limit). Hence `σ` would be a.e. a polynomial,
 contradicting `hnp`. The contrapositive produces the required witness `φ`. -/
 theorem exists_nonpoly_mollify {σ : ℝ → ℝ} (hσ : ClassM σ) (hnp : ¬ IsAEPolynomial σ) :
-    ∃ φ : ℝ → ℝ, ContDiff ℝ ⊤ φ ∧ HasCompactSupport φ ∧ ¬ IsPolynomialFun (mollify σ φ) := by
+    ∃ φ : ℝ → ℝ, ContDiff ℝ ∞ φ ∧ HasCompactSupport φ ∧ ¬ IsPolynomialFun (mollify σ φ) := by
   sorry
 
 /-- A (leaf, hard M-class core). For `M`-class `σ`, every dilated/translated ridge of the smooth
@@ -87,7 +82,7 @@ by `genFun_reparam_mem` (reparametrisation with the same `lam`, `w`, `b` and shi
 `c - yᵢ`), so `Rₘ ∈ genSpan σ K`. Uniform convergence `Rₘ → (σ ⋆ φ) ∘ (ridge)` on `K` then gives
 `ApproxByGen σ K`, i.e. membership in `T σ K`. (Cross-reference: the conditional `Contrib`
 Riemann-sum convolution-approximation lemma.) -/
-theorem mollify_ridge_mem_T {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff ℝ ⊤ φ)
+theorem mollify_ridge_mem_T {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff ℝ ∞ φ)
     (hφc : HasCompactSupport φ) (K : Set E) (w : E) (b lam c : ℝ)
     (hcont : Continuous fun x : ↥K => mollify σ φ (lam * (⟪w, (x : E)⟫ + b) + c)) :
     (⟨fun x : ↥K => mollify σ φ (lam * (⟪w, (x : E)⟫ + b) + c), hcont⟩
