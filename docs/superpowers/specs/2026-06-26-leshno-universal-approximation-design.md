@@ -23,6 +23,12 @@ Numerica 8 (1999), Theorem 3.1.
 1. **Target:** full `M`-class (`L∞_loc`) theorem, the **iff**.
 2. **Approximation metric:** everywhere-sup (uniform convergence on compacta), *not* ess-sup —
    the topology must work for thin compacta (e.g. a segment in ℝ², ambient-measure zero).
+   **Compactness of `↥K` is required wherever the `C(↥K,ℝ)` topology is used** (`T_isClosed` and the
+   Task 6/8 closure arguments): `C(↥K,ℝ)` carries the *compact-convergence* topology and is a metric
+   (sup-norm) space only when `↥K` is compact. On compact `K`, everywhere-sup approximation `∀x,|f x−g x|<ε`
+   coincides with `dist f g < ε`; for non-compact `K` the two diverge and `T` is genuinely **not** closed
+   (truncation counterexample). The `def`s `genFun`/`genSpan`/`ApproxByGen`/`T` stay general; only the
+   closedness/closure lemmas (and their consumers) take `hK : IsCompact K`. Every consumer already does.
 3. **"Polynomial" notion:** a.e.-polynomial (correct converse hypothesis under everywhere-sup;
    continuity of the target turns the a.e. statement into an everywhere obstruction).
 4. **Staging:** go straight for the `M`-class theorem; the continuous-σ case is just an instance.
@@ -116,7 +122,7 @@ All `{n}`, `{K}`, `hK : IsCompact K` implicit/standing as needed; `open scoped R
 ```lean
 -- Family.lean
 theorem genSpan_dilation_translation_invariant …    -- genSpan closed under w↦λw, b↦λb+c
-theorem T_isClosed (σ K) : IsClosed (T σ K : Set C(↥K,ℝ))
+theorem T_isClosed (σ) {K} (hK : IsCompact K) : IsClosed (T σ K : Set C(↥K,ℝ))  -- compactness REQUIRED
 theorem denselyApproximates_of_forall_T_eq_top
     (h : ∀ {n} (K : Set (EuclideanSpace ℝ (Fin n))), IsCompact K → T σ K = ⊤) :
     DenselyApproximates σ

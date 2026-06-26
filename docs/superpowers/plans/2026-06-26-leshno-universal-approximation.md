@@ -232,7 +232,10 @@ theorem genFun_reparam_mem (σ : ℝ → ℝ) (K : Set E)
     (fun x : ↥K => σ (lam * (⟪w, (x : E)⟫ + b) + c)) ∈ genSpan σ K := by
   sorry
 
-theorem T_isClosed (σ : ℝ → ℝ) (K : Set E) :
+-- NOTE (amended during Task 3): `C(↥K,ℝ)` carries the compact-convergence topology and is only a
+-- metric (sup-norm) space when `↥K` is compact; `T` is genuinely non-closed for non-compact `K`
+-- (truncation counterexample). So `T_isClosed` requires `IsCompact K`. Every consumer already has it.
+theorem T_isClosed (σ : ℝ → ℝ) {K : Set E} (hK : IsCompact K) :
     IsClosed (T σ K : Set C(↥K, ℝ)) := by
   sorry
 
@@ -249,7 +252,7 @@ end UniversalApproximation.Leshno
 
 - [ ] **Step 3: Prove `genFun_reparam_mem`.** Rewrite `lam * (⟪w,x⟫ + b) + c = ⟪lam•w, x⟫ + (lam*b + c)` via `real_inner_smul_left` (exactly the rewrite used in the Cybenko `signed_halfspace_eq_zero`), so the function equals `genFun σ (lam•w) (lam*b + c)`, which is `Submodule.subset_span ⟨(lam•w, lam*b+c), rfl⟩`.
 
-- [ ] **Step 4: Prove `T_isClosed`.** A uniform limit (in `C(↥K,ℝ)`, i.e. sup-norm) of functions each approximable by `genSpan` is itself approximable: given `h` in the closure and `ε`, pick `h'` in `T` with `‖h - h'‖ < ε/2` (so `∀x, |h x - h' x| < ε/2` via `ContinuousMap.norm_lt_iff` / `BoundedContinuousFunction`), then `g ∈ genSpan` with `∀x, |h' x - g x| < ε/2`, triangle. Use `Metric.isClosed_iff` / `mem_closure_iff_seq_limit` or `IsClosed` via `isClosed_iff_clusterPt`. Candidate names: `ContinuousMap.norm_le`, `ContinuousMap.dist_le`, `Metric.isClosed_iff`. Genuine proof.
+- [ ] **Step 4: Prove `T_isClosed`** (with `hK : IsCompact K`). `haveI := hK.compactSpace` so `C(↥K,ℝ)` is a metric (sup-norm) space. A uniform limit of functions each approximable by `genSpan` is itself approximable: given `h` in the closure and `ε`, via `Metric.isClosed_iff` pick `h'` in `T` with `dist h h' < ε/2` (so `∀x, |h x - h' x| < ε/2` via `ContinuousMap.dist_apply_le_dist`), then `g ∈ genSpan` with `∀x, |h' x - g x| < ε/2`, triangle. Candidate names: `Metric.isClosed_iff`, `ContinuousMap.dist_apply_le_dist`. Genuine proof. (For non-compact `K` the statement is FALSE — see the signature note above.)
 
 - [ ] **Step 5: Prove `denselyApproximates_of_forall_T_eq_top`.** Unfold `DenselyApproximates`. Given `K`, `hK`, `f`, `ε`: from `h K hK : T σ K = ⊤`, `f ∈ T σ K` (`Submodule.mem_top`), i.e. `ApproxByGen σ K f`; apply at `ε`. Direct.
 
@@ -452,7 +455,7 @@ Impl note for `UnivariateDense`: the cleanest formalisation of the 1-D family ma
 
 - [ ] **Step 2: Prove `ridge_mem_T` (C1).** For `x ∈ K`, `⟪a,x⟫` ranges over the compact image `I := (⟪a,·⟫)'' K`. By `hσu I`, `h|_I ∈ T σ I`, so `h|_I` is approximable on `I` by `∑ cᵢ σ(λᵢ s + bᵢ)`; substituting `s = ⟪a,x⟫` gives `∑ cᵢ σ(⟪λᵢ•a, x⟫ + bᵢ) ∈ genSpan σ K` (reparametrisation, `genFun_reparam_mem` with `lam = λᵢ`, `w = a`, `b = 0`, `c = bᵢ`), and the sup-error transfers because `s = ⟪a,x⟫ ∈ I`. Hence `ApproxByGen σ K (ridge)`. Genuine proof.
 
-- [ ] **Step 3: Prove `ridge_density` (C).** From C1, every continuous ridge is in `T`. In particular every ridge *power* `x ↦ (⟪a,x⟫)ᵏ` (take `h = (·)^k ∈ C(ℝ,ℝ)`) is in `T`. By `ridgePow_span`, these span the homogeneous degree-`k` polynomial functions; summing over `k` ⇒ all polynomial functions ∈ `T`. Polynomials are dense in `C(↥K,ℝ)` for compact `K ⊆ EuclideanSpace ℝ (Fin n)` (multivariate Weierstrass / Stone–Weierstrass: the polynomial functions form a point-separating subalgebra containing constants — `ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints`). With `T` closed (`T_isClosed`), `T = ⊤`. Verify the Stone–Weierstrass name; this is the main external dependency.
+- [ ] **Step 3: Prove `ridge_density` (C).** From C1, every continuous ridge is in `T`. In particular every ridge *power* `x ↦ (⟪a,x⟫)ᵏ` (take `h = (·)^k ∈ C(ℝ,ℝ)`) is in `T`. By `ridgePow_span`, these span the homogeneous degree-`k` polynomial functions; summing over `k` ⇒ all polynomial functions ∈ `T`. Polynomials are dense in `C(↥K,ℝ)` for compact `K ⊆ EuclideanSpace ℝ (Fin n)` (multivariate Weierstrass / Stone–Weierstrass: the polynomial functions form a point-separating subalgebra containing constants — `ContinuousMap.subalgebra_topologicalClosure_eq_top_of_separatesPoints`). With `T` closed (`T_isClosed σ hK` — pass the compactness hypothesis), `T = ⊤`. Verify the Stone–Weierstrass name; this is the main external dependency.
 
 - [ ] **Step 4: Verify** — `lean_diagnostic_messages`: no `error`; **no `sorry`** (both lemmas are glue). Contingency rule applies if a sub-step is intractable.
 
@@ -551,7 +554,7 @@ theorem leshno_dense_iff {σ : ℝ → ℝ} (hσ : ClassM σ) :
   sorry
 ```
 
-- [ ] **Step 2: Prove `univariate_density` (glue).** For a compact `I ⊆ ℝ`: get `φ` from `exists_nonpoly_mollify hσ hnp`; `g₀ := mollify σ φ` is smooth (`contDiff_mollify`) and not an everywhere polynomial (`exists_nonpoly_mollify`). Apply `smooth_engine hg₀ hnp₀ I hI`: `closure(Sg g₀ I) = ⊤`. Now show `Sg g₀ I ≤ T σ I`: each generator `t ↦ g₀(λt+b)` of `Sg` is a ridge of the mollification, in `T σ I` by `mollify_ridge_mem_T` instantiated at `E = ℝ`, `w = 1` (so `⟪1,t⟫ = t`), inner `b = 0`, `lam = λ`, `c = b` (giving `mollify σ φ (λ·t + b) = g₀(λt+b)`); since `T` is a submodule, `Sg g₀ I ≤ T σ I`, and since `T` is closed (`T_isClosed`), `closure(Sg g₀ I) ≤ T σ I`. With the former `= ⊤`, `T σ I = ⊤`. (This is where the `E = ℝ` instance of `T`/`genSpan` from Task 3 must line up with Task 5's `mollify_ridge_mem_T` and the `Sg` of Task 4.)
+- [ ] **Step 2: Prove `univariate_density` (glue).** For a compact `I ⊆ ℝ`: get `φ` from `exists_nonpoly_mollify hσ hnp`; `g₀ := mollify σ φ` is smooth (`contDiff_mollify`) and not an everywhere polynomial (`exists_nonpoly_mollify`). Apply `smooth_engine hg₀ hnp₀ I hI`: `closure(Sg g₀ I) = ⊤`. Now show `Sg g₀ I ≤ T σ I`: each generator `t ↦ g₀(λt+b)` of `Sg` is a ridge of the mollification, in `T σ I` by `mollify_ridge_mem_T` instantiated at `E = ℝ`, `w = 1` (so `⟪1,t⟫ = t`), inner `b = 0`, `lam = λ`, `c = b` (giving `mollify σ φ (λ·t + b) = g₀(λt+b)`); since `T` is a submodule, `Sg g₀ I ≤ T σ I`, and since `T` is closed (`T_isClosed σ hI` — pass the compactness hypothesis), `closure(Sg g₀ I) ≤ T σ I`. With the former `= ⊤`, `T σ I = ⊤`. (This is where the `E = ℝ` instance of `T`/`genSpan` from Task 3 must line up with Task 5's `mollify_ridge_mem_T` and the `Sg` of Task 4.)
 
 - [ ] **Step 3: Prove `leshno_dense` (glue).** `denselyApproximates_of_forall_T_eq_top` applied to `fun K hK => ridge_density (univariate_density hσ hnp) K hK`.
 
