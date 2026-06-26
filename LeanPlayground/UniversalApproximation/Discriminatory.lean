@@ -291,4 +291,94 @@ theorem charFun_eq_zero (hσ : Sigmoidal σ) {μ : SignedMeasure ↥K}
     rw [signedIntegral, ← integral_map_of_stronglyMeasurable hfm hsin,
         ← integral_map_of_stronglyMeasurable hfm hsin, hmapeq, sub_self]
 
+/-- The characteristic function of the pushforward of a finite measure on `↥K` along the
+coercion `Subtype.val : ↥K → EuclideanSpace ℝ (Fin n)`, expressed through real cosine/sine
+moments. This is the `charFun`-side glue used to assemble `sigmoidal_discriminatory`. -/
+private theorem charFun_map_subtype (ν : Measure ↥K) [IsFiniteMeasure ν]
+    (t : EuclideanSpace ℝ (Fin n)) :
+    charFun (ν.map Subtype.val) t
+      = (↑(∫ x : ↥K, Real.cos ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫ ∂ν) : ℂ)
+        + (↑(∫ x : ↥K, Real.sin ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫ ∂ν) : ℂ) * Complex.I := by
+  have hval : Measurable (Subtype.val : ↥K → EuclideanSpace ℝ (Fin n)) :=
+    measurable_subtype_coe
+  -- The integrand of `charFun` is (AE)strongly measurable: it is continuous in `y`.
+  have hcont : Continuous (fun y : EuclideanSpace ℝ (Fin n) =>
+      Complex.exp (↑(inner ℝ y t) * Complex.I)) := by fun_prop
+  rw [charFun_apply, integral_map hval.aemeasurable hcont.aestronglyMeasurable]
+  -- Pointwise: `exp (⟪val x, t⟫ * I) = cos ⟪t, val x⟫ + sin ⟪t, val x⟫ * I`.
+  have hpt : (fun x : ↥K => Complex.exp (↑(inner ℝ (Subtype.val x) t) * Complex.I))
+      = fun x : ↥K =>
+          (↑(Real.cos ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫) : ℂ)
+          + (↑(Real.sin ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫) : ℂ) * Complex.I := by
+    funext x
+    rw [Complex.exp_mul_I, ← Complex.ofReal_cos, ← Complex.ofReal_sin, real_inner_comm]
+  rw [hpt]
+  -- Split the integral of the real and imaginary parts (both integrands are bounded ⇒ integrable).
+  have hcosc : Continuous
+      (fun x : ↥K => (↑(Real.cos ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫) : ℂ)) := by
+    fun_prop
+  have hsinc : Continuous
+      (fun x : ↥K => (↑(Real.sin ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫) : ℂ) * Complex.I) := by
+    fun_prop
+  have hcosi : Integrable (fun x : ↥K => (↑(Real.cos ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫) : ℂ)) ν :=
+    Integrable.of_bound hcosc.aestronglyMeasurable 1
+      (Filter.Eventually.of_forall (fun x => by
+        rw [Complex.norm_real, Real.norm_eq_abs]; exact (Real.abs_cos_le_one _)))
+  have hsini : Integrable
+      (fun x : ↥K => (↑(Real.sin ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫) : ℂ) * Complex.I) ν :=
+    Integrable.of_bound hsinc.aestronglyMeasurable 1
+      (Filter.Eventually.of_forall (fun x => by
+        rw [norm_mul, Complex.norm_I, mul_one, Complex.norm_real, Real.norm_eq_abs]
+        exact (Real.abs_sin_le_one _)))
+  rw [integral_add hcosi hsini, integral_mul_const, integral_complex_ofReal,
+    integral_complex_ofReal]
+
+/-- **Every continuous sigmoidal activation is discriminatory** (Cybenko 1989, §3).
+
+A signed measure `μ` on `↥K` that annihilates every affine pre-composition
+`x ↦ σ (⟪w, x⟫ + b)` of a sigmoidal `σ` is the zero measure. By `charFun_eq_zero`, all cosine
+and sine moments of `μ` vanish in every direction. Pushing the two finite Jordan parts forward
+to `EuclideanSpace ℝ (Fin n)` along the coercion `Subtype.val`, this says exactly that the two
+pushforwards have equal characteristic functions; `Measure.ext_of_charFun` then equates them, and
+injectivity of `Subtype.val` propagates the equality back to the Jordan parts. Since the positive
+and negative parts agree on every measurable set, `μ` is `0`. -/
+theorem sigmoidal_discriminatory {K : Set (EuclideanSpace ℝ (Fin n))} {σ : ℝ → ℝ}
+    (hσ : Sigmoidal σ) : Discriminatory K σ := by
+  intro μ H0
+  set μp := μ.toJordanDecomposition.posPart with hμp
+  set μn := μ.toJordanDecomposition.negPart with hμn
+  have hval : Measurable (Subtype.val : ↥K → EuclideanSpace ℝ (Fin n)) := measurable_subtype_coe
+  -- The two pushforwards to `E` have equal characteristic functions.
+  have hchareq : charFun (μp.map Subtype.val) = charFun (μn.map Subtype.val) := by
+    funext t
+    rw [charFun_map_subtype μp t, charFun_map_subtype μn t]
+    obtain ⟨hcos, hsin⟩ := charFun_eq_zero hσ H0 t
+    -- `signedIntegral μ (cos⟪t,·⟫) = ∫ cos μp - ∫ cos μn = 0`, likewise for sin.
+    have hc : (∫ x : ↥K, Real.cos ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫ ∂μp)
+            = ∫ x : ↥K, Real.cos ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫ ∂μn := by
+      have := hcos; rw [signedIntegral, ← hμp, ← hμn, sub_eq_zero] at this; exact this
+    have hs : (∫ x : ↥K, Real.sin ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫ ∂μp)
+            = ∫ x : ↥K, Real.sin ⟪t, (x : EuclideanSpace ℝ (Fin n))⟫ ∂μn := by
+      have := hsin; rw [signedIntegral, ← hμp, ← hμn, sub_eq_zero] at this; exact this
+    rw [hc, hs]
+  -- `Measure.ext_of_charFun` equates the two finite pushforward measures.
+  have hmapeq : μp.map Subtype.val = μn.map Subtype.val :=
+    Measure.ext_of_charFun hchareq
+  -- Propagate back to the Jordan parts: `Subtype.val` is measurable and injective, so every
+  -- measurable subset of `↥K` is the preimage of a measurable set of `E`.
+  have hjordan : μp = μn := by
+    ext s hs
+    obtain ⟨s', hs'm, hs'eq⟩ := (MeasurableSpace.measurableSet_comap
+      (f := (Subtype.val : ↥K → EuclideanSpace ℝ (Fin n)))).mp hs
+    have h1 : (μp.map Subtype.val) s' = μp s := by
+      rw [Measure.map_apply hval hs'm, hs'eq]
+    have h2 : (μn.map Subtype.val) s' = μn s := by
+      rw [Measure.map_apply hval hs'm, hs'eq]
+    rw [← h1, ← h2, hmapeq]
+  -- Equal Jordan parts on every measurable set ⇒ the signed measure is `0`.
+  apply MeasureTheory.VectorMeasure.ext
+  intro s hs
+  rw [signedMeasure_apply_eq μ hs, ← hμp, ← hμn, hjordan]
+  simp
+
 end UniversalApproximation

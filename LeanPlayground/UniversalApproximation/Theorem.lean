@@ -1,5 +1,6 @@
 import Mathlib
 import LeanPlayground.UniversalApproximation.Activation
+import LeanPlayground.UniversalApproximation.Discriminatory
 import LeanPlayground.UniversalApproximation.Family
 import LeanPlayground.UniversalApproximation.Riesz
 

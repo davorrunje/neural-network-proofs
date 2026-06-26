@@ -1,4 +1,5 @@
 import LeanPlayground.UniversalApproximation.Activation
+import LeanPlayground.UniversalApproximation.Discriminatory
 import LeanPlayground.UniversalApproximation.Network
 import LeanPlayground.UniversalApproximation.Family
 import LeanPlayground.UniversalApproximation.Riesz
@@ -15,8 +16,9 @@ space `C(K, ℝ)` of continuous real-valued functions on a compact set
 
 It re-exports the five component modules:
 
-* `Activation` — `Sigmoidal`, `signedIntegral`, `Discriminatory`, and the
-  admitted `sigmoidal_discriminatory`.
+* `Activation` — `Sigmoidal`, `signedIntegral`, and `Discriminatory`.
+* `Discriminatory` — the proved `sigmoidal_discriminatory` (Cybenko's
+  Fourier/measure argument).
 * `Network` — `Layer`, `Network`, and `Layer.continuous_toFun`.
 * `Family` — `generator`, the spanned submodule `S`, and `generator_mem_S`.
 * `Riesz` — the admitted dual/signed Riesz representation `riesz_repr`.
@@ -27,15 +29,16 @@ It re-exports the five component modules:
 
 ## Admit inventory (roadmap)
 
-The scaffold is complete except for two deep analytic facts, left as named
-`sorry`s with full docstrings pointing at their intended proofs:
+The scaffold is complete except for one deep analytic fact, left as a named
+`sorry` with a full docstring pointing at its intended proof:
 
 1. `UniversalApproximation.riesz_repr` — the signed / dual Riesz representation:
    every continuous linear functional on `C(K, ℝ)` is integration against a
    signed measure on `K`.
-2. `UniversalApproximation.sigmoidal_discriminatory` — a continuous sigmoidal
-   activation is discriminatory (Cybenko's Fourier/measure half-space
-   argument).
+
+`UniversalApproximation.sigmoidal_discriminatory` — a continuous sigmoidal
+activation is discriminatory (Cybenko's Fourier/measure half-space argument) —
+is now **fully proved** in `Discriminatory.lean`.
 
 **Everything else is proved**, with no `sorry`:
 
