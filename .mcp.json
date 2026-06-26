@@ -2,7 +2,7 @@
   "mcpServers": {
     "lean-lsp": {
       "command": "uvx",
-      "args": ["lean-lsp-mcp"]
+      "args": ["--python", "3.12", "lean-lsp-mcp"]
     }
   }
 }
