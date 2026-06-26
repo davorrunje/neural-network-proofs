@@ -222,4 +222,73 @@ theorem signed_halfspace_eq_zero (hσ : Sigmoidal σ) {μ : SignedMeasure ↥K}
   refine ⟨?_, hHy⟩
   rw [hHy] at e1; simpa using e1
 
+/-- **The characteristic function of `μ` vanishes.** If a signed measure `μ` annihilates every
+affine pre-composition of a sigmoidal `σ`, then for every direction `w` both the cosine and sine
+moments `signedIntegral μ (cos⟪w,·⟫)` and `signedIntegral μ (sin⟪w,·⟫)` vanish. -/
+theorem charFun_eq_zero (hσ : Sigmoidal σ) {μ : SignedMeasure ↥K}
+    (H0 : ∀ (w : EuclideanSpace ℝ (Fin n)) (b : ℝ),
+        signedIntegral μ (fun x => σ (⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ + b)) = 0)
+    (w : EuclideanSpace ℝ (Fin n)) :
+    signedIntegral μ (fun x => Real.cos ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫) = 0 ∧
+    signedIntegral μ (fun x => Real.sin ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫) = 0 := by
+  -- The real-valued "score" `f x = ⟪w, x⟫`; push `μ`'s Jordan parts forward along `f`.
+  set f : ↥K → ℝ := fun x => ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ with hfdef
+  have hfc : Continuous f := by fun_prop
+  have hfm : Measurable f := hfc.measurable
+  set μp := μ.toJordanDecomposition.posPart with hμp
+  set μn := μ.toJordanDecomposition.negPart with hμn
+  -- (1) Every closed half-space `{f ≤ a}` has signed measure `0`: it is the disjoint union of
+  -- the open half-space `{f < a}` and the hyperplane `{f = a}`, both of signed measure `0`.
+  have hclosed : ∀ a : ℝ, μ {x : ↥K | f x ≤ a} = 0 := by
+    intro a
+    have hopen := signed_halfspace_eq_zero hσ H0 (-w) a
+    -- `{0 < ⟪-w, x⟫ + a} = {f x < a}` and `{⟪-w, x⟫ + a = 0} = {f x = a}`.
+    have hset1 : {x : ↥K | 0 < ⟪(-w), (x : EuclideanSpace ℝ (Fin n))⟫ + a}
+               = {x : ↥K | f x < a} := by
+      ext x
+      simp only [Set.mem_setOf_eq, hfdef, inner_neg_left]
+      constructor <;> intro h <;> linarith
+    have hset2 : {x : ↥K | ⟪(-w), (x : EuclideanSpace ℝ (Fin n))⟫ + a = 0}
+               = {x : ↥K | f x = a} := by
+      ext x
+      simp only [Set.mem_setOf_eq, hfdef, inner_neg_left]
+      constructor <;> intro h <;> linarith
+    rw [hset1, hset2] at hopen
+    obtain ⟨hlt, heq⟩ := hopen
+    have hmlt : MeasurableSet {x : ↥K | f x < a} := hfm measurableSet_Iio
+    have hmeq : MeasurableSet {x : ↥K | f x = a} := hfm (measurableSet_singleton a)
+    have hdisj : Disjoint {x : ↥K | f x < a} {x : ↥K | f x = a} := by
+      rw [Set.disjoint_left]; intro x hx hx'; simp only [Set.mem_setOf_eq] at hx hx'; linarith
+    have hunion : {x : ↥K | f x ≤ a} = {x : ↥K | f x < a} ∪ {x : ↥K | f x = a} := by
+      ext x; simp only [Set.mem_setOf_eq, Set.mem_union]; exact le_iff_lt_or_eq
+    rw [hunion, MeasureTheory.VectorMeasure.of_union hdisj hmlt hmeq, hlt, heq, add_zero]
+  -- (2) On every closed half-space, the Jordan parts have equal mass (since the signed measure
+  -- there is `0` and both parts are finite).
+  have hagree : ∀ a : ℝ, μp (f ⁻¹' Set.Iic a) = μn (f ⁻¹' Set.Iic a) := by
+    intro a
+    have hms : MeasurableSet {x : ↥K | f x ≤ a} := hfm measurableSet_Iic
+    have hpre : f ⁻¹' Set.Iic a = {x : ↥K | f x ≤ a} := by ext x; simp [Set.mem_Iic]
+    have hz := signedMeasure_apply_eq μ hms
+    rw [hclosed a, ← hμp, ← hμn] at hz
+    have hreal : (μp {x : ↥K | f x ≤ a}).toReal = (μn {x : ↥K | f x ≤ a}).toReal := by linarith
+    rw [hpre]
+    exact (ENNReal.toReal_eq_toReal_iff' (measure_ne_top μp _) (measure_ne_top μn _)).mp hreal
+  -- (3) The pushforwards `μp.map f` and `μn.map f` agree on all `Iic a`, hence are equal.
+  have hmapeq : μp.map f = μn.map f := by
+    apply Measure.ext_of_Iic
+    intro a
+    rw [Measure.map_apply hfm measurableSet_Iic, Measure.map_apply hfm measurableSet_Iic]
+    exact hagree a
+  -- (4) Change of variables on each Jordan part turns the cos/sin moments into integrals against
+  -- the pushforwards, which coincide.
+  have hcos : StronglyMeasurable Real.cos := Real.continuous_cos.stronglyMeasurable
+  have hsin : StronglyMeasurable Real.sin := Real.continuous_sin.stronglyMeasurable
+  refine ⟨?_, ?_⟩
+  · change signedIntegral μ (fun x => Real.cos (f x)) = 0
+    rw [signedIntegral, ← integral_map_of_stronglyMeasurable hfm hcos,
+        ← integral_map_of_stronglyMeasurable hfm hcos, hmapeq, sub_self]
+  · change signedIntegral μ (fun x => Real.sin (f x)) = 0
+    rw [signedIntegral, ← integral_map_of_stronglyMeasurable hfm hsin,
+        ← integral_map_of_stronglyMeasurable hfm hsin, hmapeq, sub_self]
+
 end UniversalApproximation
