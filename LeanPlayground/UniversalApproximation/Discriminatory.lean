@@ -44,4 +44,20 @@ theorem Sigmoidal.bounded {σ : ℝ → ℝ} (hσ : Sigmoidal σ) : ∃ C, ∀ t
     rw [Real.norm_eq_abs] at this
     exact le_trans this (le_max_left _ _)
 
+/-- As `m → ∞`, `σ (m * t + φ) → 1` when `t > 0`: the inner argument tends to `+∞`. -/
+theorem sigmoidal_tendsto_pos {σ : ℝ → ℝ} (hσ : Sigmoidal σ) {t : ℝ} (ht : 0 < t) (φ : ℝ) :
+    Tendsto (fun m : ℕ => σ (m * t + φ)) Filter.atTop (𝓝 1) := by
+  have hinner : Tendsto (fun m : ℕ => (m : ℝ) * t + φ) Filter.atTop Filter.atTop := by
+    apply Filter.tendsto_atTop_add_const_right
+    exact Tendsto.atTop_mul_const ht tendsto_natCast_atTop_atTop
+  exact hσ.atTop.comp hinner
+
+/-- As `m → ∞`, `σ (m * t + φ) → 0` when `t < 0`: the inner argument tends to `-∞`. -/
+theorem sigmoidal_tendsto_neg {σ : ℝ → ℝ} (hσ : Sigmoidal σ) {t : ℝ} (ht : t < 0) (φ : ℝ) :
+    Tendsto (fun m : ℕ => σ (m * t + φ)) Filter.atTop (𝓝 0) := by
+  have hinner : Tendsto (fun m : ℕ => (m : ℝ) * t + φ) Filter.atTop Filter.atBot := by
+    apply Filter.tendsto_atBot_add_const_right
+    exact Tendsto.atTop_mul_neg ht tendsto_natCast_atTop_atTop tendsto_const_nhds
+  exact hσ.atBot.comp hinner
+
 end UniversalApproximation
