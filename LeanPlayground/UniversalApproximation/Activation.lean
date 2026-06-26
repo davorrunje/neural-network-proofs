@@ -15,7 +15,7 @@ Universal Approximation Theorem (UAT) scaffold:
   pre-compositions `x ↦ σ (⟪w, x⟫ + b)`.
 
 The theorem `sigmoidal_discriminatory` (continuous sigmoidal ⇒ discriminatory)
-is **admitted** here; see its docstring for the roadmap and reference.
+is proved in `LeanPlayground.UniversalApproximation.Discriminatory`.
 -/
 
 namespace UniversalApproximation
@@ -53,17 +53,5 @@ def Discriminatory (K : Set (EuclideanSpace ℝ (Fin n))) (σ : ℝ → ℝ) : P
     (∀ (w : EuclideanSpace ℝ (Fin n)) (b : ℝ),
       signedIntegral μ (fun x => σ (⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ + b)) = 0) →
         μ = 0
-
-/-- Every continuous sigmoidal activation is discriminatory.
-
-**Admitted (roadmap item).** This is one of the two deep analytic facts left as
-a named `sorry` in the UAT scaffold. Its proof is the Fourier/measure argument
-of Cybenko 1989, *Math. Control Signals Systems* 2:303–314, §3: if a signed
-measure annihilates all `x ↦ σ (⟪w, x⟫ + b)`, letting the affine functionals
-sweep through half-spaces forces the measure of every half-space (hence of every
-Borel set, hence the whole measure) to vanish. -/
-theorem sigmoidal_discriminatory {K : Set (EuclideanSpace ℝ (Fin n))} {σ : ℝ → ℝ}
-    (hσ : Sigmoidal σ) : Discriminatory K σ := by
-  sorry
 
 end UniversalApproximation
