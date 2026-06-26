@@ -11,8 +11,11 @@ functional on `C(K, ℝ)` is represented by integration against a signed
 (regular Borel) measure on `K`.
 
 Mathlib provides the Riesz–Markov–Kakutani theorem for *positive* linear
-functionals; the *signed* / dual-space form needed here is the substantive
-gap, so `riesz_repr` is **admitted** (roadmap item 1).
+functionals only. The *signed* / dual-space form `riesz_repr` is **proved**
+here by combining the Riesz–Kantorovich decomposition
+(`Contrib.RieszKantorovich.exists_positive_decomposition`, which splits a
+continuous functional into two cone-positive functionals) with the positive
+Riesz–Markov–Kakutani theorem applied to each part.
 -/
 
 namespace UniversalApproximation
