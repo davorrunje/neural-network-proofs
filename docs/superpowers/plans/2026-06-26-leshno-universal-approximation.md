@@ -440,9 +440,12 @@ engine + mollification.) -/
 def UnivariateDense (σ : ℝ → ℝ) : Prop :=
   ∀ (I : Set ℝ), IsCompact I → T σ I = ⊤    -- 1-D instance: EuclideanSpace ℝ (Fin 1) identified with ℝ; see impl note
 
-/-- C1 (glue). Given univariate density, every continuous ridge `x ↦ h(⟪a,x⟫)` lies in `T`. -/
+/-- C1 (glue). Given univariate density, every continuous ridge `x ↦ h(⟪a,x⟫)` lies in `T`.
+NOTE: requires `hK : IsCompact K` (the image `(⟪a,·⟫)''K` must be compact for univariate density to
+apply; the statement is false for non-compact `K`). `ridge_density` passes its own `hK`. -/
 theorem ridge_mem_T {σ : ℝ → ℝ} (hσu : UnivariateDense σ)
-    (K : Set (EuclideanSpace ℝ (Fin n))) (a : EuclideanSpace ℝ (Fin n)) (h : C(ℝ, ℝ)) :
+    (K : Set (EuclideanSpace ℝ (Fin n))) (hK : IsCompact K)
+    (a : EuclideanSpace ℝ (Fin n)) (h : C(ℝ, ℝ)) :
     (⟨fun x : ↥K => h ⟪a, (x : EuclideanSpace ℝ (Fin n))⟫, by fun_prop⟩ : C(↥K, ℝ)) ∈ T σ K := by
   sorry
 
