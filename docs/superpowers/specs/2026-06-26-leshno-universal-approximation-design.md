@@ -27,8 +27,9 @@ Numerica 8 (1999), Theorem 3.1.
    continuity of the target turns the a.e. statement into an everywhere obstruction).
 4. **Staging:** go straight for the `M`-class theorem; the continuous-σ case is just an instance.
 5. **Location:** `LeanPlayground/UniversalApproximation/Leshno/` (no existing file renamed).
-6. **Upstreaming:** PR-candidate lemmas in `LeanPlayground/ForMathlib/`, tagged `-- TODO(mathlib)`,
-   tracked in `docs/superpowers/mathlib-contributions.md`.
+6. **Upstreaming:** PR-candidate lemmas in `LeanPlayground/Contrib/` (the repo's contribution area,
+   established by PR #5), each in a per-contribution namespace with an inline `Intended Mathlib home:`
+   header — no separate tracking doc.
 
 ## Precise statement
 
@@ -94,7 +95,7 @@ leshno_dense_iff                                                         [Theore
 │   └─ T_eq_top : ¬IsAEPolynomial σ ⇒ T σ K = ⊤
 │       ├─ ridge_density          (C(K) ⊆ T, given univariate density)   [Ridge.lean]
 │       │   ├─ C1 ridge_mem_T     (univariate ⇒ ridge x↦h(⟪a,x⟫) ∈ T)
-│       │   ├─ C2a ridgePow_span  (powers (⟪a,·⟫)ᵏ span homog. degree-k)  [ForMathlib]
+│       │   ├─ C2a ridgePow_span  (powers (⟪a,·⟫)ᵏ span homog. degree-k)  [Contrib]
 │       │   └─ C2b polys dense in C(K)        (Stone–Weierstrass)         [Mathlib]
 │       └─ univariate_density     (the 1-D engine reaches all of C(ℝ))   [SmoothEngine + Mollify]
 │           ├─ A  mollify_mem_T   (σ⋆φ ∈ T)    — hard M-class core        [Mollify.lean]
@@ -103,7 +104,7 @@ leshno_dense_iff                                                         [Theore
 │           └─ B  smooth_engine    (g∈C^∞, ¬poly ⇒ span{g(λ·+b)} dense)   [SmoothEngine.lean]
 │               ├─ B1 deriv_pow_mem (tᵏ g⁽ᵏ⁾(λt+b) ∈ closure of shifts)
 │               ├─ B2 exists_deriv_ne (¬poly ⇒ ∀k ∃bₖ, g⁽ᵏ⁾(bₖ)≠0)
-│               │     └─ iteratedDeriv_eq_zero_imp_poly   (helper)        [ForMathlib]
+│               │     └─ iteratedDeriv_eq_zero_imp_poly   (helper)        [Contrib]
 │               └─ B3 monomials + Weierstrass            (Mathlib)
 └─ (⇒)  IsAEPolynomial σ ⇒ ¬DenselyApproximates σ                        [Converse.lean]
 ```
@@ -123,7 +124,7 @@ theorem denselyApproximates_of_forall_T_eq_top
 -- SmoothEngine.lean (univariate; work on compact intervals / C(ℝ) uniform on compacta)
 theorem deriv_pow_mem (hg : ContDiff ℝ ⊤ g) (k : ℕ) (b : ℝ) … -- B1
 theorem iteratedDeriv_eq_zero_imp_poly {f : ℝ → ℝ} {k : ℕ}
-    (h : ∀ x, iteratedDeriv k f x = 0) : ∃ p : Polynomial ℝ, … ∧ p.natDegree < k   -- ForMathlib
+    (h : ∀ x, iteratedDeriv k f x = 0) : ∃ p : Polynomial ℝ, … ∧ p.natDegree < k   -- Contrib
 theorem exists_deriv_ne (hg : ContDiff ℝ ⊤ g) (hnp : ¬ IsPolynomialFun g) (k : ℕ) :
     ∃ b, iteratedDeriv k g b ≠ 0                                                   -- B2
 theorem smooth_engine (hg : ContDiff ℝ ⊤ g) (hnp : ¬ IsPolynomialFun g) : …       -- B3: span{g(λ·+b)} dense in C(ℝ)
@@ -140,7 +141,7 @@ theorem mollify_mem_T (hσ : ClassM σ) (hφ : ContDiff ℝ ⊤ φ) (hφc : HasC
 -- Ridge.lean
 theorem ridge_mem_T (huniv : univariate density) (a : EuclideanSpace ℝ (Fin n)) (h : C(ℝ,ℝ)) :
     (ridge a h : C(↥K,ℝ)) ∈ T σ K                                                  -- C1
-theorem ridgePow_span … -- (⟪a,·⟫)ᵏ span homogeneous degree-k polynomials           -- C2a (ForMathlib)
+theorem ridgePow_span … -- (⟪a,·⟫)ᵏ span homogeneous degree-k polynomials           -- C2a (Contrib)
 theorem ridge_density (huniv) : T σ K = ⊤                                          -- C2 assembled
 
 -- Converse.lean
@@ -154,9 +155,10 @@ nodes, where everywhere-equality is available; `IsAEPolynomial` is the a.e. vers
 
 ## Mathlib-contribution candidates
 
-Stated generally in `LeanPlayground/ForMathlib/`, tagged `-- TODO(mathlib)`, tracked in
-`docs/superpowers/mathlib-contributions.md` (statement, status, intended Mathlib file). Each is
-verified absent from Mathlib (`lean_leansearch`/`lean_loogle`/`lean_local_search`) before scaffolding.
+Stated generally in `LeanPlayground/Contrib/`, each in a per-contribution namespace with an inline
+`Intended Mathlib home: …` file-docstring header (the convention established by PR #5's
+`RieszKantorovich.lean`; no separate tracking doc). Each is verified absent from Mathlib
+(`lean_leansearch`/`lean_loogle`/`lean_local_search`) before scaffolding.
 
 1. **`iteratedDeriv_eq_zero_imp_poly`** — `iteratedDeriv n f ≡ 0 ⇒ f` is a polynomial function of
    degree `< n` (needed by B2). Intended near `Mathlib/Analysis/Calculus/IteratedDeriv/*`.
@@ -180,13 +182,11 @@ New, under `LeanPlayground/UniversalApproximation/Leshno/`:
 - `Theorem.lean` — `leshno_dense_iff`.
 - `Leshno.lean` (re-export root) — imports all of the above; admit-inventory docstring.
 
-New, under `LeanPlayground/ForMathlib/`:
+New, under `LeanPlayground/Contrib/` (alongside PR #5's `RieszKantorovich.lean`):
 
-- `IteratedDerivPolynomial.lean` — `iteratedDeriv_eq_zero_imp_poly`.
-- `RidgePowersSpan.lean` — `ridgePow_span`.
+- `IteratedDerivPolynomial.lean` — `namespace IteratedDerivPolynomial`, `iteratedDeriv_eq_zero_imp_poly`.
+- `RidgePowersSpan.lean` — `namespace RidgePowersSpan`, `ridgePow_span`.
 - (conditional) `ConvolutionRiemannApprox.lean`.
-
-Plus `docs/superpowers/mathlib-contributions.md` (tracking).
 
 Light reuse of existing scaffold: the `EuclideanSpace ℝ (Fin n)` / `⟪·,·⟫` conventions, and
 optionally `Network.lean` for the network interpretation. No reuse of `Sigmoidal`, `Discriminatory`,

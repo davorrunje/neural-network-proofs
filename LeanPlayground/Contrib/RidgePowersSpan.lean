@@ -1,9 +1,8 @@
 import Mathlib
 
-/-! # (Mathlib candidate) Powers of linear functionals span the homogeneous polynomials.
-
-TODO(mathlib): polarization; intended home near `Mathlib/LinearAlgebra/Polynomial` /
-`Mathlib/RingTheory/MvPolynomial`.
+/-! # Powers of linear functionals span the homogeneous polynomials.
+Intended Mathlib home: `Mathlib/LinearAlgebra/Polynomial` / `Mathlib/RingTheory/MvPolynomial`
+(polarization; confirm with maintainers).
 
 This is the polarization identity for symmetric tensors, phrased at the level of polynomial
 *functions* on `Fin n → ℝ`. As of the toolchain pin (`v4.32.0-rc1`) no off-the-shelf statement
@@ -25,11 +24,13 @@ formulation: it names "homogeneous degree-`k` polynomial functions" via Mathlib'
 exactly the evaluations of `(∑ i, C (a i) * X i) ^ k`, which is homogeneous of degree `k`, so the
 two sides live in the same space and the `⊆` inclusion is definitionally on track. -/
 
+namespace RidgePowersSpan
+
 open MvPolynomial
 
 variable {n : ℕ}
 
-/-- TODO(mathlib). The powers `x ↦ (∑ i, a i * x i) ^ k`, ranging over `a : Fin n → ℝ`, span
+/-- The powers `x ↦ (∑ i, a i * x i) ^ k`, ranging over `a : Fin n → ℝ`, span
 (over ℝ) the space of homogeneous polynomial functions of degree `k` on `Fin n → ℝ`.
 (Polarization of symmetric tensors.) Needed for the Leshno ridge-function step.
 Leshno et al. 1993 / Pinkus, Acta Numerica 1999, Thm 3.1.
@@ -43,3 +44,5 @@ theorem ridgePow_span (k : ℕ) :
       = Submodule.map (MvPolynomial.evalₗ ℝ (Fin n))
           (MvPolynomial.homogeneousSubmodule (Fin n) ℝ k) := by
   sorry
+
+end RidgePowersSpan

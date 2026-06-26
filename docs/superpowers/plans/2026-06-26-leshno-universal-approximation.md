@@ -4,7 +4,7 @@
 
 **Goal:** Build a compiling Lean 4 / Mathlib *scaffold* of the full Leshno–Lin–Pinkus–Schocken (1993) universal approximation theorem (`M`-class, dense ⟺ not-a.e.-polynomial), with every deep analytic leaf left as a documented `sorry` and all structural glue genuinely proved.
 
-**Architecture:** A new subfolder `LeanPlayground/UniversalApproximation/Leshno/` follows Pinkus (Acta Numerica 1999, Thm 3.1): mollification (`σ⋆φ`) + the smooth derivative-trick engine + the ridge-function lift, bypassing Riesz duality entirely. All discontinuity of `σ` is confined to one membership fact (`σ⋆φ ∈ T`); everything downstream is ordinary `C(↥K,ℝ)` analysis. PR-candidate lemmas live in `LeanPlayground/ForMathlib/`.
+**Architecture:** A new subfolder `LeanPlayground/UniversalApproximation/Leshno/` follows Pinkus (Acta Numerica 1999, Thm 3.1): mollification (`σ⋆φ`) + the smooth derivative-trick engine + the ridge-function lift, bypassing Riesz duality entirely. All discontinuity of `σ` is confined to one membership fact (`σ⋆φ ∈ T`); everything downstream is ordinary `C(↥K,ℝ)` analysis. PR-candidate lemmas live in `LeanPlayground/Contrib/`.
 
 **Tech Stack:** Lean 4, Mathlib `v4.32.0-rc1`, `lake`, lean-lsp MCP tools.
 
@@ -12,7 +12,7 @@
 
 - Spec: `docs/superpowers/specs/2026-06-26-leshno-universal-approximation-design.md`. Branch: `feat/leshno-uat` (already created; spec committed).
 - All new Leshno code under `LeanPlayground/UniversalApproximation/Leshno/`, `namespace UniversalApproximation.Leshno`, each file beginning `import Mathlib` (plus intra-folder imports). **No existing file is renamed or modified** except the optional new root re-export.
-- `ForMathlib` code under `LeanPlayground/ForMathlib/`, in a project-neutral namespace (no `UniversalApproximation`), stated with general typeclasses, tagged `-- TODO(mathlib)`, so it is PR-extractable.
+- `Contrib` code under `LeanPlayground/Contrib/`, following the established repo convention (PR #5, `RieszKantorovich.lean`): one per-contribution `namespace` matching the file (e.g. `IteratedDerivPolynomial`, `RidgePowersSpan`) — **not** under `UniversalApproximation` — a file docstring with an inline `Intended Mathlib home: …` line (no separate tracking doc), per-declaration docstrings, general typeclasses only, ≤100-char lines, lint-clean. So it is PR-extractable. Downstream Leshno files `open` the contribution namespace to use the unqualified lemma name.
 - Input space `EuclideanSpace ℝ (Fin n)`; inner product written `⟪w, x⟫` with `open scoped RealInnerProductSpace` (the `⟪·,·⟫_ℝ` suffix does NOT parse — established in the existing scaffold).
 - **Approximation metric is everywhere-sup** (`∀ x, |f x - g x| < ε`), never ess-sup.
 - **"Polynomial" at the M-boundary is a.e.** (`IsAEPolynomial`); the smooth/univariate layer uses everywhere-equality (`IsPolynomialFun`); a bridging lemma connects them for continuous functions.
@@ -25,14 +25,15 @@
 
 ---
 
-### Task 1: `ForMathlib` leaf lemmas + tracking doc
+### Task 1: `Contrib` leaf lemmas
+
+**Status: complete** — files now live in `LeanPlayground/Contrib/` (namespaces `IteratedDerivPolynomial`, `RidgePowersSpan`), with inline `Intended Mathlib home:` headers. The separate tracking doc was dropped in favour of the inline-header convention established by PR #5. The step detail below is retained as a record.
 
 The two general-purpose lemmas that the Leshno proof needs and Mathlib (probably) lacks. Both are `sorry` leaves this cycle; they have no project dependencies, so they come first.
 
 **Files:**
-- Create: `LeanPlayground/ForMathlib/IteratedDerivPolynomial.lean`
-- Create: `LeanPlayground/ForMathlib/RidgePowersSpan.lean`
-- Create: `docs/superpowers/mathlib-contributions.md`
+- Create: `LeanPlayground/Contrib/IteratedDerivPolynomial.lean` (`namespace IteratedDerivPolynomial`)
+- Create: `LeanPlayground/Contrib/RidgePowersSpan.lean` (`namespace RidgePowersSpan`)
 
 **Interfaces:**
 - Consumes: nothing.
@@ -45,12 +46,14 @@ The two general-purpose lemmas that the Leshno proof needs and Mathlib (probably
 ```lean
 import Mathlib
 
-/-! # (Mathlib candidate) A function with a vanishing iterated derivative is a polynomial.
-TODO(mathlib): intended home near `Mathlib/Analysis/Calculus/IteratedDeriv/`. -/
+/-! # A function with a vanishing iterated derivative is a polynomial.
+Intended Mathlib home: `Mathlib/Analysis/Calculus/IteratedDeriv/` (confirm with maintainers). -/
+
+namespace IteratedDerivPolynomial
 
 open Polynomial
 
-/-- TODO(mathlib). If the `n`-th iterated derivative of `f : ℝ → ℝ` vanishes identically, then `f`
+/-- If the `n`-th iterated derivative of `f : ℝ → ℝ` vanishes identically, then `f`
 agrees (everywhere) with a polynomial function of degree `< n`. Needed for the Leshno smooth-engine
 step (a nonpolynomial smooth function has some nonvanishing derivative of every order).
 Leshno et al. 1993 / Pinkus, Acta Numerica 1999, Thm 3.1. -/
@@ -58,6 +61,8 @@ theorem iteratedDeriv_eq_zero_imp_poly {f : ℝ → ℝ} {n : ℕ}
     (hf : ContDiff ℝ (n : ℕ∞) f) (h : ∀ x, iteratedDeriv n f x = 0) :
     ∃ p : Polynomial ℝ, (∀ x, f x = p.eval x) ∧ p.natDegree < n := by
   sorry
+
+end IteratedDerivPolynomial
 ```
 Proof strategy for later: induction on `n` via `iteratedDeriv_succ` (the `n`-th derivative is the 1st derivative of the `(n-1)`-th); base case `n = 0` is `f = 0`; use that a function with zero derivative on `ℝ` is constant (`is_const_of_deriv_eq_zero` / `Constant`), then integrate degree by degree. Candidate names to verify: `iteratedDeriv_succ`, `is_const_of_fderiv_eq_zero`, `Polynomial.eval`.
 
@@ -66,15 +71,17 @@ Proof strategy for later: induction on `n` via `iteratedDeriv_succ` (the `n`-th 
 ```lean
 import Mathlib
 
-/-! # (Mathlib candidate) Powers of linear functionals span the homogeneous polynomials.
-TODO(mathlib): polarization; intended home near `Mathlib/LinearAlgebra/Polynomial` /
-`Mathlib/RingTheory/MvPolynomial`. -/
+/-! # Powers of linear functionals span the homogeneous polynomials.
+Intended Mathlib home: `Mathlib/LinearAlgebra/Polynomial` / `Mathlib/RingTheory/MvPolynomial`
+(polarization; confirm with maintainers). -/
+
+namespace RidgePowersSpan
 
 open MvPolynomial
 
 variable {n : ℕ}
 
-/-- TODO(mathlib). The powers `x ↦ (∑ i, a i * x i) ^ k`, ranging over `a : Fin n → ℝ`, span (over ℝ)
+/-- The powers `x ↦ (∑ i, a i * x i) ^ k`, ranging over `a : Fin n → ℝ`, span (over ℝ)
 the space of homogeneous polynomial functions of degree `k` on `Fin n → ℝ`. (Polarization of
 symmetric tensors.) Needed for the Leshno ridge-function step.
 Leshno et al. 1993 / Pinkus, Acta Numerica 1999, Thm 3.1. -/
@@ -82,21 +89,23 @@ theorem ridgePow_span (k : ℕ) :
     Submodule.span ℝ
         (Set.range fun a : Fin n → ℝ =>
           (fun x : Fin n → ℝ => (∑ i, a i * x i) ^ k))
-      = -- the submodule of homogeneous degree-k polynomial functions (precise RHS chosen during impl)
-        sorry := by
+      = Submodule.map (MvPolynomial.evalₗ ℝ (Fin n))
+          (MvPolynomial.homogeneousSubmodule (Fin n) ℝ k) := by
   sorry
+
+end RidgePowersSpan
 ```
 Note for impl: the exact RHS (how to name "homogeneous degree-`k` polynomial functions" as a `Submodule ℝ ((Fin n → ℝ) → ℝ)`) is to be fixed when writing — likely the span of the monomial functions `x ↦ ∏ x i ^ (e i)` with `∑ e i = k`. Pin it down so the statement elaborates, then `sorry` the proof. This is the only node whose *statement* may need refinement; do that first and confirm it elaborates before moving on.
 
-- [ ] **Step 4: Write `docs/superpowers/mathlib-contributions.md`** — a table with columns: lemma name, file, one-line statement, intended Mathlib location, status (`scaffolded` / `proved` / `PR #`). Seed it with the two lemmas above and a third conditional row for the convolution Riemann-sum approximation (Task 5, Lemma A core).
+- [ ] **Step 4: Inline `Intended Mathlib home:` headers** — each `Contrib` file's docstring carries an inline `Intended Mathlib home: …` line and a note of the missing mathematics (matching PR #5's `RieszKantorovich.lean`). No separate tracking markdown. The conditional convolution Riemann-sum lemma (Task 5, Lemma A core), if extracted to `Contrib`, gets the same inline header.
 
 - [ ] **Step 5: Verify** — `lean_diagnostic_messages` on both `.lean` files: no `error`; only `declaration uses 'sorry'` warnings (two per file at most: one for `ridgePow_span`'s RHS-placeholder if still present — resolve the RHS so only the *proof* `sorry` remains).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add LeanPlayground/ForMathlib/ docs/superpowers/mathlib-contributions.md
-git commit -m "feat(leshno): ForMathlib leaf lemmas (iteratedDeriv→poly, ridge-powers span) + tracking doc
+git add LeanPlayground/Contrib/
+git commit -m "feat(leshno): Contrib leaf lemmas (iteratedDeriv→poly, ridge-powers span)
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ```
@@ -273,11 +282,11 @@ This file works abstractly on `C(ℝ,ℝ)` with the closed span of shifts `Sg g 
 ```lean
 import Mathlib
 import LeanPlayground.UniversalApproximation.Leshno.ClassM
-import LeanPlayground.ForMathlib.IteratedDerivPolynomial
+import LeanPlayground.Contrib.IteratedDerivPolynomial
 
 namespace UniversalApproximation.Leshno
 
-open Topology
+open Topology IteratedDerivPolynomial
 
 /-- The span of dilated/translated copies of `g`, inside `C(I,ℝ)` for a compact real set `I`. -/
 def Sg (g : ℝ → ℝ) (I : Set ℝ) (hg : Continuous g) : Submodule ℝ C(↥I, ℝ) :=
@@ -383,7 +392,7 @@ theorem mollify_ridge_mem_T {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContD
 
 - [ ] **Step 3: Leaf `exists_nonpoly_mollify` (D) — docstring + `sorry`.** Document: if `mollify σ φ` were an everywhere polynomial for *every* smooth compactly-supported `φ`, then `σ` is a.e. a polynomial (standard distribution-theory fact: a distribution all of whose mollifications are polynomials of uniformly bounded degree is a polynomial; the degree bound comes from `(d/dx)^N (σ⋆φ) = σ⋆φ^(N)`). Contrapositive gives the witness. Leave as documented `sorry`.
 
-- [ ] **Step 4: Leaf `mollify_ridge_mem_T` (A) — docstring + `sorry`.** This is THE hard analytic step. Document precisely: `(σ⋆φ)(s) = ∫ σ(s-y)φ(y) dy` is approximated uniformly for `s` in the compact image `(lam(⟪w,·⟫+b)+c)(K)` by Riemann sums `∑ᵢ σ(s - yᵢ)φ(yᵢ)Δ`; each Riemann-sum-as-a-function-of-`x` is a finite combination of `genFun σ (lam•w) (lam*b + c - yᵢ)` (reparametrisation, cf. `genFun_reparam_mem`), hence in `genSpan`; uniform convergence on the compact image (using `ClassM.locBdd` + `ClassM.discNull` for uniform control of the Riemann error of the a.e.-continuous integrand) gives membership in `ApproxByGen`, i.e. in `T`. Cross-reference the conditional `ForMathlib` row (Riemann-sum convolution approximation). Leave as documented `sorry`.
+- [ ] **Step 4: Leaf `mollify_ridge_mem_T` (A) — docstring + `sorry`.** This is THE hard analytic step. Document precisely: `(σ⋆φ)(s) = ∫ σ(s-y)φ(y) dy` is approximated uniformly for `s` in the compact image `(lam(⟪w,·⟫+b)+c)(K)` by Riemann sums `∑ᵢ σ(s - yᵢ)φ(yᵢ)Δ`; each Riemann-sum-as-a-function-of-`x` is a finite combination of `genFun σ (lam•w) (lam*b + c - yᵢ)` (reparametrisation, cf. `genFun_reparam_mem`), hence in `genSpan`; uniform convergence on the compact image (using `ClassM.locBdd` + `ClassM.discNull` for uniform control of the Riemann error of the a.e.-continuous integrand) gives membership in `ApproxByGen`, i.e. in `T`. Cross-reference the conditional `Contrib` row (Riemann-sum convolution approximation). Leave as documented `sorry`.
 
 - [ ] **Step 5: Verify** — `lean_diagnostic_messages`: no `error`; `sorry` on `exists_nonpoly_mollify`, `mollify_ridge_mem_T` (and `contDiff_mollify` only if not reused from Mathlib).
 
@@ -412,12 +421,12 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ```lean
 import Mathlib
 import LeanPlayground.UniversalApproximation.Leshno.Family
-import LeanPlayground.ForMathlib.RidgePowersSpan
+import LeanPlayground.Contrib.RidgePowersSpan
 
 namespace UniversalApproximation.Leshno
 
 open scoped RealInnerProductSpace
-open Topology
+open Topology RidgePowersSpan
 
 variable {n : ℕ}
 
@@ -569,12 +578,12 @@ Everything else — the family/`T` infrastructure, the ridge lift, the converse,
 -/
 ```
 
-- [ ] **Step 6: Verify the whole development.** Run `lean_diagnostic_messages` on `Theorem.lean` and `Leshno.lean`: no `error`; `sorry` warnings only on the named leaves (Tasks 1/4/5). Then `mcp__lean-lsp__lean_build` (or `lake build LeanPlayground.UniversalApproximation.Leshno`) to confirm the module and all imports compile together. Update `docs/superpowers/mathlib-contributions.md` statuses.
+- [ ] **Step 6: Verify the whole development.** Run `lean_diagnostic_messages` on `Theorem.lean` and `Leshno.lean`: no `error`; `sorry` warnings only on the named leaves (Tasks 1/4/5). Then `mcp__lean-lsp__lean_build` (or `lake build LeanPlayground.UniversalApproximation.Leshno`) to confirm the module and all imports compile together.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add LeanPlayground/UniversalApproximation/Leshno/Theorem.lean LeanPlayground/UniversalApproximation/Leshno.lean docs/superpowers/mathlib-contributions.md
+git add LeanPlayground/UniversalApproximation/Leshno/Theorem.lean LeanPlayground/UniversalApproximation/Leshno.lean
 git commit -m "feat(leshno): assemble leshno_dense_iff + root re-export; full M-class scaffold compiles
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
@@ -585,6 +594,6 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ## Final verification (whole branch)
 
 - [ ] `lake build LeanPlayground.UniversalApproximation.Leshno` succeeds (and `lake build` of the existing default target still succeeds — the Cybenko files are untouched).
-- [ ] `git grep -n "sorry" LeanPlayground/UniversalApproximation/Leshno LeanPlayground/ForMathlib` lists **only** the named leaves; no stray sorries in glue.
+- [ ] `git grep -n "sorry" LeanPlayground/UniversalApproximation/Leshno LeanPlayground/Contrib` lists **only** the named leaves; no stray sorries in glue.
 - [ ] `leshno_dense_iff`, `leshno_dense`, `univariate_density`, `ridge_density`, `denselyApproximates_of_forall_T_eq_top` are present and (apart from depending on the leaves) `sorry`-free.
-- [ ] `docs/superpowers/mathlib-contributions.md` reflects final statuses.
+- [ ] Each `Contrib` file carries an accurate inline `Intended Mathlib home:` header.
