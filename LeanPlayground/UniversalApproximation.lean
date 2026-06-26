@@ -21,26 +21,26 @@ It re-exports the five component modules:
   Fourier/measure argument).
 * `Network` — `Layer`, `Network`, and `Layer.continuous_toFun`.
 * `Family` — `generator`, the spanned submodule `S`, and `generator_mem_S`.
-* `Riesz` — the admitted dual/signed Riesz representation `riesz_repr`.
+* `Riesz` — the proved dual/signed Riesz representation `riesz_repr` (via
+  `Contrib.RieszKantorovich` + positive Riesz–Markov–Kakutani).
 * `Theorem` — the Hahn–Banach reduction
   `dense_iff_forall_functional_eq_zero`, the main theorem
   `universal_approximation`, and the ε-form corollary
   `universal_approximation_eps`.
 
-## Admit inventory (roadmap)
+## Status: fully proved
 
-The scaffold is complete except for one deep analytic fact, left as a named
-`sorry` with a full docstring pointing at its intended proof:
+The development is now **`sorry`-free**. Both formerly-admitted analytic facts
+are proved:
 
-1. `UniversalApproximation.riesz_repr` — the signed / dual Riesz representation:
-   every continuous linear functional on `C(K, ℝ)` is integration against a
-   signed measure on `K`.
+1. `UniversalApproximation.sigmoidal_discriminatory` — a continuous sigmoidal
+   activation is discriminatory (Cybenko's Fourier/measure half-space argument),
+   in `Discriminatory.lean`.
+2. `UniversalApproximation.riesz_repr` — the signed / dual Riesz representation,
+   via the Riesz–Kantorovich decomposition (`Contrib.RieszKantorovich`) plus the
+   positive Riesz–Markov–Kakutani theorem.
 
-`UniversalApproximation.sigmoidal_discriminatory` — a continuous sigmoidal
-activation is discriminatory (Cybenko's Fourier/measure half-space argument) —
-is now **fully proved** in `Discriminatory.lean`.
-
-**Everything else is proved**, with no `sorry`:
+The structural pieces are likewise proved:
 
 * continuity of layers / networks (`Layer.continuous_toFun`);
 * the spanned subspace and its generators (`S`, `generator`,
