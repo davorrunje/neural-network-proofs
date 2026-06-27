@@ -140,9 +140,10 @@ noncomputable def mollify (σ : ℝ → ℝ) (φ : ℝ → ℝ) : ℝ → ℝ :=
 theorem contDiff_mollify (hσ : ClassM σ) (hφ : ContDiff ℝ ∞ φ) (hφc : HasCompactSupport φ) :
     ContDiff ℝ ∞ (mollify σ φ)                                                    -- E (Mathlib)
 theorem exists_nonpoly_mollify (hσ : ClassM σ) (hnp : ¬ IsAEPolynomial σ) :
-    ∃ φ, ContDiff ℝ ∞ φ ∧ HasCompactSupport φ ∧ ¬ IsAEPolynomial (mollify σ φ)     -- D
-theorem mollify_mem_T (hσ : ClassM σ) (hφ : ContDiff ℝ ∞ φ) (hφc : HasCompactSupport φ) :
-    (⟨mollify-as-ridge, …⟩ : C(↥K,ℝ)) ∈ T σ K                                      -- A (HARD)
+    ∃ φ, ContDiff ℝ ∞ φ ∧ HasCompactSupport φ ∧ ¬ IsPolynomialFun (mollify σ φ)    -- D
+theorem mollify_ridge_mem_T (hσ : ClassM σ) (hφ : ContDiff ℝ ∞ φ) (hφc : HasCompactSupport φ)
+    (K) (w) (b lam c) (hcont) :
+    (⟨mollify-as-ridge, hcont⟩ : C(↥K,ℝ)) ∈ T σ K                                  -- A (HARD)
 
 -- Ridge.lean
 theorem ridge_mem_T (huniv : univariate density) (a : EuclideanSpace ℝ (Fin n)) (h : C(ℝ,ℝ)) :
