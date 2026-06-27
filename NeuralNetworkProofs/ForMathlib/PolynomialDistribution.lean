@@ -1,6 +1,6 @@
 import Mathlib
-import NeuralNetworkProofs.Contrib.IteratedDerivPolynomial
-import NeuralNetworkProofs.Contrib.SmoothCompactAntideriv
+import NeuralNetworkProofs.ForMathlib.IteratedDerivPolynomial
+import NeuralNetworkProofs.ForMathlib.SmoothCompactAntideriv
 
 /-! # Distributional characterization of polynomials (degree ≤ d).
 Intended Mathlib home: `Mathlib/Analysis/Distribution/…` (confirm with maintainers). -/

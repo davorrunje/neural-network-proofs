@@ -1,6 +1,6 @@
 import Mathlib
-import NeuralNetworkProofs.UniversalApproximation.Activation
-import NeuralNetworkProofs.UniversalApproximation.Network
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Activation
+import NeuralNetworkProofs.NeuralNetwork.Network
 
 /-!
 # The single-hidden-layer function family
@@ -17,7 +17,7 @@ No compactness of `K` is needed to form these objects; compactness is supplied
 later, at theorem time, when invoking density (Stone–Weierstrass) arguments.
 -/
 
-namespace UniversalApproximation
+namespace UniversalApproximation.Cybenko
 
 open scoped RealInnerProductSpace
 
@@ -50,4 +50,4 @@ theorem generator_mem_S (hσc : Continuous σ) {K : Set (EuclideanSpace ℝ (Fin
     generator σ hσc (K := K) w b ∈ S σ hσc (K := K) :=
   Submodule.subset_span ⟨(w, b), rfl⟩
 
-end UniversalApproximation
+end UniversalApproximation.Cybenko

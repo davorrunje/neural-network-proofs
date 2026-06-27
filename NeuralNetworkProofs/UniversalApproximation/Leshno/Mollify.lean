@@ -2,12 +2,12 @@ import Mathlib
 import NeuralNetworkProofs.UniversalApproximation.Leshno.ClassM
 import NeuralNetworkProofs.UniversalApproximation.Leshno.Family
 import NeuralNetworkProofs.UniversalApproximation.Leshno.MollifyDef
-import NeuralNetworkProofs.Contrib.UniformRiemannConvolution
-import NeuralNetworkProofs.Contrib.ConvolutionIteratedDeriv
-import NeuralNetworkProofs.Contrib.SmoothCompactAntideriv
-import NeuralNetworkProofs.Contrib.PolynomialDistribution
-import NeuralNetworkProofs.Contrib.IteratedDerivPolynomial
-import NeuralNetworkProofs.Contrib.TestFunctionDegreeBound
+import NeuralNetworkProofs.ForMathlib.UniformRiemannConvolution
+import NeuralNetworkProofs.ForMathlib.ConvolutionIteratedDeriv
+import NeuralNetworkProofs.ForMathlib.SmoothCompactAntideriv
+import NeuralNetworkProofs.ForMathlib.PolynomialDistribution
+import NeuralNetworkProofs.ForMathlib.IteratedDerivPolynomial
+import NeuralNetworkProofs.ForMathlib.TestFunctionDegreeBound
 
 /-! # Mollification: smoothness (E), the nonpolynomial mollifier (D), and the M-class membrane (A).
 

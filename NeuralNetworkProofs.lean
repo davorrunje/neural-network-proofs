@@ -1,16 +1,14 @@
-import NeuralNetworkProofs.UniversalApproximation
+import NeuralNetworkProofs.UniversalApproximation.Cybenko
 import NeuralNetworkProofs.UniversalApproximation.Leshno
+import NeuralNetworkProofs.NeuralNetwork.Network
 
 /-! # NeuralNetworkProofs — universal approximation theorems
 
-Root module of the package. It re-exports both formalized universal approximation
-developments so that the default `lake build` target exercises (and thus verifies) their headline
-theorems:
+Re-exports the formalized developments so the default `lake build` builds and verifies both
+headlines:
 
-* `NeuralNetworkProofs.UniversalApproximation` — **Cybenko (1989)**: a single-hidden-layer
-  network with a continuous sigmoidal activation is dense in `C(K, ℝ)`
-  (`UniversalApproximation.universal_approximation`).
-* `NeuralNetworkProofs.UniversalApproximation.Leshno` — **Leshno–Lin–Pinkus–Schocken (1993)**: an
-  `M`-class activation densely approximates iff it is not (a.e.) a polynomial
-  (`UniversalApproximation.Leshno.leshno_dense_iff`).
--/
+* `UniversalApproximation.Cybenko.universal_approximation` — Cybenko (1989).
+* `UniversalApproximation.Leshno.leshno_dense_iff` — Leshno–Lin–Pinkus–Schocken (1993).
+
+General neural-network infrastructure lives under `NeuralNetwork` (`NeuralNetwork.Layer`,
+`NeuralNetwork.Network`); Mathlib-upstream candidates under `NeuralNetworkProofs.ForMathlib`. -/

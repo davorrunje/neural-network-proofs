@@ -15,10 +15,10 @@ Universal Approximation Theorem (UAT) scaffold:
   pre-compositions `x ↦ σ (⟪w, x⟫ + b)`.
 
 The theorem `sigmoidal_discriminatory` (continuous sigmoidal ⇒ discriminatory)
-is proved in `NeuralNetworkProofs.UniversalApproximation.Discriminatory`.
+is proved in `NeuralNetworkProofs.UniversalApproximation.Cybenko.Discriminatory`.
 -/
 
-namespace UniversalApproximation
+namespace UniversalApproximation.Cybenko
 
 open MeasureTheory Filter Topology
 open scoped RealInnerProductSpace
@@ -54,4 +54,4 @@ def Discriminatory (K : Set (EuclideanSpace ℝ (Fin n))) (σ : ℝ → ℝ) : P
       signedIntegral μ (fun x => σ (⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ + b)) = 0) →
         μ = 0
 
-end UniversalApproximation
+end UniversalApproximation.Cybenko

@@ -1,8 +1,8 @@
 import Mathlib
-import NeuralNetworkProofs.UniversalApproximation.Activation
-import NeuralNetworkProofs.UniversalApproximation.Discriminatory
-import NeuralNetworkProofs.UniversalApproximation.Family
-import NeuralNetworkProofs.UniversalApproximation.Riesz
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Activation
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Discriminatory
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Family
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Riesz
 
 /-!
 # Universal Approximation Theorem (Cybenko, scaffold)
@@ -11,7 +11,7 @@ This file contains the Hahn–Banach reduction (proved), the main
 `universal_approximation` theorem and its ε-form corollary.
 -/
 
-namespace UniversalApproximation
+namespace UniversalApproximation.Cybenko
 
 open scoped RealInnerProductSpace
 
@@ -133,4 +133,4 @@ theorem universal_approximation_eps
   rw [dist_eq_norm] at hdist
   exact hdist
 
-end UniversalApproximation
+end UniversalApproximation.Cybenko

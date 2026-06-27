@@ -1,6 +1,6 @@
 import Mathlib
-import NeuralNetworkProofs.UniversalApproximation.Activation
-import NeuralNetworkProofs.Contrib.RieszKantorovich
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Activation
+import NeuralNetworkProofs.ForMathlib.RieszKantorovich
 
 /-!
 # Riesz representation for the Universal Approximation Theorem
@@ -13,12 +13,12 @@ functional on `C(K, ℝ)` is represented by integration against a signed
 Mathlib provides the Riesz–Markov–Kakutani theorem for *positive* linear
 functionals only. The *signed* / dual-space form `riesz_repr` is **proved**
 here by combining the Riesz–Kantorovich decomposition
-(`Contrib.RieszKantorovich.exists_positive_decomposition`, which splits a
+(`ForMathlib.RieszKantorovich.exists_positive_decomposition`, which splits a
 continuous functional into two cone-positive functionals) with the positive
 Riesz–Markov–Kakutani theorem applied to each part.
 -/
 
-namespace UniversalApproximation
+namespace UniversalApproximation.Cybenko
 
 open MeasureTheory
 
@@ -176,4 +176,4 @@ theorem riesz_repr [CompactSpace ↥K] (L : C(↥K, ℝ) →L[ℝ] ℝ) :
     rw [SignedMeasure.toJordanDecomposition_zero]
     simp
 
-end UniversalApproximation
+end UniversalApproximation.Cybenko

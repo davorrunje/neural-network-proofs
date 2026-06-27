@@ -1,9 +1,9 @@
 import Mathlib
-import NeuralNetworkProofs.UniversalApproximation.Activation
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Activation
 
 /-! # Discriminatory property of sigmoidal activations (Cybenko 1989, §3). -/
 
-namespace UniversalApproximation
+namespace UniversalApproximation.Cybenko
 
 open MeasureTheory Filter Topology
 open scoped RealInnerProductSpace
@@ -381,4 +381,4 @@ theorem sigmoidal_discriminatory {K : Set (EuclideanSpace ℝ (Fin n))} {σ : �
   rw [signedMeasure_apply_eq μ hs, ← hμp, ← hμn, hjordan]
   simp
 
-end UniversalApproximation
+end UniversalApproximation.Cybenko

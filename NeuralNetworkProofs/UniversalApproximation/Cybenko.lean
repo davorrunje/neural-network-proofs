@@ -1,9 +1,9 @@
-import NeuralNetworkProofs.UniversalApproximation.Activation
-import NeuralNetworkProofs.UniversalApproximation.Discriminatory
-import NeuralNetworkProofs.UniversalApproximation.Network
-import NeuralNetworkProofs.UniversalApproximation.Family
-import NeuralNetworkProofs.UniversalApproximation.Riesz
-import NeuralNetworkProofs.UniversalApproximation.Theorem
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Activation
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Discriminatory
+import NeuralNetworkProofs.NeuralNetwork.Network
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Family
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Riesz
+import NeuralNetworkProofs.UniversalApproximation.Cybenko.Theorem
 
 /-!
 # Universal Approximation Theorem (Cybenko) — scaffold root
@@ -22,7 +22,7 @@ It re-exports the five component modules:
 * `Network` — `Layer`, `Network`, and `Layer.continuous_toFun`.
 * `Family` — `generator`, the spanned submodule `S`, and `generator_mem_S`.
 * `Riesz` — the proved dual/signed Riesz representation `riesz_repr` (via
-  `Contrib.RieszKantorovich` + positive Riesz–Markov–Kakutani).
+  `ForMathlib.RieszKantorovich` + positive Riesz–Markov–Kakutani).
 * `Theorem` — the Hahn–Banach reduction
   `dense_iff_forall_functional_eq_zero`, the main theorem
   `universal_approximation`, and the ε-form corollary
@@ -33,11 +33,11 @@ It re-exports the five component modules:
 The development is now **`sorry`-free**. Both formerly-admitted analytic facts
 are proved:
 
-1. `UniversalApproximation.sigmoidal_discriminatory` — a continuous sigmoidal
+1. `UniversalApproximation.Cybenko.sigmoidal_discriminatory` — a continuous sigmoidal
    activation is discriminatory (Cybenko's Fourier/measure half-space argument),
    in `Discriminatory.lean`.
-2. `UniversalApproximation.riesz_repr` — the signed / dual Riesz representation,
-   via the Riesz–Kantorovich decomposition (`Contrib.RieszKantorovich`) plus the
+2. `UniversalApproximation.Cybenko.riesz_repr` — the signed / dual Riesz representation,
+   via the Riesz–Kantorovich decomposition (`ForMathlib.RieszKantorovich`) plus the
    positive Riesz–Markov–Kakutani theorem.
 
 The structural pieces are likewise proved:
@@ -56,7 +56,7 @@ function `t ↦ 1 / (1 + exp (-t))` is sigmoidal — is **fully proved** (it is
 `Sigmoidal` hypothesis of the main theorem.
 -/
 
-namespace UniversalApproximation
+namespace UniversalApproximation.Cybenko
 
 open Real
 
@@ -88,4 +88,4 @@ theorem logistic_sigmoidal : Sigmoidal (fun t => 1 / (1 + Real.exp (-t))) where
       Filter.Tendsto.div tendsto_const_nhds h1 (by norm_num)
     simpa using h2
 
-end UniversalApproximation
+end UniversalApproximation.Cybenko

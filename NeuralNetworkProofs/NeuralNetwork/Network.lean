@@ -16,7 +16,7 @@ The continuity of `x ↦ W.mulVec x` (a finite-dimensional linear map) is obtain
 `Continuous.matrix_mulVec`.
 -/
 
-namespace UniversalApproximation
+namespace NeuralNetwork
 
 /-- A single feedforward layer from `Fin a` inputs to `Fin b` outputs:
 a weight matrix `W` and a bias vector `c`. -/
@@ -54,4 +54,4 @@ theorem Layer.continuous_toFun (σ : ℝ → ℝ) (hσ : Continuous σ) {a b}
     exact (continuous_apply i).comp hmul
   · exact continuous_const
 
-end UniversalApproximation
+end NeuralNetwork
