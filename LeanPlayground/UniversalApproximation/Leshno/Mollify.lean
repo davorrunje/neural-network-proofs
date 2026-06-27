@@ -1,7 +1,13 @@
 import Mathlib
 import LeanPlayground.UniversalApproximation.Leshno.ClassM
 import LeanPlayground.UniversalApproximation.Leshno.Family
+import LeanPlayground.UniversalApproximation.Leshno.MollifyDef
 import LeanPlayground.Contrib.UniformRiemannConvolution
+import LeanPlayground.Contrib.ConvolutionIteratedDeriv
+import LeanPlayground.Contrib.SmoothCompactAntideriv
+import LeanPlayground.Contrib.PolynomialDistribution
+import LeanPlayground.Contrib.IteratedDerivPolynomial
+import LeanPlayground.Contrib.TestFunctionDegreeBound
 
 /-! # Mollification: smoothness (E), the nonpolynomial mollifier (D), and the M-class membrane (A).
 
@@ -24,10 +30,6 @@ open MeasureTheory
 open scoped RealInnerProductSpace ContDiff
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-
-/-- Mollification of `σ` by a smooth compactly-supported kernel `φ` (convolution). -/
-noncomputable def mollify (σ φ : ℝ → ℝ) : ℝ → ℝ :=
-  fun x => ∫ y, σ (x - y) * φ y
 
 /-- An `M`-class `σ` is a.e.-strongly-measurable: `σ` is continuous on the open set
 `G := (closure {t | ¬ ContinuousAt σ t})ᶜ` whose complement is null (`ClassM.discNull`), so it is
@@ -78,28 +80,13 @@ Proof: `mollify σ φ` is the Mathlib convolution `φ ⋆[ContinuousLinearMap.mu
 `ClassM.locallyIntegrable` (local boundedness + a.e. continuity). -/
 theorem contDiff_mollify {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff ℝ ∞ φ)
     (hφc : HasCompactSupport φ) : ContDiff ℝ ∞ (mollify σ φ) := by
-  have hconv : mollify σ φ
-      = MeasureTheory.convolution φ σ (ContinuousLinearMap.mul ℝ ℝ) volume := by
-    funext x
-    rw [MeasureTheory.convolution_def]
-    refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
-    simp [mul_comm]
-  rw [hconv]
+  rw [mollify_eq_convolution]
   exact hφc.contDiff_convolution_left _ hφ hσ.locallyIntegrable
 
 /-- D (leaf). A non-a.e.-polynomial `M`-class `σ` admits a smooth compactly-supported kernel whose
 mollification is not an everywhere polynomial.
 
-Proof sketch (standard distribution theory; reserved as a leaf). Suppose, for contradiction, that
-`mollify σ φ` were an everywhere polynomial for *every* smooth compactly-supported `φ`. Each
-mollification `σ ⋆ φ` is then a polynomial, and moreover its degree is uniformly bounded
-independently of `φ`: differentiation commutes with convolution, `(d/dx)^N (σ ⋆ φ) = σ ⋆ φ^(N)`,
-so if `σ ⋆ φ` had unbounded degree as `φ` ranges over an approximate identity, a fixed-order
-derivative `(d/dx)^N (σ ⋆ φ)` would fail to vanish for arbitrarily large `N`, contradicting that
-`σ ⋆ φ` is a polynomial of bounded degree. A distribution all of whose mollifications are
-polynomials of uniformly bounded degree `≤ N` is itself (a.e.) a polynomial of degree `≤ N`
-(test against the approximate identity and pass to the limit). Hence `σ` would be a.e. a polynomial,
-contradicting `hnp`. The contrapositive produces the required witness `φ`. -/
+Proof sketch (standard distribution theory; reserved as a leaf for the 7b assembly step). -/
 theorem exists_nonpoly_mollify {σ : ℝ → ℝ} (hσ : ClassM σ) (hnp : ¬ IsAEPolynomial σ) :
     ∃ φ : ℝ → ℝ, ContDiff ℝ ∞ φ ∧ HasCompactSupport φ ∧ ¬ IsPolynomialFun (mollify σ φ) := by
   sorry
