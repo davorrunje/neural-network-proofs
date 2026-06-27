@@ -29,13 +29,12 @@ continuous function on every compact `K ⊆ ℝⁿ` **iff** `σ` is not (Lebesgu
 * `Converse` — the converse direction (`aePolynomial_not_dense`).
 * `Theorem` — the final assembly (`univariate_density`, `leshno_dense`, `leshno_dense_iff`).
 
-## Admit inventory (documented `sorry` leaves)
+## Admit inventory (now `sorry`-free)
 
-The headline `leshno_dense_iff` and its supporting theorems are fully proved as *glue*. Of the deep
-analytic leaves originally scaffolded, all but one are now proved. Exactly **one `sorry`** remains in
-the whole development — a single documented research leaf with a precise blocker note — so
-`lean_verify`/`#print axioms` reporting `sorryAx` on the top-level theorems (and on
-`Mollify.mollify_ridge_mem_T`, which consumes that leaf) is expected and fully accounted for.
+The headline `leshno_dense_iff` and its supporting theorems are fully proved as *glue*. Every deep
+analytic leaf originally scaffolded is now proved: the development has **0 `sorry` leaves**. So
+`lean_verify`/`#print axioms` on the top-level theorems should report only
+`[propext, Classical.choice, Quot.sound]` once the compiled `.olean` artifacts are rebuilt.
 
 **Proved (no longer leaves):**
 * `IteratedDerivPolynomial.iteratedDeriv_eq_zero_imp_poly` (Contrib) — vanishing `n`-th derivative
@@ -57,14 +56,17 @@ the whole development — a single documented research leaf with a precise block
   degree bound above plus `ConvolutionIteratedDeriv.iteratedDeriv_convolution_left`,
   `SmoothCompactAntideriv.exists_iteratedDeriv_eq_of_moments_zero`, and
   `PolynomialDistribution.aePolynomial_of_annihilates_moment_vanishing`.
-
-**Remaining documented research leaf (1 `sorry`):**
 * `UniformRiemannConvolution.tendstoUniformly_riemannSum_aeContinuous` (Contrib) — uniform
   Riemann-sum approximation of the convolution for an a.e.-continuous (M-class) kernel; the analytic
-  core consumed by `Mollify.mollify_ridge_mem_T` (the latter is otherwise fully assembled). *Blocked*
-  on measure-theoretic infrastructure absent from Mathlib (a parameter-uniform Riemann/Lebesgue
-  criterion, or measurability of the uncountable-index oscillation supremum); see its docstring for
-  the two investigated routes and the remaining tractable good/bad-cell approach.
+  core consumed by `Mollify.mollify_ridge_mem_T`. **Now proved** (`sorryAx`-free) by the classical
+  good/bad-cell argument — cells split into good cells (uniform continuity of the kernel on a
+  compact complement of a metric thickening of the discontinuity-closure) and bad cells (measure
+  controlled by `tendsto_measure_cthickening_of_isCompact`), with the budgets uniform in the
+  translation parameter. New Contrib supports: `UniformRiemannConvolution.exists_uniform_bound`,
+  `…uniformContinuousOn_off_disc`, `…exists_cthickening_measure_lt`.
+
+With this last leaf closed, `Mollify.mollify_ridge_mem_T`, `univariate_density`, `leshno_dense`, and
+`leshno_dense_iff` are all `sorryAx`-free at the source level.
 
 Everything else — the `ClassM`/`Family`/`T` infrastructure, `exists_deriv_ne` (**proved**, not a
 leaf), `smooth_engine`, the ridge lift, the converse, and the final assembly — is proved outright.

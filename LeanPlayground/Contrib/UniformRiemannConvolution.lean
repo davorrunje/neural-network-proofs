@@ -199,29 +199,19 @@ set_option maxHeartbeats 1600000 in
 only **locally bounded and a.e. continuous** (`volume (closure {t | ¬ ContinuousAt f t}) = 0`).
 The null discontinuity set controls the cells straddling discontinuities (Lebesgue's criterion).
 
-BLOCKER (research-grade, reserved as a leaf). Splitting the per-cell integrand error
-`f(s-yᵢ)·φ(yᵢ) - f(s-y)·φ(y) = f(s-yᵢ)·(φ(yᵢ)-φ(y)) + (f(s-yᵢ)-f(s-y))·φ(y)` reduces the proof to
-two terms. The **φ-variation** term is handled exactly as in the continuous case (uniform continuity
-of `φ` + the uniform bound on `f` from `hbdd` on the compact `S - Icc (-M) M`). The **f-variation**
-term `∑ᵢ φ(yᵢ) ∫_cell (f(s-yᵢ)-f(s-y)) dy` is the L¹ partition-oscillation of `y ↦ f(s-y)` and is
-the Lebesgue criterion for Riemann integrability of the *point-sampled* equispaced Riemann sum,
-**uniformly** in `s ∈ S`. Two routes were investigated and both bottom out on measure-theoretic
-infrastructure that this Mathlib does not package:
-
-* Riemann↔Lebesgue via `BoxIntegral` (tagged prepartitions under the `Riemann` integration-params
-  filter, e.g. `BoxIntegral.integrable_of_bounded_and_ae_continuousWithinAt`) neither specialises to
-  this fixed equispaced point-sampling sum nor gives a parameter-uniform tendsto.
-* Dominating the `f`-variation term by the pointwise oscillation `⨆_{h∈[0,Δ]} |f(v)-f(v+h)|` over a
-  fixed (`s`-independent) compact domain, then dominated convergence: the bound holds and its
-  integral does tend to `0`, but the oscillation majorant is a supremum over an *uncountable*
-  compact index, so its (a.e.) measurability needs a measurable section-supremum / analytic-set
-  (`AnalyticSet.nullMeasurableSet`) result that Mathlib lacks. The naive countable (rational) sup
-  undershoots: at a discontinuity reached only by an irrational shift it misses the jump.
-
-The remaining tractable in-repo route is the classical good/bad-cell argument (cover the null
-closure of the discontinuity set by a small-measure open set via outer regularity, use uniform
-continuity on the compact complement, and bound the straddling cells uniformly in `s`) — a
-many-line measure-theory development reserved as this leaf. -/
+Proved by the classical good/bad-cell argument. Splitting the per-cell integrand error
+`f(s-y)·φ(y) - f(s-yᵢ)·φ(yᵢ) = f(s-y)·(φ(y)-φ(yᵢ)) + (f(s-y)-f(s-yᵢ))·φ(yᵢ)` gives two terms.
+The **φ-variation** term is bounded by uniform continuity of `φ` on the compact `Icc (-M) M` and the
+uniform bound on `f` from `hbdd` (`exists_uniform_bound`). For the **f-variation** term, let
+`K = closure {t | ¬ ContinuousAt f t} ∩ J` for the fixed compact window
+`J = Icc (sInf S - M) (sSup S + M)` holding every `s - y`; `K` is compact and null. Cells split
+into **good** cells (off `Metric.thickening (δ₀/2) K`, lying in the compact
+`J \ thickening (δ₀/2) K` where `f` is uniformly continuous, via `uniformContinuousOn_off_disc`)
+and **bad** cells (whose image cells lie in `Metric.cthickening δ₀ K`, of total measure `< η` by
+`exists_cthickening_measure_lt` / `tendsto_measure_cthickening_of_isCompact`). Since `K` and `δ₀`
+are independent of `s`, all three ε/3 budgets are uniform in `s ∈ S`. No analytic-set or
+measurable-selection infrastructure is needed (the earlier oscillation-supremum and `BoxIntegral`
+routes that needed it are avoided entirely). -/
 theorem tendstoUniformly_riemannSum_aeContinuous
     {f φ : ℝ → ℝ} (hbdd : ∀ R, ∃ C, ∀ t, |t| ≤ R → |f t| ≤ C)
     (hdisc : MeasureTheory.volume (closure {t : ℝ | ¬ ContinuousAt f t}) = 0)
