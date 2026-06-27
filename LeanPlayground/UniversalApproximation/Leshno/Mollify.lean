@@ -86,12 +86,12 @@ theorem contDiff_mollify {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff
 /-- D (leaf). A non-a.e.-polynomial `M`-class `σ` admits a smooth compactly-supported kernel whose
 mollification is not an everywhere polynomial.
 
-This is now fully assembled from proved Contrib leaves and the single research-grade Baire input
-`TestFunctionDegreeBound.exists_uniform_degree_bound` (the only remaining `sorry` reachable from
-here). Argument (contrapositive): assume every mollification `mollify σ φ` is an everywhere
-polynomial. The Baire lemma yields one `d` with `iteratedDeriv (d+1) (mollify σ φ) = 0` for all
-`φ`. For any test `g` with vanishing moments up to `d`, its reflection `g̃ y = g (-y)` also has
-vanishing moments up to `d`, so `g̃ = iteratedDeriv (d+1) ψ` for a smooth compact `ψ`
+This is now fully proved (`sorryAx`-free) from proved Contrib leaves, including the uniform degree
+bound `TestFunctionDegreeBound.exists_uniform_degree_bound` (itself proved via convolution
+degree-invariance, no Baire). Argument (contrapositive): assume every mollification `mollify σ φ` is
+an everywhere polynomial. The degree bound gives a `d` with `iteratedDeriv (d+1) (mollify σ φ) = 0`
+for all `φ`. For any test `g` with vanishing moments up to `d`, its reflection `g̃ y = g (-y)` also
+has vanishing moments up to `d`, so `g̃ = iteratedDeriv (d+1) ψ` for a smooth compact `ψ`
 (`SmoothCompactAntideriv.exists_iteratedDeriv_eq_of_moments_zero`). Differentiation through the
 convolution (`ConvolutionIteratedDeriv.iteratedDeriv_convolution_left`, via
 `mollify_eq_convolution`) gives `mollify σ g̃ = iteratedDeriv (d+1) (mollify σ ψ) = 0`, whence the
@@ -107,7 +107,7 @@ theorem exists_nonpoly_mollify {σ : ℝ → ℝ} (hσ : ClassM σ) (hnp : ¬ Is
   have H' : ∀ φ : ℝ → ℝ, ContDiff ℝ ∞ φ → HasCompactSupport φ → IsPolynomialFun (mollify σ φ) :=
     hcon
   apply hnp
-  -- Uniform degree bound from Baire (the single research leaf).
+  -- Uniform degree bound (proved via convolution degree-invariance).
   obtain ⟨d, hd⟩ := TestFunctionDegreeBound.exists_uniform_degree_bound hσ H'
   -- `σ` annihilates every moment-vanishing test function ⇒ `σ` is a.e. a polynomial.
   apply PolynomialDistribution.aePolynomial_of_annihilates_moment_vanishing d

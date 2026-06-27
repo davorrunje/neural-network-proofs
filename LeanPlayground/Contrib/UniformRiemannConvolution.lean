@@ -151,72 +151,6 @@ theorem tendstoUniformly_riemannSum_continuous
           rw [div_mul_eq_mul_div, div_lt_iff₀ (by positivity)]
           nlinarith [hε, hM]
 
-/-- The discontinuity hypothesis gives a.e. continuity: the discontinuity set is contained in its
-null closure, so its complement (which contains every continuity point) is co-null. -/
-private theorem ae_continuousAt_of_disc {f : ℝ → ℝ}
-    (hdisc : volume (closure {t : ℝ | ¬ ContinuousAt f t}) = 0) :
-    ∀ᵐ v : ℝ, ContinuousAt f v := by
-  rw [ae_iff]
-  exact measure_mono_null subset_closure hdisc
-
-/-- A locally bounded, a.e.-continuous `f` is a.e.-strongly-measurable: `f` is continuous on the
-open co-null set `G := (closure {t | ¬ ContinuousAt f t})ᶜ`, so a.e.-strongly-measurable on
-`volume.restrict G = volume`. -/
-private theorem aestronglyMeasurable_of_aeContinuous {f : ℝ → ℝ}
-    (_hbdd : ∀ R, ∃ C, ∀ t, |t| ≤ R → |f t| ≤ C)
-    (hdisc : volume (closure {t : ℝ | ¬ ContinuousAt f t}) = 0) :
-    AEStronglyMeasurable f volume := by
-  set G : Set ℝ := (closure {t | ¬ ContinuousAt f t})ᶜ with hG
-  have hGopen : IsOpen G := isClosed_closure.isOpen_compl
-  have hcont : ContinuousOn f G := by
-    intro x hx
-    have hx' : ContinuousAt f x := by
-      by_contra h
-      exact hx (subset_closure h)
-    exact hx'.continuousWithinAt
-  have hmeas : AEStronglyMeasurable f (volume.restrict G) :=
-    hcont.aestronglyMeasurable hGopen.measurableSet
-  have hae : ∀ᵐ x ∂(volume : Measure ℝ), x ∈ G := by
-    rw [ae_iff]
-    simpa [hG, compl_compl] using hdisc
-  rwa [Measure.restrict_eq_self_of_ae_mem hae] at hmeas
-
-/-- For locally bounded a.e.-continuous `f` and continuous compactly-supported `φ`, the integrand
-`y ↦ f (s - y) * φ y` is integrable: `f (s - ·)` is a.e.-strongly-measurable, `C * |φ|` (with `C`
-the bound of `f` on the compact `tsupport φ`-translate) dominates the integrand pointwise, and
-`C * |φ|` is integrable (continuous, compact support). -/
-private theorem integrable_translate_mul {f φ : ℝ → ℝ}
-    (hbdd : ∀ R, ∃ C, ∀ t, |t| ≤ R → |f t| ≤ C)
-    (hdisc : volume (closure {t : ℝ | ¬ ContinuousAt f t}) = 0)
-    (hφ : Continuous φ) (hφc : HasCompactSupport φ) (s : ℝ) :
-    Integrable (fun y => f (s - y) * φ y) volume := by
-  -- `f (s - ·)` is a.e.-strongly-measurable (A1 composed with the measurable translate), and `φ`
-  -- is continuous, so the product is a.e.-strongly-measurable.
-  have hfm : AEStronglyMeasurable f volume := aestronglyMeasurable_of_aeContinuous hbdd hdisc
-  have hcomp : AEStronglyMeasurable (fun y => f (s - y)) volume :=
-    hfm.comp_quasiMeasurePreserving
-      (Measure.measurePreserving_sub_left volume s).quasiMeasurePreserving
-  have hmeas : AEStronglyMeasurable (fun y => f (s - y) * φ y) volume :=
-    hcomp.mul hφ.aestronglyMeasurable
-  -- Bound `|s - y|` uniformly over the compact `tsupport φ`, then bound `|f (s - y)|` there.
-  obtain ⟨R, hR⟩ := hφc.isCompact.exists_bound_of_continuousOn
-    (f := fun y => |s - y|) (by fun_prop)
-  obtain ⟨C, hC⟩ := hbdd R
-  -- `C * |φ|` is integrable (continuous, compact support) and dominates the integrand pointwise.
-  have hCφ : Integrable (fun y => C * |φ y|) volume := by
-    apply Continuous.integrable_of_hasCompactSupport
-    · fun_prop
-    · exact hφc.abs.mul_left
-  refine hCφ.mono' hmeas (Filter.Eventually.of_forall fun y => ?_)
-  by_cases hy : y ∈ tsupport φ
-  · have hsy : |s - y| ≤ R := by simpa using hR y hy
-    rw [Real.norm_eq_abs, abs_mul]
-    have := hC (s - y) hsy
-    have hφnn : (0 : ℝ) ≤ |φ y| := abs_nonneg _
-    nlinarith [abs_nonneg (f (s - y))]
-  · have : φ y = 0 := image_eq_zero_of_notMem_tsupport hy
-    simp [this]
-
 /-- Same uniform Riemann-sum convergence as `tendstoUniformly_riemannSum_continuous`, but for `f`
 only **locally bounded and a.e. continuous** (`volume (closure {t | ¬ ContinuousAt f t}) = 0`).
 The null discontinuity set controls the cells straddling discontinuities (Lebesgue's criterion).
@@ -227,14 +161,23 @@ two terms. The **φ-variation** term is handled exactly as in the continuous cas
 of `φ` + the uniform bound on `f` from `hbdd` on the compact `S - Icc (-M) M`). The **f-variation**
 term `∑ᵢ φ(yᵢ) ∫_cell (f(s-yᵢ)-f(s-y)) dy` is the L¹ partition-oscillation of `y ↦ f(s-y)` and is
 the Lebesgue criterion for Riemann integrability of the *point-sampled* equispaced Riemann sum,
-**uniformly** in `s ∈ S`. Mathlib provides Riemann↔Lebesgue only through `BoxIntegral` (tagged
-prepartitions under the `Riemann` integration-params filter, e.g.
-`BoxIntegral.integrable_of_bounded_and_ae_continuousWithinAt`), which neither specialises to this
-fixed equispaced point-sampling sum nor gives a parameter-uniform tendsto; the requisite
-good/bad-cell argument (cover the null closure of the discontinuity set by an open set of small
-measure via outer regularity, uniformly continuous on the compact complement, with a thickened
-neighbourhood length bound on straddling cells, all uniform in the translate `s`) is a many-line
-measure-theory development absent from Mathlib. See `.superpowers/sdd/task-6-report.md`. -/
+**uniformly** in `s ∈ S`. Two routes were investigated and both bottom out on measure-theoretic
+infrastructure that this Mathlib does not package:
+
+* Riemann↔Lebesgue via `BoxIntegral` (tagged prepartitions under the `Riemann` integration-params
+  filter, e.g. `BoxIntegral.integrable_of_bounded_and_ae_continuousWithinAt`) neither specialises to
+  this fixed equispaced point-sampling sum nor gives a parameter-uniform tendsto.
+* Dominating the `f`-variation term by the pointwise oscillation `⨆_{h∈[0,Δ]} |f(v)-f(v+h)|` over a
+  fixed (`s`-independent) compact domain, then dominated convergence: the bound holds and its
+  integral does tend to `0`, but the oscillation majorant is a supremum over an *uncountable*
+  compact index, so its (a.e.) measurability needs a measurable section-supremum / analytic-set
+  (`AnalyticSet.nullMeasurableSet`) result that Mathlib lacks. The naive countable (rational) sup
+  undershoots: at a discontinuity reached only by an irrational shift it misses the jump.
+
+The remaining tractable in-repo route is the classical good/bad-cell argument (cover the null
+closure of the discontinuity set by a small-measure open set via outer regularity, use uniform
+continuity on the compact complement, and bound the straddling cells uniformly in `s`) — a
+many-line measure-theory development reserved as this leaf. -/
 theorem tendstoUniformly_riemannSum_aeContinuous
     {f φ : ℝ → ℝ} (hbdd : ∀ R, ∃ C, ∀ t, |t| ≤ R → |f t| ≤ C)
     (hdisc : MeasureTheory.volume (closure {t : ℝ | ¬ ContinuousAt f t}) = 0)
