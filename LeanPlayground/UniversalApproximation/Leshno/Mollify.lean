@@ -18,9 +18,9 @@ approximation scaffold:
   against a smooth compactly-supported kernel `φ`;
 * `contDiff_mollify` (E) — the mollification of an `M`-class `σ` by a smooth compactly-supported
   kernel is `C^∞`;
-* `exists_nonpoly_mollify` (D, leaf) — a non-a.e.-polynomial `M`-class `σ` admits a kernel whose
+* `exists_nonpoly_mollify` (D, proved) — a non-a.e.-polynomial `M`-class `σ` admits a kernel whose
   mollification is not an everywhere polynomial;
-* `mollify_ridge_mem_T` (A, leaf, the hard M-class core) — every dilated/translated ridge of a
+* `mollify_ridge_mem_T` (A, proved — the hard M-class core) — every dilated/translated ridge of a
   mollified `M`-class `σ` lands in the continuous-core submodule `T`.
 -/
 
@@ -83,7 +83,7 @@ theorem contDiff_mollify {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff
   rw [mollify_eq_convolution]
   exact hφc.contDiff_convolution_left _ hφ hσ.locallyIntegrable
 
-/-- D (leaf). A non-a.e.-polynomial `M`-class `σ` admits a smooth compactly-supported kernel whose
+/-- D (proved). A non-a.e.-polynomial `M`-class `σ` admits a smooth compactly-supported kernel whose
 mollification is not an everywhere polynomial.
 
 This is now fully proved (`sorryAx`-free) from proved Contrib leaves, including the uniform degree
@@ -214,7 +214,7 @@ theorem mollify_ridge_mem_T_of_continuous {σ φ : ℝ → ℝ} (hσc : Continuo
     rwa [Set.preimage_range] at hcomp
   exact mollify_ridge_mem_T_of_uniformRiemann M K w b lam c hcont huniv
 
-/-- A (leaf, hard M-class core). For `M`-class `σ`, every dilated/translated ridge of the smooth
+/-- A (proved — hard M-class core). For `M`-class `σ`, every dilated/translated ridge of the smooth
 mollification `σ ⋆ φ` lies in the continuous-core submodule `T`: it is an everywhere-sup limit on
 `K` of `genSpan` elements (the Riemann sums of the convolution integral).
 
