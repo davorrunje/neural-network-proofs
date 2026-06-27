@@ -104,33 +104,6 @@ theorem exists_nonpoly_mollify {σ : ℝ → ℝ} (hσ : ClassM σ) (hnp : ¬ Is
     ∃ φ : ℝ → ℝ, ContDiff ℝ ∞ φ ∧ HasCompactSupport φ ∧ ¬ IsPolynomialFun (mollify σ φ) := by
   sorry
 
-/-- A (leaf, hard M-class core). For `M`-class `σ`, every dilated/translated ridge of the smooth
-mollification `σ ⋆ φ` lies in the continuous-core submodule `T`: it is an everywhere-sup limit on
-`K` of `genSpan` elements (the Riemann sums of the convolution integral).
-
-Proof sketch (the central analytic step; reserved as a leaf). Write
-`s := lam * (⟪w, x⟫ + b) + c`. As `x` ranges over the compact `K`, `s` ranges over the compact
-image `S := (fun x => lam * (⟪w, x⟫ + b) + c) '' K`. The mollification value is
-`(σ ⋆ φ)(s) = ∫ σ (s - y) · φ y dy`, an integral over the *fixed* compact `tsupport φ`. Partition
-that support into `m` cells of width `Δ` with nodes `yᵢ`; the Riemann sum
-`Rₘ(s) := ∑ᵢ σ (s - yᵢ) · φ yᵢ · Δ` approximates `(σ ⋆ φ)(s)` uniformly for `s ∈ S`:
-* `ClassM.locBdd` bounds `σ` on the compact `S - tsupport φ`, so the integrand is bounded;
-* `ClassM.discNull` (the closure of the discontinuity set of `σ` is null) makes the integrand
-  Riemann-integrable in `y` with error tending to `0` uniformly in `s ∈ S` (a.e.-continuous +
-  bounded ⇒ uniform Riemann convergence on the compact node set).
-For each fixed partition, `Rₘ` *as a function of `x`* is the finite linear combination
-`∑ᵢ (φ yᵢ · Δ) · (fun x => σ (lam * (⟪w, x⟫ + b) + (c - yᵢ)))`. Each summand lies in `genSpan σ K`
-by `genFun_reparam_mem` (reparametrisation with the same `lam`, `w`, `b` and shifted constant
-`c - yᵢ`), so `Rₘ ∈ genSpan σ K`. Uniform convergence `Rₘ → (σ ⋆ φ) ∘ (ridge)` on `K` then gives
-`ApproxByGen σ K`, i.e. membership in `T σ K`. (Cross-reference: the conditional `Contrib`
-Riemann-sum convolution-approximation lemma.) -/
-theorem mollify_ridge_mem_T {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff ℝ ∞ φ)
-    (hφc : HasCompactSupport φ) (K : Set E) (w : E) (b lam c : ℝ)
-    (hcont : Continuous fun x : ↥K => mollify σ φ (lam * (⟪w, (x : E)⟫ + b) + c)) :
-    (⟨fun x : ↥K => mollify σ φ (lam * (⟪w, (x : E)⟫ + b) + c), hcont⟩
-      : C(↥K, ℝ)) ∈ T σ K := by
-  sorry
-
 /-- Assembly core (σ-regularity-independent): if the ridge `x ↦ (σ⋆φ)(lam*(⟪w,x⟫+b)+c)` is a
 uniform-on-`K` limit of the point-sampling Riemann sums (each of which is a `genSpan` element via
 `genFun_reparam_mem`), it lies in `T σ K`. -/
@@ -187,6 +160,45 @@ theorem mollify_ridge_mem_T_of_continuous {σ φ : ℝ → ℝ} (hσc : Continuo
   -- Uniform Riemann-sum convergence on the compact range.
   have huS := UniformRiemannConvolution.tendstoUniformly_riemannSum_continuous
     hσc hφ.continuous hM hsupp hScpt
+  -- Transport to uniform-on-univ of `↥K` via the parametrization.
+  have huniv : TendstoUniformlyOn
+      (fun m (x : ↥K) => UniformRiemannConvolution.riemannSum σ φ M m (p x))
+      (fun x : ↥K => mollify σ φ (p x)) Filter.atTop Set.univ := by
+    have hcomp := huS.comp p
+    rwa [Set.preimage_range] at hcomp
+  exact mollify_ridge_mem_T_of_uniformRiemann M K w b lam c hcont huniv
+
+/-- A (leaf, hard M-class core). For `M`-class `σ`, every dilated/translated ridge of the smooth
+mollification `σ ⋆ φ` lies in the continuous-core submodule `T`: it is an everywhere-sup limit on
+`K` of `genSpan` elements (the Riemann sums of the convolution integral).
+
+Proof. Mirrors `mollify_ridge_mem_T_of_continuous`, but feeds the a.e.-continuous M-class Riemann
+core `UniformRiemannConvolution.tendstoUniformly_riemannSum_aeContinuous` (using `hσ.locBdd` and
+`hσ.discNull`) instead of the continuous one. Choose `M > 0` with `support φ ⊆ Icc (-M) M`; the
+ridge parametrisation `p : ↥K → ℝ` has compact range (`hK`); uniform Riemann convergence on
+`range p` transports to uniform-on-`univ` of `↥K`, and `mollify_ridge_mem_T_of_uniformRiemann` packs
+each Riemann sum as a `genSpan σ K` element via `genFun_reparam_mem`, giving membership in `T σ K`.
+-/
+theorem mollify_ridge_mem_T {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff ℝ ∞ φ)
+    (hφc : HasCompactSupport φ) (K : Set E) (hK : IsCompact K) (w : E) (b lam c : ℝ)
+    (hcont : Continuous fun x : ↥K => mollify σ φ (lam * (⟪w, (x : E)⟫ + b) + c)) :
+    (⟨fun x : ↥K => mollify σ φ (lam * (⟪w, (x : E)⟫ + b) + c), hcont⟩
+      : C(↥K, ℝ)) ∈ T σ K := by
+  haveI : CompactSpace ↥K := isCompact_iff_compactSpace.mp hK
+  -- Choose `M > 0` with `support φ ⊆ Icc (-M) M` from compact support of `φ`.
+  have hbdd_supp : Bornology.IsBounded (Function.support φ) :=
+    (hφc.isCompact).isBounded.subset (subset_closure)
+  obtain ⟨M, hM, hsubball⟩ := hbdd_supp.subset_closedBall_lt 0 0
+  have hsupp : Function.support φ ⊆ Set.Icc (-M) M := by
+    rw [← Real.closedBall_zero_eq_Icc]; exact hsubball
+  -- The continuous parametrization `p : ↥K → ℝ`.
+  set p : ↥K → ℝ := fun x : ↥K => lam * (⟪w, (x : E)⟫ + b) + c with hp
+  have hpc : Continuous p := by rw [hp]; fun_prop
+  -- Its range is compact (continuous image of compact `↥K`).
+  have hScpt : IsCompact (Set.range p) := isCompact_range hpc
+  -- Uniform Riemann-sum convergence on the compact range (a.e.-continuous core).
+  have huS := UniformRiemannConvolution.tendstoUniformly_riemannSum_aeContinuous
+    hσ.locBdd hσ.discNull hφ.continuous hM hsupp hScpt
   -- Transport to uniform-on-univ of `↥K` via the parametrization.
   have huniv : TendstoUniformlyOn
       (fun m (x : ↥K) => UniformRiemannConvolution.riemannSum σ φ M m (p x))
