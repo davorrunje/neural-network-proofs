@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make `Contrib/TestFunctionDegreeBound.lean` Leshno-free and upstream-ready by restating its
+**Goal:** Make `ForMathlib/TestFunctionDegreeBound.lean` Leshno-free and upstream-ready by restating its
 lemmas over `convolution`/`LocallyIntegrable`/an inline polynomial predicate, renaming it to
 `ConvolutionDegreeBound`, and adapting the sole consumer in-place.
 
@@ -22,7 +22,7 @@ deliverable is a green `lake build` with unchanged axiom sets. `mollify σ φ` i
 - Do not change the *statement* of `exists_nonpoly_mollify` or any headline theorem; only
   `exists_uniform_degree_bound` and `mollify_conv_assoc` are restated (a generalization —
   `ClassM σ → LocallyIntegrable σ volume` — so the consumer still type-checks).
-- No new Mathlib upstream dependency; `import Mathlib` plus the sibling `Contrib` files only.
+- No new Mathlib upstream dependency; `import Mathlib` plus the sibling `ForMathlib` files only.
 - The decoupled `ConvolutionDegreeBound.lean` must contain no `import …UniversalApproximation…` and
   no reference to `mollify`, `ClassM`, or `IsPolynomialFun`.
 - Preserve git history via `git mv`.
@@ -34,20 +34,20 @@ deliverable is a green `lake build` with unchanged axiom sets. `mollify σ φ` i
 
 ## File Structure
 
-- `LeanPlayground/Contrib/TestFunctionDegreeBound.lean` → **renamed** (`git mv`) to
-  `LeanPlayground/Contrib/ConvolutionDegreeBound.lean`; contents generalized.
-- `LeanPlayground/UniversalApproximation/Leshno/Mollify.lean` — import + one call site adapted.
-- `LeanPlayground/UniversalApproximation/Leshno.lean` — admit-inventory docstring references updated.
+- `NeuralNetworkProofs/ForMathlib/TestFunctionDegreeBound.lean` → **renamed** (`git mv`) to
+  `NeuralNetworkProofs/ForMathlib/ConvolutionDegreeBound.lean`; contents generalized.
+- `NeuralNetworkProofs/UniversalApproximation/Leshno/Mollify.lean` — import + one call site adapted.
+- `NeuralNetworkProofs/UniversalApproximation/Leshno.lean` — admit-inventory docstring references updated.
 
 ---
 
 ### Task 1: Generalize and rename `ConvolutionDegreeBound`, adapt the consumer
 
 **Files:**
-- Rename + modify: `LeanPlayground/Contrib/TestFunctionDegreeBound.lean` →
-  `LeanPlayground/Contrib/ConvolutionDegreeBound.lean`
-- Modify: `LeanPlayground/UniversalApproximation/Leshno/Mollify.lean` (imports + `exists_nonpoly_mollify`)
-- Modify: `LeanPlayground/UniversalApproximation/Leshno.lean` (inventory docstring)
+- Rename + modify: `NeuralNetworkProofs/ForMathlib/TestFunctionDegreeBound.lean` →
+  `NeuralNetworkProofs/ForMathlib/ConvolutionDegreeBound.lean`
+- Modify: `NeuralNetworkProofs/UniversalApproximation/Leshno/Mollify.lean` (imports + `exists_nonpoly_mollify`)
+- Modify: `NeuralNetworkProofs/UniversalApproximation/Leshno.lean` (inventory docstring)
 
 **Interfaces:**
 - Produces (new, in `namespace ConvolutionDegreeBound`):
@@ -70,19 +70,19 @@ deliverable is a green `lake build` with unchanged axiom sets. `mollify σ φ` i
 
 ```bash
 cd /workspaces/lean-playground
-git mv LeanPlayground/Contrib/TestFunctionDegreeBound.lean \
-       LeanPlayground/Contrib/ConvolutionDegreeBound.lean
+git mv NeuralNetworkProofs/ForMathlib/TestFunctionDegreeBound.lean \
+       NeuralNetworkProofs/ForMathlib/ConvolutionDegreeBound.lean
 ```
 
 - [ ] **Step 2: Edit the header and imports of `ConvolutionDegreeBound.lean`.**
 
 Replace the top of the file (imports + module docstring + namespace/opens). Remove the Leshno import
-and the `open UniversalApproximation.Leshno`; keep the two `Contrib` imports:
+and the `open UniversalApproximation.Leshno`; keep the two `ForMathlib` imports:
 
 ```lean
 import Mathlib
-import LeanPlayground.Contrib.ConvolutionPolynomial
-import LeanPlayground.Contrib.IteratedDerivPolynomial
+import NeuralNetworkProofs.ForMathlib.ConvolutionPolynomial
+import NeuralNetworkProofs.ForMathlib.IteratedDerivPolynomial
 
 /-! # Uniform iterated-derivative bound for polynomial convolutions.
 
@@ -101,7 +101,7 @@ open MeasureTheory
 open scoped ContDiff
 ```
 
-(Removed: `import LeanPlayground.UniversalApproximation.Leshno.MollifyDef`,
+(Removed: `import NeuralNetworkProofs.UniversalApproximation.Leshno.MollifyDef`,
 `open UniversalApproximation.Leshno`. Namespace `TestFunctionDegreeBound` → `ConvolutionDegreeBound`.)
 
 - [ ] **Step 3: Delete the two `private` Leshno-derived lemmas.**
@@ -175,7 +175,7 @@ Confirm by search that the file contains no `mollify`, `ClassM`, `IsPolynomialFu
 `import …UniversalApproximation…`:
 
 ```bash
-grep -nE "mollify|ClassM|IsPolynomialFun|UniversalApproximation" LeanPlayground/Contrib/ConvolutionDegreeBound.lean || echo "CLEAN"
+grep -nE "mollify|ClassM|IsPolynomialFun|UniversalApproximation" NeuralNetworkProofs/ForMathlib/ConvolutionDegreeBound.lean || echo "CLEAN"
 ```
 Expected: `CLEAN`.
 
@@ -184,7 +184,7 @@ Expected: `CLEAN`.
 (a) Update the import (line 10):
 
 ```lean
-import LeanPlayground.Contrib.ConvolutionDegreeBound
+import NeuralNetworkProofs.ForMathlib.ConvolutionDegreeBound
 ```
 
 (b) In `exists_nonpoly_mollify`, replace the single call
@@ -222,7 +222,7 @@ Replace the references to the old name (in the "Proved" inventory block, ~lines 
 `mollify_conv_assoc`/`TestFunctionDegreeBound` was named). Keep line length ≤ 100 codepoints.
 
 ```bash
-grep -n "TestFunctionDegreeBound\|mollify_conv_assoc" LeanPlayground/UniversalApproximation/Leshno.lean
+grep -n "TestFunctionDegreeBound\|mollify_conv_assoc" NeuralNetworkProofs/UniversalApproximation/Leshno.lean
 ```
 Update each hit to the new name; re-run the grep and expect no remaining `TestFunctionDegreeBound`.
 
@@ -238,8 +238,8 @@ Expected: `Build completed successfully`. If the consumer bridge has a type mism
 
 ```bash
 cat > /tmp/check_decouple.lean << 'EOF'
-import LeanPlayground.UniversalApproximation.Leshno.Theorem
-import LeanPlayground.Contrib.ConvolutionDegreeBound
+import NeuralNetworkProofs.UniversalApproximation.Leshno.Theorem
+import NeuralNetworkProofs.ForMathlib.ConvolutionDegreeBound
 open UniversalApproximation.Leshno
 #print axioms ConvolutionDegreeBound.exists_uniform_degree_bound
 #print axioms ConvolutionDegreeBound.conv_left_comm_mul
@@ -253,7 +253,7 @@ Expected: each line reports `[propext, Classical.choice, Quot.sound]` — no `so
 - [ ] **Step 11: Confirm no dangling references to the old module/namespace.**
 
 ```bash
-grep -rn "TestFunctionDegreeBound" LeanPlayground/ docs/ || echo "NO STALE REFS"
+grep -rn "TestFunctionDegreeBound" NeuralNetworkProofs/ docs/ || echo "NO STALE REFS"
 ```
 Expected: `NO STALE REFS` (docs may legitimately mention the rename; if a live `.lean` reference
 remains, fix it).
@@ -261,9 +261,9 @@ remains, fix it).
 - [ ] **Step 12: Commit (signed).**
 
 ```bash
-git add LeanPlayground/Contrib/ConvolutionDegreeBound.lean \
-        LeanPlayground/UniversalApproximation/Leshno/Mollify.lean \
-        LeanPlayground/UniversalApproximation/Leshno.lean
+git add NeuralNetworkProofs/ForMathlib/ConvolutionDegreeBound.lean \
+        NeuralNetworkProofs/UniversalApproximation/Leshno/Mollify.lean \
+        NeuralNetworkProofs/UniversalApproximation/Leshno.lean
 git commit -S -m "refactor(contrib): decouple ConvolutionDegreeBound from Leshno (convolution form)"
 ```
 
