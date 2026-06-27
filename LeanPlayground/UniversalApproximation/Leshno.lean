@@ -33,8 +33,8 @@ continuous function on every compact `K ⊆ ℝⁿ` **iff** `σ` is not (Lebesgu
 
 The headline `leshno_dense_iff` and its supporting theorems are fully proved as *glue*. Of the deep
 analytic leaves originally scaffolded, all are now proved or reduced to a single self-contained
-research fact. Exactly **two `sorry`s** remain in the whole development; both are documented research
-leaves with precise blocker notes, so `lean_verify`/`#print axioms` reporting `sorryAx` on the
+research fact. Exactly **two `sorry`s** remain in the whole development; both are documented
+research leaves with precise blocker notes, so `lean_verify`/`#print axioms` reporting `sorryAx` on
 top-level theorems is expected and fully accounted for.
 
 **Proved (no longer leaves):**
@@ -54,10 +54,11 @@ top-level theorems is expected and fully accounted for.
   through the single research leaf `TestFunctionDegreeBound.exists_uniform_degree_bound` below.
 
 **Remaining documented research leaves (2 `sorry`s):**
-* `TestFunctionDegreeBound.exists_uniform_degree_bound` (Contrib) — the Baire-category uniform degree
-  bound: if every mollification `mollify σ φ` is a polynomial, one `d` bounds all their degrees. The
-  only analytic input to `exists_nonpoly_mollify`. *Blocked* on a missing `CompleteSpace`/`BaireSpace`
-  instance for the test-function space `ContDiffMapSupportedIn` (`𝓓^{∞}_{K}`); see its docstring.
+* `TestFunctionDegreeBound.exists_uniform_degree_bound` (Contrib) — the Baire-category uniform
+  degree bound: if every mollification `mollify σ φ` is a polynomial, one `d` bounds all their
+  degrees. The only analytic input to `exists_nonpoly_mollify`. *Blocked* on a missing
+  `CompleteSpace`/`BaireSpace` instance for the test-function space `ContDiffMapSupportedIn`
+  (`𝓓^{∞}_{K}`); see its docstring.
 * `UniformRiemannConvolution.tendstoUniformly_riemannSum_aeContinuous` (Contrib) — uniform
   Riemann-sum approximation of the convolution for an a.e.-continuous (M-class) kernel; the analytic
   core consumed by `Mollify.mollify_ridge_mem_T` (the latter is otherwise fully assembled).
