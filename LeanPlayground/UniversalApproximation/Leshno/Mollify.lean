@@ -86,10 +86,69 @@ theorem contDiff_mollify {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff
 /-- D (leaf). A non-a.e.-polynomial `M`-class `σ` admits a smooth compactly-supported kernel whose
 mollification is not an everywhere polynomial.
 
-Proof sketch (standard distribution theory; reserved as a leaf for the 7b assembly step). -/
+This is now fully assembled from proved Contrib leaves and the single research-grade Baire input
+`TestFunctionDegreeBound.exists_uniform_degree_bound` (the only remaining `sorry` reachable from
+here). Argument (contrapositive): assume every mollification `mollify σ φ` is an everywhere
+polynomial. The Baire lemma yields one `d` with `iteratedDeriv (d+1) (mollify σ φ) = 0` for all
+`φ`. For any test `g` with vanishing moments up to `d`, its reflection `g̃ y = g (-y)` also has
+vanishing moments up to `d`, so `g̃ = iteratedDeriv (d+1) ψ` for a smooth compact `ψ`
+(`SmoothCompactAntideriv.exists_iteratedDeriv_eq_of_moments_zero`). Differentiation through the
+convolution (`ConvolutionIteratedDeriv.iteratedDeriv_convolution_left`, via
+`mollify_eq_convolution`) gives `mollify σ g̃ = iteratedDeriv (d+1) (mollify σ ψ) = 0`, whence the
+point value `mollify σ g̃ 0 = ∫ y, σ (-y) * g (-y) = ∫ y, σ y * g y = 0` (Lebesgue is
+neg-invariant). Thus `σ` annihilates every moment-vanishing test function, so by
+`PolynomialDistribution.aePolynomial_of_annihilates_moment_vanishing` it is a.e. a polynomial —
+contradicting `hnp`. -/
 theorem exists_nonpoly_mollify {σ : ℝ → ℝ} (hσ : ClassM σ) (hnp : ¬ IsAEPolynomial σ) :
     ∃ φ : ℝ → ℝ, ContDiff ℝ ∞ φ ∧ HasCompactSupport φ ∧ ¬ IsPolynomialFun (mollify σ φ) := by
-  sorry
+  by_contra hcon
+  -- Contrapositive: every mollification is an everywhere polynomial.
+  push Not at hcon
+  have H' : ∀ φ : ℝ → ℝ, ContDiff ℝ ∞ φ → HasCompactSupport φ → IsPolynomialFun (mollify σ φ) :=
+    hcon
+  apply hnp
+  -- Uniform degree bound from Baire (the single research leaf).
+  obtain ⟨d, hd⟩ := TestFunctionDegreeBound.exists_uniform_degree_bound hσ H'
+  -- `σ` annihilates every moment-vanishing test function ⇒ `σ` is a.e. a polynomial.
+  apply PolynomialDistribution.aePolynomial_of_annihilates_moment_vanishing d
+    hσ.locallyIntegrable
+  intro g hg hgc hmom
+  -- Reflection `g̃ y = g (-y)`: smooth, compactly supported, moments still vanish up to `d`.
+  set g' : ℝ → ℝ := fun y => g (-y) with hg'def
+  have hg'smooth : ContDiff ℝ ∞ g' := hg.comp contDiff_neg
+  have hg'supp : HasCompactSupport g' :=
+    hgc.comp_homeomorph (Homeomorph.neg ℝ)
+  have hg'mom : ∀ j ≤ d, ∫ y, y ^ j * g' y = 0 := by
+    intro j hj
+    have hflip : ∫ y, y ^ j * g' y = ∫ y, (-1 : ℝ) ^ j * (y ^ j * g y) := by
+      rw [← integral_neg_eq_self (fun y => (-1 : ℝ) ^ j * (y ^ j * g y)) volume]
+      refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
+      change y ^ j * g (-y) = (-1) ^ j * ((-y) ^ j * g (-y))
+      rw [← mul_assoc, ← mul_pow]; norm_num
+    rw [hflip, integral_const_mul, hmom j hj, mul_zero]
+  -- Write `g̃ = iteratedDeriv (d+1) ψ` for a smooth compact `ψ`.
+  obtain ⟨ψ, hψ, hψc, hψeq⟩ :=
+    SmoothCompactAntideriv.exists_iteratedDeriv_eq_of_moments_zero d hg'smooth hg'supp hg'mom
+  -- `mollify σ g̃ = iteratedDeriv (d+1) (mollify σ ψ) = 0`.
+  have hmoll : mollify σ g' = 0 := by
+    have h1 : iteratedDeriv (d + 1) (mollify σ ψ) = mollify σ g' := by
+      rw [mollify_eq_convolution σ ψ,
+        ConvolutionIteratedDeriv.iteratedDeriv_convolution_left (d + 1) hψ hψc
+          hσ.locallyIntegrable,
+        hψeq, ← mollify_eq_convolution σ g']
+    rw [← h1, hd ψ hψ hψc]
+  -- The point value at `0` is the annihilation integral, after a neg substitution.
+  have hpt : mollify σ g' 0 = 0 := by rw [hmoll]; rfl
+  have hval : ∫ y, g y * σ y = 0 := by
+    have hexpand : mollify σ g' 0 = ∫ y, σ y * g y := by
+      have : mollify σ g' 0 = ∫ y, σ (-y) * g (-y) := by
+        simp only [mollify, zero_sub, hg'def]
+      rw [this]
+      exact integral_neg_eq_self (fun y => σ y * g y) volume
+    rw [← hpt, hexpand]
+    refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
+    ring
+  exact hval
 
 /-- Assembly core (σ-regularity-independent): if the ridge `x ↦ (σ⋆φ)(lam*(⟪w,x⟫+b)+c)` is a
 uniform-on-`K` limit of the point-sampling Riemann sums (each of which is a `genSpan` element via
