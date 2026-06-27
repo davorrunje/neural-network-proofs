@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build (toolchain + Mathlib cache + lake build)
+        uses: leanprover/lean-action@v1
+        with:
+          use-mathlib-cache: true
+
+      - name: Sorry-free axiom gate
+        run: |
+          set -euo pipefail
+          # Re-run #print axioms on the headline theorems and fail if any depends on `sorryAx`.
+          out=$(lake env lean scripts/check_sorry_free.lean)
+          echo "$out"
+          if echo "$out" | grep -q 'sorryAx'; then
+            echo "::error::A headline theorem depends on sorryAx (admitted proof reintroduced)."
+            exit 1
+          fi
+          echo "All headline theorems are sorry-free."
