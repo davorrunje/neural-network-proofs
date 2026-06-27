@@ -151,6 +151,47 @@ theorem tendstoUniformly_riemannSum_continuous
           rw [div_mul_eq_mul_div, div_lt_iff₀ (by positivity)]
           nlinarith [hε, hM]
 
+private theorem exists_uniform_bound {f : ℝ → ℝ}
+    (hbdd : ∀ R, ∃ C, ∀ t, |t| ≤ R → |f t| ≤ C) {M : ℝ} (_hM : 0 < M)
+    {S : Set ℝ} (hS : IsCompact S) :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ s ∈ S, ∀ y ∈ Set.Icc (-M) M, |f (s - y)| ≤ C := by
+  obtain ⟨R₀, hR₀⟩ := hS.isBounded.subset_closedBall (0 : ℝ)
+  obtain ⟨C, hC⟩ := hbdd (R₀ + M)
+  refine ⟨max C 0, le_max_right _ _, fun s hs y hy => ?_⟩
+  have hsR : |s| ≤ R₀ := by
+    have := hR₀ hs
+    simpa [Real.dist_eq, sub_zero] using this
+  have hyM : |y| ≤ M := by
+    rw [Set.mem_Icc] at hy; rw [abs_le]; constructor <;> linarith [hy.1, hy.2]
+  have hle : |s - y| ≤ R₀ + M :=
+    calc |s - y| ≤ |s| + |y| := abs_sub _ _
+      _ ≤ R₀ + M := by linarith
+  exact le_trans (hC _ hle) (le_max_left _ _)
+
+private theorem uniformContinuousOn_off_disc {f : ℝ → ℝ} {A : Set ℝ}
+    (hA : IsCompact A) (hdisj : Disjoint A (closure {t : ℝ | ¬ ContinuousAt f t})) :
+    UniformContinuousOn f A := by
+  apply hA.uniformContinuousOn_of_continuous
+  intro x hx
+  have hxnot : x ∉ {t : ℝ | ¬ ContinuousAt f t} := fun hmem =>
+    (Set.disjoint_left.mp hdisj) hx (subset_closure hmem)
+  exact (not_not.mp hxnot).continuousWithinAt
+
+private theorem exists_cthickening_measure_lt {K : Set ℝ}
+    (hK : IsCompact K) (hKnull : MeasureTheory.volume K = 0)
+    {η : ENNReal} (hη : 0 < η) :
+    ∃ δ₀ : ℝ, 0 < δ₀ ∧ MeasureTheory.volume (Metric.cthickening δ₀ K) < η := by
+  have htend := tendsto_measure_cthickening_of_isCompact (μ := MeasureTheory.volume) hK
+  rw [hKnull] at htend
+  have hev : ∀ᶠ r in nhds (0 : ℝ),
+      MeasureTheory.volume (Metric.cthickening r K) < η :=
+    htend.eventually (Iio_mem_nhds hη)
+  rw [Metric.eventually_nhds_iff] at hev
+  obtain ⟨ε, hε, hball⟩ := hev
+  refine ⟨ε / 2, by positivity, hball ?_⟩
+  rw [Real.dist_eq, sub_zero, abs_of_pos (by positivity)]
+  linarith
+
 /-- Same uniform Riemann-sum convergence as `tendstoUniformly_riemannSum_continuous`, but for `f`
 only **locally bounded and a.e. continuous** (`volume (closure {t | ¬ ContinuousAt f t}) = 0`).
 The null discontinuity set controls the cells straddling discontinuities (Lebesgue's criterion).
