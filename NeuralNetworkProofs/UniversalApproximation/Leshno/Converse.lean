@@ -1,6 +1,6 @@
 import Mathlib
-import LeanPlayground.UniversalApproximation.Leshno.ClassM
-import LeanPlayground.UniversalApproximation.Leshno.Family
+import NeuralNetworkProofs.UniversalApproximation.Leshno.ClassM
+import NeuralNetworkProofs.UniversalApproximation.Leshno.Family
 
 /-! # Converse direction of Leshno UAT: a.e.-polynomial activation is not dense.
 

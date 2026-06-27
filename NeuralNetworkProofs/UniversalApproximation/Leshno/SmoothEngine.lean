@@ -1,6 +1,6 @@
 import Mathlib
-import LeanPlayground.UniversalApproximation.Leshno.ClassM
-import LeanPlayground.Contrib.IteratedDerivPolynomial
+import NeuralNetworkProofs.UniversalApproximation.Leshno.ClassM
+import NeuralNetworkProofs.Contrib.IteratedDerivPolynomial
 
 /-! # The univariate smooth derivative-trick engine for the Leshno UAT.
 

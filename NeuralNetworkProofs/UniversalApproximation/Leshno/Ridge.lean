@@ -1,6 +1,6 @@
 import Mathlib
-import LeanPlayground.UniversalApproximation.Leshno.Family
-import LeanPlayground.Contrib.RidgePowersSpan
+import NeuralNetworkProofs.UniversalApproximation.Leshno.Family
+import NeuralNetworkProofs.Contrib.RidgePowersSpan
 
 /-! # Ridge lift: univariate density ⇒ multivariate density.
 

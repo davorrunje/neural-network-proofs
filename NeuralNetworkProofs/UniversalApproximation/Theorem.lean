@@ -1,8 +1,8 @@
 import Mathlib
-import LeanPlayground.UniversalApproximation.Activation
-import LeanPlayground.UniversalApproximation.Discriminatory
-import LeanPlayground.UniversalApproximation.Family
-import LeanPlayground.UniversalApproximation.Riesz
+import NeuralNetworkProofs.UniversalApproximation.Activation
+import NeuralNetworkProofs.UniversalApproximation.Discriminatory
+import NeuralNetworkProofs.UniversalApproximation.Family
+import NeuralNetworkProofs.UniversalApproximation.Riesz
 
 /-!
 # Universal Approximation Theorem (Cybenko, scaffold)

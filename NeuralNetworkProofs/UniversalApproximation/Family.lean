@@ -1,6 +1,6 @@
 import Mathlib
-import LeanPlayground.UniversalApproximation.Activation
-import LeanPlayground.UniversalApproximation.Network
+import NeuralNetworkProofs.UniversalApproximation.Activation
+import NeuralNetworkProofs.UniversalApproximation.Network
 
 /-!
 # The single-hidden-layer function family

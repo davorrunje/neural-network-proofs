@@ -1,5 +1,5 @@
 import Mathlib
-import LeanPlayground.UniversalApproximation.Leshno.ClassM
+import NeuralNetworkProofs.UniversalApproximation.Leshno.ClassM
 
 /-! # Mollification: definition and the convolution identity.
 

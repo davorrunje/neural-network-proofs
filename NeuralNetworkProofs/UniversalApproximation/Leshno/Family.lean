@@ -1,5 +1,5 @@
 import Mathlib
-import LeanPlayground.UniversalApproximation.Leshno.ClassM
+import NeuralNetworkProofs.UniversalApproximation.Leshno.ClassM
 
 /-! # The generator family, span, and the continuous-core submodule `T`.
 

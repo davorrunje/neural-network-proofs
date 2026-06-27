@@ -1,10 +1,10 @@
-import LeanPlayground.UniversalApproximation.Leshno.ClassM
-import LeanPlayground.UniversalApproximation.Leshno.Family
-import LeanPlayground.UniversalApproximation.Leshno.SmoothEngine
-import LeanPlayground.UniversalApproximation.Leshno.Mollify
-import LeanPlayground.UniversalApproximation.Leshno.Ridge
-import LeanPlayground.UniversalApproximation.Leshno.Converse
-import LeanPlayground.UniversalApproximation.Leshno.Theorem
+import NeuralNetworkProofs.UniversalApproximation.Leshno.ClassM
+import NeuralNetworkProofs.UniversalApproximation.Leshno.Family
+import NeuralNetworkProofs.UniversalApproximation.Leshno.SmoothEngine
+import NeuralNetworkProofs.UniversalApproximation.Leshno.Mollify
+import NeuralNetworkProofs.UniversalApproximation.Leshno.Ridge
+import NeuralNetworkProofs.UniversalApproximation.Leshno.Converse
+import NeuralNetworkProofs.UniversalApproximation.Leshno.Theorem
 
 /-! # The Leshno (1993) universal approximation theorem (`M`-class activations).
 

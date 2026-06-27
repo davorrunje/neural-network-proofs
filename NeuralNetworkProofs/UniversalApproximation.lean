@@ -1,9 +1,9 @@
-import LeanPlayground.UniversalApproximation.Activation
-import LeanPlayground.UniversalApproximation.Discriminatory
-import LeanPlayground.UniversalApproximation.Network
-import LeanPlayground.UniversalApproximation.Family
-import LeanPlayground.UniversalApproximation.Riesz
-import LeanPlayground.UniversalApproximation.Theorem
+import NeuralNetworkProofs.UniversalApproximation.Activation
+import NeuralNetworkProofs.UniversalApproximation.Discriminatory
+import NeuralNetworkProofs.UniversalApproximation.Network
+import NeuralNetworkProofs.UniversalApproximation.Family
+import NeuralNetworkProofs.UniversalApproximation.Riesz
+import NeuralNetworkProofs.UniversalApproximation.Theorem
 
 /-!
 # Universal Approximation Theorem (Cybenko) — scaffold root

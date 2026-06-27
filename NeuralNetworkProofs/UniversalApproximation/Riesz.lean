@@ -1,6 +1,6 @@
 import Mathlib
-import LeanPlayground.UniversalApproximation.Activation
-import LeanPlayground.Contrib.RieszKantorovich
+import NeuralNetworkProofs.UniversalApproximation.Activation
+import NeuralNetworkProofs.Contrib.RieszKantorovich
 
 /-!
 # Riesz representation for the Universal Approximation Theorem

@@ -1,5 +1,5 @@
 import Mathlib
-import LeanPlayground.UniversalApproximation.Activation
+import NeuralNetworkProofs.UniversalApproximation.Activation
 
 /-! # Discriminatory property of sigmoidal activations (Cybenko 1989, §3). -/
 

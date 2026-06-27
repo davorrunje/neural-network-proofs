@@ -15,7 +15,7 @@ Universal Approximation Theorem (UAT) scaffold:
   pre-compositions `x ↦ σ (⟪w, x⟫ + b)`.
 
 The theorem `sigmoidal_discriminatory` (continuous sigmoidal ⇒ discriminatory)
-is proved in `LeanPlayground.UniversalApproximation.Discriminatory`.
+is proved in `NeuralNetworkProofs.UniversalApproximation.Discriminatory`.
 -/
 
 namespace UniversalApproximation

@@ -1,7 +1,7 @@
-name = "lean_playground"
+name = "neural_network_proofs"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["LeanPlayground"]
+defaultTargets = ["NeuralNetworkProofs"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -15,4 +15,4 @@ scope = "leanprover-community"
 rev = "v4.32.0-rc1"
 
 [[lean_lib]]
-name = "LeanPlayground"
+name = "NeuralNetworkProofs"
