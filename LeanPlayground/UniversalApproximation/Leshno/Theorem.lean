@@ -50,7 +50,7 @@ theorem univariate_density {σ : ℝ → ℝ} (hσ : ClassM σ) (hnp : ¬ IsAEPo
       have haff : Continuous fun t : ↥I => lb.1 * (⟪(1 : ℝ), (t : ℝ)⟫ + 0) + lb.2 := by
         simp only [RCLike.inner_apply, conj_trivial]; fun_prop
       exact hcontg₀.comp haff
-    have hmem := mollify_ridge_mem_T hσ hφ hφc I (1 : ℝ) 0 lb.1 lb.2 hcont
+    have hmem := mollify_ridge_mem_T hσ hφ hφc I hI (1 : ℝ) 0 lb.1 lb.2 hcont
     -- The generator equals this mollified ridge (using `⟪(1:ℝ), t⟫ = t`).
     change (⟨fun t : ↥I => g₀ (lb.1 * (t : ℝ) + lb.2), by exact hcontg₀.comp (by fun_prop)⟩
         : C(↥I, ℝ)) ∈ T σ I
