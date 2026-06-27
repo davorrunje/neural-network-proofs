@@ -113,4 +113,25 @@ theorem iteratedDeriv_eq_zero_imp_poly {f : ℝ → ℝ} {n : ℕ}
       refine lt_of_le_of_lt hQc ?_
       exact_mod_cast Nat.lt_succ_self n
 
+/-- The converse direction: a polynomial of `natDegree ≤ d` has vanishing `(d+1)`-st iterated
+derivative (as a function `ℝ → ℝ`). -/
+theorem iteratedDeriv_succ_eq_zero_of_natDegree_le {p : Polynomial ℝ} {d : ℕ}
+    (hp : p.natDegree ≤ d) :
+    iteratedDeriv (d + 1) (fun x => p.eval x) = 0 := by
+  have key : ∀ (n : ℕ) (q : Polynomial ℝ),
+      deriv^[n] (fun x => q.eval x) = fun x => (derivative^[n] q).eval x := by
+    intro n
+    induction n with
+    | zero => intro q; rfl
+    | succ k ih =>
+      intro q
+      rw [Function.iterate_succ', Function.comp_apply, ih q]
+      funext x
+      rw [Polynomial.deriv, Function.iterate_succ', Function.comp_apply]
+  rw [iteratedDeriv_eq_iterate, key (d + 1) p,
+    Polynomial.iterate_derivative_eq_zero (Nat.lt_succ_of_le hp)]
+  funext x
+  rw [Polynomial.eval_zero]
+  rfl
+
 end IteratedDerivPolynomial

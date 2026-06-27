@@ -32,10 +32,10 @@ continuous function on every compact `K ⊆ ℝⁿ` **iff** `σ` is not (Lebesgu
 ## Admit inventory (documented `sorry` leaves)
 
 The headline `leshno_dense_iff` and its supporting theorems are fully proved as *glue*. Of the deep
-analytic leaves originally scaffolded, all are now proved or reduced to a single self-contained
-research fact. Exactly **two `sorry`s** remain in the whole development; both are documented
-research leaves with precise blocker notes, so `lean_verify`/`#print axioms` reporting `sorryAx` on
-top-level theorems is expected and fully accounted for.
+analytic leaves originally scaffolded, all but one are now proved. Exactly **one `sorry`** remains in
+the whole development — a single documented research leaf with a precise blocker note — so
+`lean_verify`/`#print axioms` reporting `sorryAx` on the top-level theorems (and on
+`Mollify.mollify_ridge_mem_T`, which consumes that leaf) is expected and fully accounted for.
 
 **Proved (no longer leaves):**
 * `IteratedDerivPolynomial.iteratedDeriv_eq_zero_imp_poly` (Contrib) — vanishing `n`-th derivative
@@ -46,22 +46,25 @@ top-level theorems is expected and fully accounted for.
   `SmoothEngine.smooth_engine` is now fully `sorryAx`-free).
 * `Mollify.contDiff_mollify` — the mollification of an `M`-class `σ` by a smooth compactly-supported
   kernel is `C^∞`. *Proved.*
+* `TestFunctionDegreeBound.exists_uniform_degree_bound` (Contrib) — a uniform polynomial-degree
+  bound for all mollifications `mollify σ φ`. *Proved* via an algebraic degree-invariance argument
+  (convolution associativity + "polynomial ⋆ test function preserves degree when the kernel's `0`-th
+  moment is nonzero"), sidestepping the Baire/`BaireSpace` route entirely. New Contrib supports:
+  `ConvolutionPolynomial.monomial_conv_isPoly`, `…poly_conv_isPoly`, `…natDegree_poly_conv_eq`,
+  `…convolution_comm_mul`, `IteratedDerivPolynomial.iteratedDeriv_succ_eq_zero_of_natDegree_le`.
 * `Mollify.exists_nonpoly_mollify` — a non-a.e.-polynomial `M`-class `σ` admits a kernel whose
-  mollification is not an everywhere polynomial. **Now fully assembled** from proved Contrib leaves
-  (`ConvolutionIteratedDeriv.iteratedDeriv_convolution_left`,
-  `SmoothCompactAntideriv.exists_iteratedDeriv_eq_of_moments_zero`,
-  `PolynomialDistribution.aePolynomial_of_annihilates_moment_vanishing`); its only `sorryAx` traces
-  through the single research leaf `TestFunctionDegreeBound.exists_uniform_degree_bound` below.
+  mollification is not an everywhere polynomial. **Now fully proved** (`sorryAx`-free) from the
+  degree bound above plus `ConvolutionIteratedDeriv.iteratedDeriv_convolution_left`,
+  `SmoothCompactAntideriv.exists_iteratedDeriv_eq_of_moments_zero`, and
+  `PolynomialDistribution.aePolynomial_of_annihilates_moment_vanishing`.
 
-**Remaining documented research leaves (2 `sorry`s):**
-* `TestFunctionDegreeBound.exists_uniform_degree_bound` (Contrib) — the Baire-category uniform
-  degree bound: if every mollification `mollify σ φ` is a polynomial, one `d` bounds all their
-  degrees. The only analytic input to `exists_nonpoly_mollify`. *Blocked* on a missing
-  `CompleteSpace`/`BaireSpace` instance for the test-function space `ContDiffMapSupportedIn`
-  (`𝓓^{∞}_{K}`); see its docstring.
+**Remaining documented research leaf (1 `sorry`):**
 * `UniformRiemannConvolution.tendstoUniformly_riemannSum_aeContinuous` (Contrib) — uniform
   Riemann-sum approximation of the convolution for an a.e.-continuous (M-class) kernel; the analytic
-  core consumed by `Mollify.mollify_ridge_mem_T` (the latter is otherwise fully assembled).
+  core consumed by `Mollify.mollify_ridge_mem_T` (the latter is otherwise fully assembled). *Blocked*
+  on measure-theoretic infrastructure absent from Mathlib (a parameter-uniform Riemann/Lebesgue
+  criterion, or measurability of the uncountable-index oscillation supremum); see its docstring for
+  the two investigated routes and the remaining tractable good/bad-cell approach.
 
 Everything else — the `ClassM`/`Family`/`T` infrastructure, `exists_deriv_ne` (**proved**, not a
 leaf), `smooth_engine`, the ridge lift, the converse, and the final assembly — is proved outright.
