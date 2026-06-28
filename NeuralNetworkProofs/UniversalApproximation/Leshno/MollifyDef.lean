@@ -3,9 +3,9 @@ import NeuralNetworkProofs.UniversalApproximation.Leshno.ClassM
 
 /-! # Mollification: definition and the convolution identity.
 
-Split out of `Mollify.lean` so both the consumer `Mollify.exists_nonpoly_mollify` and the
-Baire-category leaf `TestFunctionDegreeBound.exists_uniform_degree_bound` can refer to `mollify`
-without a circular import. -/
+Split out of `Mollify.lean` so the consumer `Mollify.exists_nonpoly_mollify` can refer to `mollify`
+and bridge to the decoupled `ConvolutionDegreeBound.exists_uniform_degree_bound` (stated over plain
+`convolution`) without a circular import. -/
 
 namespace UniversalApproximation.Leshno
 
