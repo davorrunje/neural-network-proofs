@@ -7,7 +7,7 @@ import NeuralNetworkProofs.ForMathlib.ConvolutionIteratedDeriv
 import NeuralNetworkProofs.ForMathlib.SmoothCompactAntideriv
 import NeuralNetworkProofs.ForMathlib.PolynomialDistribution
 import NeuralNetworkProofs.ForMathlib.IteratedDerivPolynomial
-import NeuralNetworkProofs.ForMathlib.TestFunctionDegreeBound
+import NeuralNetworkProofs.ForMathlib.ConvolutionDegreeBound
 
 /-! # Mollification: smoothness (E), the nonpolynomial mollifier (D), and the M-class membrane (A).
 
@@ -87,7 +87,7 @@ theorem contDiff_mollify {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff
 mollification is not an everywhere polynomial.
 
 This is now fully proved (`sorryAx`-free) from proved Contrib leaves, including the uniform degree
-bound `TestFunctionDegreeBound.exists_uniform_degree_bound` (itself proved via convolution
+bound `ConvolutionDegreeBound.exists_uniform_degree_bound` (itself proved via convolution
 degree-invariance, no Baire). Argument (contrapositive): assume every mollification `mollify σ φ` is
 an everywhere polynomial. The degree bound gives a `d` with `iteratedDeriv (d+1) (mollify σ φ) = 0`
 for all `φ`. For any test `g` with vanishing moments up to `d`, its reflection `g̃ y = g (-y)` also
@@ -108,7 +108,20 @@ theorem exists_nonpoly_mollify {σ : ℝ → ℝ} (hσ : ClassM σ) (hnp : ¬ Is
     hcon
   apply hnp
   -- Uniform degree bound (proved via convolution degree-invariance).
-  obtain ⟨d, hd⟩ := TestFunctionDegreeBound.exists_uniform_degree_bound hσ H'
+  -- General (convolution-form) hypothesis from the mollify-form `H'`.
+  have Hconv : ∀ φ : ℝ → ℝ, ContDiff ℝ ∞ φ → HasCompactSupport φ →
+      ∃ p : Polynomial ℝ,
+        convolution φ σ (ContinuousLinearMap.mul ℝ ℝ) volume = fun t => p.eval t := by
+    intro φ hφ hφc
+    obtain ⟨p, hp⟩ := H' φ hφ hφc          -- hp : mollify σ φ = fun t => p.eval t
+    exact ⟨p, by rw [← mollify_eq_convolution]; exact hp⟩
+  obtain ⟨d, hdC⟩ :=
+    ConvolutionDegreeBound.exists_uniform_degree_bound hσ.locallyIntegrable Hconv
+  -- Back to mollify form for the rest of the proof.
+  have hd : ∀ φ : ℝ → ℝ, ContDiff ℝ ∞ φ → HasCompactSupport φ →
+      iteratedDeriv (d + 1) (mollify σ φ) = 0 := by
+    intro φ hφ hφc
+    rw [mollify_eq_convolution]; exact hdC φ hφ hφc
   -- `σ` annihilates every moment-vanishing test function ⇒ `σ` is a.e. a polynomial.
   apply PolynomialDistribution.aePolynomial_of_annihilates_moment_vanishing d
     hσ.locallyIntegrable

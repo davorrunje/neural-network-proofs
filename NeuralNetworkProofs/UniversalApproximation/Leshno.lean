@@ -45,8 +45,8 @@ analytic leaf originally scaffolded is now proved: the development has **0 `sorr
   `SmoothEngine.smooth_engine` is now fully `sorryAx`-free).
 * `Mollify.contDiff_mollify` — the mollification of an `M`-class `σ` by a smooth compactly-supported
   kernel is `C^∞`. *Proved.*
-* `TestFunctionDegreeBound.exists_uniform_degree_bound` (Contrib) — a uniform polynomial-degree
-  bound for all mollifications `mollify σ φ`. *Proved* via an algebraic degree-invariance argument
+* `ConvolutionDegreeBound.exists_uniform_degree_bound` (Contrib) — a uniform polynomial-degree
+  bound for all convolutions `φ ⋆ σ`. *Proved* via an algebraic degree-invariance argument
   (convolution associativity + "polynomial ⋆ test function preserves degree when the kernel's `0`-th
   moment is nonzero"), sidestepping the Baire/`BaireSpace` route entirely. New Contrib supports:
   `ConvolutionPolynomial.monomial_conv_isPoly`, `…poly_conv_isPoly`, `…natDegree_poly_conv_eq`,
