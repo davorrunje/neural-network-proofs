@@ -132,6 +132,55 @@ private theorem coeff_ridgePoly_one (k : ℕ) (d : Fin n →₀ ℕ) (hd : d.deg
     simpa [Finsupp.indicator_apply] using this
   · intro hcontra; exact absurd hmem hcontra
 
+/-! ## Private sub-lemmas for `ridgePoly_span` -/
+
+/-- The support of `ridgePoly k a` is contained in the support of `ridgePoly k 1`. -/
+private theorem ridgePoly_support_subset (k : ℕ) (a : Fin n → ℝ) :
+    (ridgePoly k a).support ⊆ (ridgePoly k 1).support := by
+  intro e he
+  rw [MvPolynomial.mem_support_iff]
+  rw [MvPolynomial.mem_support_iff, coeff_ridgePoly] at he
+  exact fun h => he (by rw [h, mul_zero])
+
+/-- `f (ridgePoly k a)` expands as a finite sum over the support `T` of `ridgePoly k 1`,
+with coefficients `coeff e (ridgePoly k a) * f (monomial e 1)`. -/
+private theorem dual_ridgePoly_eq_sum (k : ℕ) (f : Module.Dual ℝ (MvPolynomial (Fin n) ℝ))
+    (a : Fin n → ℝ) :
+    f (ridgePoly k a)
+      = ∑ e ∈ (ridgePoly k 1).support,
+          coeff e (ridgePoly k a) * f (monomial e 1) := by
+  conv_lhs => rw [ridgePoly, ← ridgePoly, MvPolynomial.as_sum (ridgePoly k a)]
+  rw [Finset.sum_subset (ridgePoly_support_subset k a)]
+  · rw [map_sum]
+    refine Finset.sum_congr rfl ?_
+    intro e _
+    rw [show (monomial e) (coeff e (ridgePoly k a))
+          = coeff e (ridgePoly k a) • monomial e 1 by
+          rw [MvPolynomial.smul_monomial, smul_eq_mul, mul_one], map_smul, smul_eq_mul]
+  · intro e _ he
+    rw [MvPolynomial.notMem_support_iff] at he
+    rw [he, map_zero]
+
+/-- The witness polynomial `P = ∑ e ∈ T, monomial e (f (monomial e 1) * coeff e (ridgePoly k 1))`
+evaluates at `a` to `f (ridgePoly k a)`. -/
+private theorem eval_witness_poly (k : ℕ) (f : Module.Dual ℝ (MvPolynomial (Fin n) ℝ))
+    (a : Fin n → ℝ) :
+    eval a (∑ e ∈ (ridgePoly k 1).support,
+        monomial e (f (monomial e 1) * coeff e (ridgePoly k 1)))
+      = f (ridgePoly k a) := by
+  rw [dual_ridgePoly_eq_sum k f a, map_sum]
+  refine Finset.sum_congr rfl ?_
+  intro e _
+  rw [MvPolynomial.eval_monomial, coeff_ridgePoly k a e,
+    Finsupp.prod_fintype _ _ (fun i => pow_zero (a i))]
+  ring
+
+/-- Any exponent `d` of degree `k` lies in the support of `ridgePoly k 1`. -/
+private theorem degree_k_mem_ridgePoly_support (k : ℕ) (d : Fin n →₀ ℕ) (hd : d.degree = k) :
+    d ∈ (ridgePoly k 1).support := by
+  rw [MvPolynomial.mem_support_iff, coeff_ridgePoly_one k d hd]
+  exact_mod_cast (Nat.multinomial_pos Finset.univ d).ne'
+
 /-- The polynomial-level polarization identity: the powers of linear forms span (over ℝ) the
 homogeneous degree-`k` polynomials. -/
 private theorem ridgePoly_span (k : ℕ) :
@@ -159,50 +208,18 @@ private theorem ridgePoly_span (k : ℕ) :
     simp only [Set.mem_setOf_eq] at hd
     -- `f (monomial d 1) = 0` for `d.degree = k`.
     change f (monomial d 1) = 0
-    -- `T` = support of the "all-ones" ridge power; it contains every degree-`k` exponent.
+    -- Build the witness polynomial whose evaluation at `a` equals `f (ridgePoly k a)`.
     set T := (ridgePoly k (1 : Fin n → ℝ)).support with hT
-    -- Every `ridgePoly k a` is supported in `T`.
-    have hsupp : ∀ a : Fin n → ℝ, (ridgePoly k a).support ⊆ T := by
-      intro a e he
-      rw [hT, MvPolynomial.mem_support_iff]
-      rw [MvPolynomial.mem_support_iff, coeff_ridgePoly] at he
-      exact fun h => he (by rw [h, mul_zero])
-    -- `f (ridgePoly k a)` as a finite sum over `T`.
-    have hfsum : ∀ a : Fin n → ℝ,
-        f (ridgePoly k a) = ∑ e ∈ T, coeff e (ridgePoly k a) * f (monomial e 1) := by
-      intro a
-      conv_lhs => rw [ridgePoly, ← ridgePoly, MvPolynomial.as_sum (ridgePoly k a)]
-      rw [Finset.sum_subset (hsupp a)]
-      · rw [map_sum]
-        refine Finset.sum_congr rfl ?_
-        intro e _
-        rw [show (monomial e) (coeff e (ridgePoly k a))
-              = coeff e (ridgePoly k a) • monomial e 1 by
-              rw [MvPolynomial.smul_monomial, smul_eq_mul, mul_one], map_smul, smul_eq_mul]
-      · intro e _ he
-        rw [MvPolynomial.notMem_support_iff] at he
-        rw [he, map_zero]
-    -- Build the polynomial in `a` whose evaluation is `f (ridgePoly k a)`.
     set P : MvPolynomial (Fin n) ℝ :=
       ∑ e ∈ T, monomial e (f (monomial e 1) * coeff e (ridgePoly k 1)) with hP
-    have hevalP : ∀ a : Fin n → ℝ, eval a P = f (ridgePoly k a) := by
-      intro a
-      rw [hfsum a, hP, map_sum]
-      refine Finset.sum_congr rfl ?_
-      intro e _
-      rw [MvPolynomial.eval_monomial, coeff_ridgePoly k a e,
-        Finsupp.prod_fintype _ _ (fun i => pow_zero (a i))]
-      ring
-    -- `P` vanishes identically, hence is zero.
+    -- `P` vanishes identically (every `ridgePoly k a` is annihilated by `f`).
     have hP0 : P = 0 := by
       apply MvPolynomial.funext
       intro a
-      rw [hevalP a, map_zero]
+      rw [eval_witness_poly k f a, map_zero]
       exact hf _ (Submodule.subset_span ⟨a, rfl⟩)
-    -- Read off the coefficient at `d`.
-    have hdT : d ∈ T := by
-      rw [hT, MvPolynomial.mem_support_iff, coeff_ridgePoly_one k d hd]
-      exact_mod_cast (Nat.multinomial_pos Finset.univ d).ne'
+    -- Read off the coefficient at `d` from `P = 0`.
+    have hdT : d ∈ T := degree_k_mem_ridgePoly_support k d hd
     have hcoeff : coeff d P = f (monomial d 1) * coeff d (ridgePoly k 1) := by
       rw [hP, coeff_sum, Finset.sum_eq_single d]
       · rw [coeff_monomial, if_pos rfl]
