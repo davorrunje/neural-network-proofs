@@ -29,3 +29,15 @@ jobs:
             exit 1
           fi
           echo "All headline theorems are sorry-free."
+
+      - name: ForMathlib minimal-imports gate
+        run: |
+          set -euo pipefail
+          # ForMathlib files are upstream-facing: they must use minimal specific Mathlib imports,
+          # never the whole-library `import Mathlib`. (The build already ensures imports suffice;
+          # this guards that they stay minimal.)
+          if grep -rn '^import Mathlib$' NeuralNetworkProofs/ForMathlib/; then
+            echo "::error::A ForMathlib file uses 'import Mathlib'; replace with minimal imports."
+            exit 1
+          fi
+          echo "ForMathlib files use minimal imports (no whole-library 'import Mathlib')."

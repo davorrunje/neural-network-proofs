@@ -1,8 +1,15 @@
-import Mathlib
+/-
+Copyright (c) 2026 Davor Runje. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Davor Runje
+-/
+
+import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 
 /-! # A smooth compactly-supported function with vanishing moments is an iterated derivative
 of a smooth compactly-supported function.
 Intended Mathlib home: `Mathlib/Analysis/Calculus/BumpFunction/…` (confirm with maintainers). -/
+
 
 namespace SmoothCompactAntideriv
 

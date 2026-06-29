@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Davor Runje. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Davor Runje
+-/
 import Mathlib
 
 /-! # The Leshno (1993) activation class `M` and polynomial predicates.

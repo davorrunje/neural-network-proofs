@@ -1,9 +1,18 @@
-import Mathlib
+/-
+Copyright (c) 2026 Davor Runje. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Davor Runje
+-/
+
+import Mathlib.Analysis.Normed.Ring.Basic
+import Mathlib.Tactic.LinearCombination
 
 /-!
 # Riesz–Kantorovich decomposition (order-bounded dual of a vector lattice)
+
 Intended Mathlib home: `Mathlib/Analysis/Order/` (confirm with maintainers).
 -/
+
 
 namespace RieszKantorovich
 
@@ -277,7 +286,7 @@ theorem IsOrderBounded.smul (c : ℝ) {L : E →ₗ[ℝ] ℝ} (hL : IsOrderBound
     IsOrderBounded (c • L) := by
   rcases le_or_gt 0 c with hc | hc
   · exact hL.smul_nonneg hc
-  · rw [show c • L = -((-c) • L) by rw [neg_smul, neg_neg]]
+  · rw [show c • L = -((-c) • L) by have := neg_smul c L; rw [this, neg_neg]]
     exact (hL.smul_nonneg (by linarith)).neg
 
 omit [IsOrderedAddMonoid E] [PosSMulMono ℝ E] in
@@ -388,10 +397,10 @@ noncomputable instance instLattice : Lattice (OrderBoundedDual E) where
   inf L M := -((-L) ⊔ (-M))
   inf_le_left L M := by
     -- goal: -((-L) ⊔ (-M)) ≤ L
-    rw [show L = -(-L) from (neg_neg L).symm, neg_le_neg_iff, neg_neg]
+    rw [show L = -(-L) from (neg_neg L).symm, neg_le_neg_iff, neg_neg (-L)]
     exact le_sup_left
   inf_le_right L M := by
-    rw [show M = -(-M) from (neg_neg M).symm, neg_le_neg_iff, neg_neg]
+    rw [show M = -(-M) from (neg_neg M).symm, neg_le_neg_iff, neg_neg (-M)]
     exact le_sup_right
   le_inf L M N hLM hLN := by
     -- L ≤ -((-M) ⊔ (-N))  ↔  (-M) ⊔ (-N) ≤ -L

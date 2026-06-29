@@ -1,4 +1,12 @@
-import Mathlib
+/-
+Copyright (c) 2026 Davor Runje. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Davor Runje
+-/
+
+import Mathlib.AlgebraicTopology.SimplexCategory.Basic
+import Mathlib.Analysis.Distribution.AEEqOfIntegralContDiff
+import Mathlib.Topology.Algebra.Polynomial
 import NeuralNetworkProofs.ForMathlib.IteratedDerivPolynomial
 import NeuralNetworkProofs.ForMathlib.SmoothCompactAntideriv
 

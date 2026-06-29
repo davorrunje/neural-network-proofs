@@ -1,4 +1,13 @@
-import Mathlib
+/-
+Copyright (c) 2026 Davor Runje. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Davor Runje
+-/
+
+import Mathlib.Analysis.Calculus.Deriv.Polynomial
+import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
+import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.InnerProductSpace.Basic
 
 /-! # A function with a vanishing iterated derivative is a polynomial.
 Intended Mathlib home: `Mathlib/Analysis/Calculus/IteratedDeriv/` (confirm with maintainers).
@@ -11,6 +20,7 @@ function to *be* a polynomial of degree `< n`. As of the toolchain pin
 (`v4.32.0-rc1`) no such statement was found via `lean_leansearch`/`lean_loogle`
 (searches returned only the forward direction and the analytic-order characterisation
 `natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero`). -/
+
 
 namespace IteratedDerivPolynomial
 
