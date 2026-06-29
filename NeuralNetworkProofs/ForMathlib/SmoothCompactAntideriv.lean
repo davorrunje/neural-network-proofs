@@ -80,11 +80,11 @@ private lemma hasCompactSupport_antideriv {h : ℝ → ℝ}
     exact hzero y (fun hmem => hy (le_trans hmem.2 hhi.le))
 
 /-- `deriv (antideriv g) = g` pointwise, for `g` continuous and compactly supported. -/
-private lemma deriv_antideriv_eq {g : ℝ → ℝ} (hg : ContDiff ℝ ∞ g)
+private lemma deriv_antideriv_eq {g : ℝ → ℝ} (hg : Continuous g)
     (hgc : HasCompactSupport g) : deriv (antideriv g) = g := by
   funext x
-  exact (hasDerivAt_antideriv hg.continuous
-    (integrableOn_Iic_of_compactSupport hg.continuous hgc) x).deriv
+  exact (hasDerivAt_antideriv hg
+    (integrableOn_Iic_of_compactSupport hg hgc) x).deriv
 
 /-- **Moment shift under integration.** Integration by parts relates the `j`-th moment of the
 indefinite integral of a `C^∞` compactly-supported `h` to the `(j+1)`-th moment of `h`:
@@ -144,7 +144,7 @@ theorem exists_iteratedDeriv_eq_of_moments_zero {g : ℝ → ℝ} (d : ℕ)
     have hint : ∫ y, g y = 0 := by simpa using hmom 0 (le_refl 0)
     refine ⟨antideriv g, contDiff_antideriv hg hgc, hasCompactSupport_antideriv hgc hint, ?_⟩
     rw [iteratedDeriv_one]
-    exact deriv_antideriv_eq hg hgc
+    exact deriv_antideriv_eq hg.continuous hgc
   | succ d ih =>
     -- Step: `h := antideriv g` is `C^∞`, compactly supported, and its moments up to `d` vanish.
     have hint : ∫ y, g y = 0 := by simpa using hmom 0 (Nat.zero_le _)
@@ -156,6 +156,6 @@ theorem exists_iteratedDeriv_eq_of_moments_zero {g : ℝ → ℝ} (d : ℕ)
     refine ⟨ψ, hψsmooth, hψsupp, ?_⟩
     -- `iteratedDeriv (d+2) ψ = deriv (iteratedDeriv (d+1) ψ) = deriv (antideriv g) = g`.
     rw [iteratedDeriv_succ, hψeq]
-    exact deriv_antideriv_eq hg hgc
+    exact deriv_antideriv_eq hg.continuous hgc
 
 end SmoothCompactAntideriv

@@ -593,14 +593,7 @@ theorem tendstoUniformly_riemannSum_aeContinuous
   have hmpos : (0 : ℝ) < m := by exact_mod_cast hm1
   set Δ : ℝ := 2 * M / m with hΔdef
   have hΔpos : 0 < Δ := by rw [hΔdef]; positivity
-  have hΔltR : Δ < R := by
-    rw [hΔdef, div_lt_iff₀ hmpos]
-    have h1 : 2 * M / R < m := by
-      calc 2 * M / R ≤ Nat.ceil (2 * M / R) := Nat.le_ceil _
-        _ < (Nat.ceil (2 * M / R) + 1 : ℕ) := by exact_mod_cast Nat.lt_succ_self _
-        _ ≤ m := by exact_mod_cast hm
-    rw [div_lt_iff₀ hRpos] at h1
-    linarith
+  have hΔltR : Δ < R := hΔdef ▸ mesh_lt hRpos hm hmpos
   have hΔlt_f : Δ < δ_f := lt_of_lt_of_le hΔltR (min_le_left _ _)
   have hΔlt_φ : Δ < δ_φ :=
     lt_of_lt_of_le hΔltR (le_trans (min_le_right _ _) (min_le_left _ _))
