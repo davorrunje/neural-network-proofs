@@ -1,6 +1,17 @@
-import Mathlib
+/-
+Copyright (c) 2026 Davor Runje. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Davor Runje
+-/
 
-/-! # Powers of linear functionals span the homogeneous polynomials.
+import Mathlib.Algebra.MvPolynomial.Funext
+import Mathlib.Analysis.Normed.Field.Basic
+import Mathlib.Data.Nat.Choose.Multinomial
+import Mathlib.FieldTheory.Finite.Polynomial
+import Mathlib.RingTheory.MvPolynomial.IrreducibleQuadratic
+
+/-! # Powers of linear functionals span the homogeneous polynomials
+
 Intended Mathlib home: `Mathlib/LinearAlgebra/Polynomial` / `Mathlib/RingTheory/MvPolynomial`
 (polarization; confirm with maintainers).
 
@@ -20,6 +31,7 @@ side must also be a `Submodule ℝ ((Fin n → ℝ) → ℝ)`. We take it to be 
 evaluation-as-a-function linear map `MvPolynomial.evalₗ ℝ (Fin n) : MvPolynomial (Fin n) ℝ →ₗ[ℝ]
 (Fin n → ℝ) → ℝ`, of the canonical Mathlib submodule of homogeneous degree-`k` polynomials
 `MvPolynomial.homogeneousSubmodule (Fin n) ℝ k`. -/
+
 
 namespace RidgePowersSpan
 

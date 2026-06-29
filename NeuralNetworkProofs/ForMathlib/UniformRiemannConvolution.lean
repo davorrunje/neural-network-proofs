@@ -1,4 +1,12 @@
-import Mathlib
+/-
+Copyright (c) 2026 Davor Runje. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Davor Runje
+-/
+
+import Mathlib.Algebra.Order.Ring.Star
+import Mathlib.Algebra.Order.Star.Real
+import Mathlib.MeasureTheory.Measure.Haar.Unique
 
 /-! # Uniform Riemann-sum approximation of a convolution against a continuous kernel.
 Intended Mathlib home: `Mathlib/Analysis/Convolution` (confirm with maintainers). -/

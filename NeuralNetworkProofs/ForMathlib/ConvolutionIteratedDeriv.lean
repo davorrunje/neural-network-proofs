@@ -1,4 +1,12 @@
-import Mathlib
+/-
+Copyright (c) 2026 Davor Runje. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Davor Runje
+-/
+
+import Mathlib.Analysis.Calculus.ContDiff.Convolution
+import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
+import Mathlib.MeasureTheory.Measure.Haar.Unique
 
 /-! # Iterated derivative of a convolution (smooth, compactly-supported left factor).
 Intended Mathlib home: `Mathlib/Analysis/Calculus/ContDiff/Convolution`

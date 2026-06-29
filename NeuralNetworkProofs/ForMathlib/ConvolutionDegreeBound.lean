@@ -1,4 +1,11 @@
-import Mathlib
+/-
+Copyright (c) 2026 Davor Runje. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Davor Runje
+-/
+
+import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
+import Mathlib.Analysis.Calculus.BumpFunction.Normed
 import NeuralNetworkProofs.ForMathlib.ConvolutionPolynomial
 import NeuralNetworkProofs.ForMathlib.IteratedDerivPolynomial
 

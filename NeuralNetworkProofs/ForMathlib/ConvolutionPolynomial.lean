@@ -1,13 +1,21 @@
-import Mathlib
+/-
+Copyright (c) 2026 Davor Runje. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Davor Runje
+-/
+
+import Mathlib.Algebra.Polynomial.Eval.SMul
+import Mathlib.Analysis.Convolution
+import Mathlib.MeasureTheory.Measure.Haar.Unique
 
 /-! # Convolution of polynomials with test functions, and commutativity for the `mul` pairing.
+
 Intended Mathlib home: `Mathlib/Analysis/Convolution` (confirm with maintainers). -/
+
 
 namespace ConvolutionPolynomial
 
 open MeasureTheory
-
-open scoped ContDiff
 
 /-- Commutativity of the real convolution taken against scalar multiplication `mul ℝ ℝ`. -/
 theorem convolution_comm_mul (f g : ℝ → ℝ) :
