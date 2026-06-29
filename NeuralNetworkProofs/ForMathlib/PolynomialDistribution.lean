@@ -66,6 +66,37 @@ private lemma integrable_pow_mul {g : ℝ → ℝ} (hg : ContDiff ℝ ∞ g)
   · exact (continuous_pow k).mul hg.continuous
   · exact (hgc.mul_left (f := fun y : ℝ => y ^ k))
 
+/-- Any linear functional on `Fin n → ℝ` is determined by its values on basis vectors:
+`ℓ w = ∑ k, w k * ℓ (Pi.single k 1)`. -/
+private lemma linFunctional_pi_eq_sum {n : ℕ} (ℓ : (Fin n → ℝ) →ₗ[ℝ] ℝ)
+    (w : Fin n → ℝ) : ℓ w = ∑ k, w k * ℓ (Pi.single k 1) := by
+  conv_lhs => rw [← Finset.univ_sum_single w]
+  rw [map_sum]
+  apply Finset.sum_congr rfl
+  intro k _
+  rw [show Pi.single k (w k) = w k • Pi.single k (1 : ℝ) by
+    rw [← Pi.single_smul]; simp, map_smul]
+  simp
+
+/-- Integration of a test function against a polynomial expressed as weighted moment sum.
+`∫ g · p.eval = ∑ k, c k * ∫ y^k * g y` when `p.eval y = ∑ k, c k * y^k`. -/
+private lemma integral_mul_poly_eq_sum {d : ℕ} (c : Fin (d + 1) → ℝ)
+    {g : ℝ → ℝ} (hg : ContDiff ℝ ∞ g) (hgc : HasCompactSupport g)
+    (hpeval : ∀ y : ℝ, (∑ k : Fin (d + 1), Polynomial.C (c k) * Polynomial.X ^ (k : ℕ)).eval y
+      = ∑ k : Fin (d + 1), c k * y ^ (k : ℕ)) :
+    ∫ y, g y * (∑ k : Fin (d + 1), Polynomial.C (c k) * Polynomial.X ^ (k : ℕ)).eval y
+      = ∑ k : Fin (d + 1), c k * ∫ y, y ^ (k : ℕ) * g y := by
+  calc ∫ y, g y * (∑ k : Fin (d + 1), Polynomial.C (c k) * Polynomial.X ^ (k : ℕ)).eval y
+      = ∫ y, ∑ k : Fin (d + 1), c k * (y ^ (k : ℕ) * g y) := by
+        congr 1; funext y; rw [hpeval]; rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl; intro k _; ring
+    _ = ∑ k : Fin (d + 1), ∫ y, c k * (y ^ (k : ℕ) * g y) := by
+        rw [MeasureTheory.integral_finsetSum]
+        intro k _
+        exact (integrable_pow_mul hg hgc k).const_mul (c k)
+    _ = ∑ k : Fin (d + 1), c k * ∫ y, y ^ (k : ℕ) * g y := by
+        apply Finset.sum_congr rfl; intro k _; rw [integral_const_mul]
+
 theorem aePolynomial_of_annihilates_moment_vanishing {f : ℝ → ℝ} (d : ℕ)
     (hf : LocallyIntegrable f volume)
     (hann : ∀ g : ℝ → ℝ, ContDiff ℝ ∞ g → HasCompactSupport g →
@@ -108,15 +139,9 @@ theorem aePolynomial_of_annihilates_moment_vanishing {f : ℝ → ℝ} (d : ℕ)
   -- Factor `L` through `M`, obtaining the polynomial coefficients.
   obtain ⟨ℓ, hℓ⟩ := exists_factor M L hker
   set c : Fin (d + 1) → ℝ := fun k => ℓ (Pi.single k 1) with hc
-  have hℓsum : ∀ w : Fin (d + 1) → ℝ, ℓ w = ∑ k, w k * c k := by
-    intro w
-    conv_lhs => rw [← Finset.univ_sum_single w]
-    rw [map_sum]
-    apply Finset.sum_congr rfl
-    intro k _
-    rw [show Pi.single k (w k) = w k • Pi.single k (1 : ℝ) by
-      rw [← Pi.single_smul]; simp, map_smul]
-    simp [hc]
+  -- `ℓ` is determined by its values on basis vectors.
+  have hℓsum : ∀ w : Fin (d + 1) → ℝ, ℓ w = ∑ k, w k * c k :=
+    fun w => linFunctional_pi_eq_sum ℓ w
   -- Hence: for every test function, `∫ g·f = ∑ k, (∫ y^k g) · c k`.
   have key : ∀ g : ℝ → ℝ, ContDiff ℝ ∞ g → HasCompactSupport g →
       ∫ y, g y * f y = ∑ k : Fin (d + 1), (∫ y, y ^ (k : ℕ) * g y) * c k := by
@@ -138,18 +163,9 @@ theorem aePolynomial_of_annihilates_moment_vanishing {f : ℝ → ℝ} (d : ℕ)
   -- `ContDiff ℝ ∞` vs the `(↑⊤)` shape in the lemma statement.
   have hg' : ContDiff ℝ ∞ g := hg
   simp only [smul_eq_mul]
-  -- RHS: `∫ g · p.eval = ∑ k, c k * ∫ y^k g`.
-  have hrhs : ∫ y, g y * p.eval y = ∑ k : Fin (d + 1), c k * ∫ y, y ^ (k : ℕ) * g y := by
-    calc ∫ y, g y * p.eval y
-        = ∫ y, ∑ k : Fin (d + 1), c k * (y ^ (k : ℕ) * g y) := by
-          congr 1; funext y; rw [hpeval]; rw [Finset.mul_sum]; apply Finset.sum_congr rfl
-          intro k _; ring
-      _ = ∑ k : Fin (d + 1), ∫ y, c k * (y ^ (k : ℕ) * g y) := by
-          rw [MeasureTheory.integral_finsetSum]
-          intro k _
-          exact (integrable_pow_mul hg' hgc k).const_mul (c k)
-      _ = ∑ k : Fin (d + 1), c k * ∫ y, y ^ (k : ℕ) * g y := by
-          apply Finset.sum_congr rfl; intro k _; rw [integral_const_mul]
+  -- RHS: `∫ g · p.eval = ∑ k, c k * ∫ y^k g` via `integral_mul_poly_eq_sum`.
+  have hrhs : ∫ y, g y * p.eval y = ∑ k : Fin (d + 1), c k * ∫ y, y ^ (k : ℕ) * g y :=
+    integral_mul_poly_eq_sum c hg' hgc hpeval
   rw [hrhs, key g hg' hgc]
   apply Finset.sum_congr rfl
   intro k _; rw [mul_comm]
