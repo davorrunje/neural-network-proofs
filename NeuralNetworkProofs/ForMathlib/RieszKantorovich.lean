@@ -65,28 +65,38 @@ theorem rkSup_le (L : E →ₗ[ℝ] ℝ) {f : E} {c : ℝ} (hf : 0 ≤ f)
     (h : ∀ g, 0 ≤ g → g ≤ f → L g ≤ c) : rkSup L f ≤ c :=
   csSup_le (rkSup_set_nonempty L hf) (fun _ ⟨g, hg0, hgf, hgy⟩ => hgy ▸ h g hg0 hgf)
 
+-- `rkSup_add` helpers --------------------------------------------------------
+
+omit [PosSMulMono ℝ E] in
+private lemma rkSup_add_le (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) {f₁ f₂ : E}
+    (hf₁ : 0 ≤ f₁) (hf₂ : 0 ≤ f₂) :
+    rkSup L (f₁ + f₂) ≤ rkSup L f₁ + rkSup L f₂ := by
+  refine rkSup_le L (add_nonneg hf₁ hf₂) ?_
+  intro g hg0 hgf
+  obtain ⟨a, b, hgab, ha0, haf, hb0, hbf⟩ := riesz_decomp hg0 hgf hf₁ hf₂
+  rw [hgab, map_add]
+  exact add_le_add (le_rkSup L hL hf₁ ha0 haf) (le_rkSup L hL hf₂ hb0 hbf)
+
+omit [PosSMulMono ℝ E] in
+private lemma rkSup_add_ge (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) {f₁ f₂ : E}
+    (hf₁ : 0 ≤ f₁) (hf₂ : 0 ≤ f₂) :
+    rkSup L f₁ + rkSup L f₂ ≤ rkSup L (f₁ + f₂) := by
+  rw [← le_sub_iff_add_le]
+  refine rkSup_le L hf₁ ?_
+  intro g₁ hg₁0 hg₁f
+  rw [le_sub_iff_add_le, add_comm, ← le_sub_iff_add_le]
+  refine rkSup_le L hf₂ ?_
+  intro g₂ hg₂0 hg₂f
+  rw [le_sub_iff_add_le, add_comm, ← map_add]
+  exact le_rkSup L hL (add_nonneg hf₁ hf₂) (add_nonneg hg₁0 hg₂0)
+    (add_le_add hg₁f hg₂f)
+
 omit [PosSMulMono ℝ E] in
 /-- `rkSup L` is additive on the positive cone. -/
 theorem rkSup_add (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) {f₁ f₂ : E}
     (hf₁ : 0 ≤ f₁) (hf₂ : 0 ≤ f₂) :
-    rkSup L (f₁ + f₂) = rkSup L f₁ + rkSup L f₂ := by
-  apply le_antisymm
-  · -- (≤): split a positive `g ≤ f₁ + f₂` via Riesz decomposition
-    refine rkSup_le L (add_nonneg hf₁ hf₂) ?_
-    intro g hg0 hgf
-    obtain ⟨a, b, hgab, ha0, haf, hb0, hbf⟩ := riesz_decomp hg0 hgf hf₁ hf₂
-    rw [hgab, map_add]
-    exact add_le_add (le_rkSup L hL hf₁ ha0 haf) (le_rkSup L hL hf₂ hb0 hbf)
-  · -- (≥): combine the two sups
-    rw [← le_sub_iff_add_le]
-    refine rkSup_le L hf₁ ?_
-    intro g₁ hg₁0 hg₁f
-    rw [le_sub_iff_add_le, add_comm, ← le_sub_iff_add_le]
-    refine rkSup_le L hf₂ ?_
-    intro g₂ hg₂0 hg₂f
-    rw [le_sub_iff_add_le, add_comm, ← map_add]
-    exact le_rkSup L hL (add_nonneg hf₁ hf₂) (add_nonneg hg₁0 hg₂0)
-      (add_le_add hg₁f hg₂f)
+    rkSup L (f₁ + f₂) = rkSup L f₁ + rkSup L f₂ :=
+  le_antisymm (rkSup_add_le L hL hf₁ hf₂) (rkSup_add_ge L hL hf₁ hf₂)
 
 omit [IsOrderedAddMonoid E] [PosSMulMono ℝ E] in
 /-- `rkSup L` vanishes at `0`. -/
@@ -97,6 +107,42 @@ theorem rkSup_zero (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) : rkSup L (0 
     rw [le_antisymm hgf hg0, map_zero]
   · exact rkSup_nonneg L hL (le_refl 0)
 
+-- `rkSup_smul` helpers --------------------------------------------------------
+
+omit [IsOrderedAddMonoid E] in
+private lemma rkSup_smul_le (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) {c : ℝ} (hcpos : 0 < c)
+    {f : E} (hf : 0 ≤ f) : rkSup L (c • f) ≤ c * rkSup L f := by
+  have hc : 0 ≤ c := le_of_lt hcpos
+  have hcne : c ≠ 0 := ne_of_gt hcpos
+  have hcf : (0 : E) ≤ c • f := smul_nonneg hc hf
+  refine rkSup_le L hcf ?_
+  intro g hg0 hgf
+  set h := c⁻¹ • g with hh
+  have hh0 : 0 ≤ h := smul_nonneg (le_of_lt (inv_pos.mpr hcpos)) hg0
+  have hhf : h ≤ f := by
+    have := smul_le_smul_of_nonneg_left hgf (le_of_lt (inv_pos.mpr hcpos))
+    rwa [smul_smul, inv_mul_cancel₀ hcne, one_smul] at this
+  have hgch : g = c • h := by rw [hh, smul_smul, mul_inv_cancel₀ hcne, one_smul]
+  rw [hgch, map_smul, smul_eq_mul]
+  exact mul_le_mul_of_nonneg_left (le_rkSup L hL hf hh0 hhf) hc
+
+omit [IsOrderedAddMonoid E] in
+private lemma rkSup_smul_ge (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) {c : ℝ} (hcpos : 0 < c)
+    {f : E} (hf : 0 ≤ f) : c * rkSup L f ≤ rkSup L (c • f) := by
+  have hc : 0 ≤ c := le_of_lt hcpos
+  have hcne : c ≠ 0 := ne_of_gt hcpos
+  have hcf : (0 : E) ≤ c • f := smul_nonneg hc hf
+  have key : rkSup L f ≤ c⁻¹ * rkSup L (c • f) := by
+    refine rkSup_le L hf ?_
+    intro g hg0 hgf
+    have hcg0 : (0 : E) ≤ c • g := smul_nonneg hc hg0
+    have hcgf : c • g ≤ c • f := smul_le_smul_of_nonneg_left hgf hc
+    have h1 : L (c • g) ≤ rkSup L (c • f) := le_rkSup L hL hcf hcg0 hcgf
+    rw [map_smul, smul_eq_mul, ← le_div_iff₀' hcpos, div_eq_inv_mul] at h1
+    exact h1
+  have := mul_le_mul_of_nonneg_left key hc
+  rwa [← mul_assoc, mul_inv_cancel₀ hcne, one_mul] at this
+
 omit [IsOrderedAddMonoid E] in
 /-- `rkSup L` is positively homogeneous on the positive cone. -/
 theorem rkSup_smul (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) {c : ℝ} (hc : 0 ≤ c)
@@ -105,32 +151,8 @@ theorem rkSup_smul (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) {c : ℝ} (hc
   · -- `c = 0`: both sides are `0`.
     subst hc0
     rw [zero_smul, zero_mul, rkSup_zero L hL]
-  · -- `c > 0`: bijection `g ↦ c • g` between the order intervals `[0, f]` and `[0, c • f]`.
-    have hcne : c ≠ 0 := ne_of_gt hcpos
-    have hcf : (0 : E) ≤ c • f := smul_nonneg hc hf
-    apply le_antisymm
-    · -- `rkSup L (c • f) ≤ c * rkSup L f`
-      refine rkSup_le L hcf ?_
-      intro g hg0 hgf
-      set h := c⁻¹ • g with hh
-      have hh0 : 0 ≤ h := smul_nonneg (le_of_lt (inv_pos.mpr hcpos)) hg0
-      have hhf : h ≤ f := by
-        have := smul_le_smul_of_nonneg_left hgf (le_of_lt (inv_pos.mpr hcpos))
-        rwa [smul_smul, inv_mul_cancel₀ hcne, one_smul] at this
-      have hgch : g = c • h := by rw [hh, smul_smul, mul_inv_cancel₀ hcne, one_smul]
-      rw [hgch, map_smul, smul_eq_mul]
-      exact mul_le_mul_of_nonneg_left (le_rkSup L hL hf hh0 hhf) hc
-    · -- `c * rkSup L f ≤ rkSup L (c • f)`
-      have key : rkSup L f ≤ c⁻¹ * rkSup L (c • f) := by
-        refine rkSup_le L hf ?_
-        intro g hg0 hgf
-        have hcg0 : (0 : E) ≤ c • g := smul_nonneg hc hg0
-        have hcgf : c • g ≤ c • f := smul_le_smul_of_nonneg_left hgf hc
-        have h1 : L (c • g) ≤ rkSup L (c • f) := le_rkSup L hL hcf hcg0 hcgf
-        rw [map_smul, smul_eq_mul, ← le_div_iff₀' hcpos, div_eq_inv_mul] at h1
-        exact h1
-      have := mul_le_mul_of_nonneg_left key hc
-      rwa [← mul_assoc, mul_inv_cancel₀ hcne, one_mul] at this
+  · -- `c > 0`: bijection `g ↦ c • g` between order intervals `[0, f]` and `[0, c • f]`.
+    exact le_antisymm (rkSup_smul_le L hL hcpos hf) (rkSup_smul_ge L hL hcpos hf)
 
 omit [IsOrderedAddMonoid E] in
 /-- For a nonnegative scalar, `•` distributes over the lattice join. -/
@@ -162,28 +184,58 @@ omit [IsOrderedAddMonoid E] in
 theorem smul_negPart_of_nonneg {c : ℝ} (hc : 0 ≤ c) (x : E) : (c • x)⁻ = c • x⁻ := by
   rw [negPart_def, negPart_def, ← smul_neg, smul_sup_of_nonneg hc, smul_zero]
 
+-- `Lpos` helpers --------------------------------------------------------------
+
+omit [Module ℝ E] [PosSMulMono ℝ E] in
+private lemma Lpos_add_id (x y : E) :
+    (x + y)⁺ + x⁻ + y⁻ = (x + y)⁻ + x⁺ + y⁺ := by
+  have hsub : (x + y)⁺ - (x + y)⁻ = (x⁺ - x⁻) + (y⁺ - y⁻) := by
+    rw [posPart_sub_negPart, posPart_sub_negPart, posPart_sub_negPart]
+  linear_combination (norm := abel) hsub
+
+omit [PosSMulMono ℝ E] in
+private lemma Lpos_rkSup_add_left (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) (x y : E) :
+    rkSup L ((x + y)⁺ + x⁻ + y⁻) =
+      rkSup L (x + y)⁺ + rkSup L x⁻ + rkSup L y⁻ := by
+  rw [rkSup_add L hL (add_nonneg (posPart_nonneg _) (negPart_nonneg _)) (negPart_nonneg _),
+    rkSup_add L hL (posPart_nonneg _) (negPart_nonneg _)]
+
+omit [PosSMulMono ℝ E] in
+private lemma Lpos_rkSup_add_right (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) (x y : E) :
+    rkSup L ((x + y)⁻ + x⁺ + y⁺) =
+      rkSup L (x + y)⁻ + rkSup L x⁺ + rkSup L y⁺ := by
+  rw [rkSup_add L hL (add_nonneg (negPart_nonneg _) (posPart_nonneg _)) (posPart_nonneg _),
+    rkSup_add L hL (negPart_nonneg _) (posPart_nonneg _)]
+
+omit [PosSMulMono ℝ E] in
+private lemma Lpos_map_add_proof (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) (x y : E) :
+    rkSup L (x + y)⁺ - rkSup L (x + y)⁻ =
+      (rkSup L x⁺ - rkSup L x⁻) + (rkSup L y⁺ - rkSup L y⁻) := by
+  have hL1 := Lpos_rkSup_add_left L hL x y
+  have hR1 := Lpos_rkSup_add_right L hL x y
+  rw [Lpos_add_id x y] at hL1
+  rw [hL1] at hR1
+  linarith [hR1]
+
+omit [IsOrderedAddMonoid E] in
+private lemma Lpos_map_smul_neg (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) {c : ℝ} (hc : c < 0)
+    (x : E) :
+    rkSup L (c • x)⁺ - rkSup L (c • x)⁻ = c * (rkSup L x⁺ - rkSup L x⁻) := by
+  have hnc : 0 ≤ -c := by linarith
+  have hp : (c • x)⁺ = (-c) • x⁻ := by
+    rw [show c • x = -((-c) • x) by rw [neg_smul, neg_neg], posPart_neg,
+      smul_negPart_of_nonneg hnc]
+  have hn : (c • x)⁻ = (-c) • x⁺ := by
+    rw [show c • x = -((-c) • x) by rw [neg_smul, neg_neg], negPart_neg,
+      smul_posPart_of_nonneg hnc]
+  rw [hp, hn, rkSup_smul L hL hnc (negPart_nonneg _), rkSup_smul L hL hnc (posPart_nonneg _)]
+  ring
+
 /-- The Riesz–Kantorovich positive part of an order-bounded functional `L`: the linear functional
 `x ↦ rkSup L x⁺ - rkSup L x⁻`. It dominates both `L` and `0` on the positive cone. -/
 noncomputable def Lpos (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) : E →ₗ[ℝ] ℝ where
   toFun x := rkSup L x⁺ - rkSup L x⁻
-  map_add' x y := by
-    -- The lattice identity `(x + y)⁺ + x⁻ + y⁻ = (x + y)⁻ + x⁺ + y⁺` reduces additivity of
-    -- `Lpos` to additivity of `rkSup` on the positive cone.
-    have hid : (x + y)⁺ + x⁻ + y⁻ = (x + y)⁻ + x⁺ + y⁺ := by
-      have hsub : (x + y)⁺ - (x + y)⁻ = (x⁺ - x⁻) + (y⁺ - y⁻) := by
-        rw [posPart_sub_negPart, posPart_sub_negPart, posPart_sub_negPart]
-      linear_combination (norm := abel) hsub
-    have hL1 : rkSup L ((x + y)⁺ + x⁻ + y⁻) = rkSup L (x + y)⁺ + rkSup L x⁻ + rkSup L y⁻ := by
-      rw [rkSup_add L hL (add_nonneg (posPart_nonneg _) (negPart_nonneg _)) (negPart_nonneg _),
-        rkSup_add L hL (posPart_nonneg _) (negPart_nonneg _)]
-    have hR1 : rkSup L ((x + y)⁻ + x⁺ + y⁺) = rkSup L (x + y)⁻ + rkSup L x⁺ + rkSup L y⁺ := by
-      rw [rkSup_add L hL (add_nonneg (negPart_nonneg _) (posPart_nonneg _)) (posPart_nonneg _),
-        rkSup_add L hL (negPart_nonneg _) (posPart_nonneg _)]
-    rw [hid] at hL1
-    rw [hL1] at hR1
-    change rkSup L (x + y)⁺ - rkSup L (x + y)⁻
-        = (rkSup L x⁺ - rkSup L x⁻) + (rkSup L y⁺ - rkSup L y⁻)
-    linarith [hR1]
+  map_add' x y := Lpos_map_add_proof L hL x y
   map_smul' c x := by
     change rkSup L (c • x)⁺ - rkSup L (c • x)⁻ = (RingHom.id ℝ) c * (rkSup L x⁺ - rkSup L x⁻)
     rw [RingHom.id_apply]
@@ -193,15 +245,7 @@ noncomputable def Lpos (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) : E →�
         rkSup_smul L hL hc (posPart_nonneg _), rkSup_smul L hL hc (negPart_nonneg _)]
       ring
     · -- `c < 0`: scaling swaps the positive and negative parts.
-      have hnc : 0 ≤ -c := by linarith
-      have hp : (c • x)⁺ = (-c) • x⁻ := by
-        rw [show c • x = -((-c) • x) by rw [neg_smul, neg_neg], posPart_neg,
-          smul_negPart_of_nonneg hnc]
-      have hn : (c • x)⁻ = (-c) • x⁺ := by
-        rw [show c • x = -((-c) • x) by rw [neg_smul, neg_neg], negPart_neg,
-          smul_posPart_of_nonneg hnc]
-      rw [hp, hn, rkSup_smul L hL hnc (negPart_nonneg _), rkSup_smul L hL hnc (posPart_nonneg _)]
-      ring
+      exact Lpos_map_smul_neg L hL hc x
 
 /-- On the positive cone, `Lpos L hL` agrees with `rkSup L`. -/
 theorem Lpos_apply_of_nonneg (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) {f : E} (hf : 0 ≤ f) :
@@ -344,33 +388,41 @@ noncomputable instance instSup : Max (OrderBoundedDual E) where
 theorem sup_apply (L M : OrderBoundedDual E) (f : E) :
     (L ⊔ M).1 f = L.1 f + Lpos (M.1 - L.1) (M.2.sub L.2) f := rfl
 
+-- `instSemilatticeSup` helpers ------------------------------------------------
+
+private lemma rk_le_sup_left (L M : OrderBoundedDual E) (f : E) (hf : 0 ≤ f) :
+    L.1 f ≤ (L ⊔ M).1 f := by
+  rw [sup_apply]
+  have := Lpos_nonneg (M.1 - L.1) (M.2.sub L.2) hf
+  linarith
+
+private lemma rk_le_sup_right (L M : OrderBoundedDual E) (f : E) (hf : 0 ≤ f) :
+    M.1 f ≤ (L ⊔ M).1 f := by
+  rw [sup_apply]
+  have h := le_Lpos (M.1 - L.1) (M.2.sub L.2) hf
+  rw [LinearMap.sub_apply] at h
+  linarith
+
+private lemma rk_sup_le (L M N : OrderBoundedDual E) (hLN : L ≤ N) (hMN : M ≤ N)
+    (f : E) (hf : 0 ≤ f) : (L ⊔ M).1 f ≤ N.1 f := by
+  rw [sup_apply, ← le_sub_iff_add_le']
+  rw [Lpos_apply_of_nonneg (M.1 - L.1) (M.2.sub L.2) hf]
+  refine rkSup_le (M.1 - L.1) hf (fun g hg0 hgf => ?_)
+  rw [LinearMap.sub_apply]
+  have h1 : M.1 g - L.1 g ≤ N.1 g - L.1 g := by linarith [hMN g hg0]
+  have h2 : N.1 g - L.1 g ≤ N.1 f - L.1 f := by
+    have hpos : 0 ≤ N.1 (f - g) - L.1 (f - g) := by
+      have := hLN (f - g) (sub_nonneg.mpr hgf)
+      linarith
+    rw [map_sub, map_sub] at hpos
+    linarith
+  linarith
+
 noncomputable instance instSemilatticeSup : SemilatticeSup (OrderBoundedDual E) where
   sup := max
-  le_sup_left L M f hf := by
-    rw [sup_apply]
-    have := Lpos_nonneg (M.1 - L.1) (M.2.sub L.2) hf
-    linarith
-  le_sup_right L M f hf := by
-    rw [sup_apply]
-    have h := le_Lpos (M.1 - L.1) (M.2.sub L.2) hf
-    rw [LinearMap.sub_apply] at h
-    linarith
-  sup_le L M N hLN hMN f hf := by
-    rw [sup_apply]
-    rw [← le_sub_iff_add_le']
-    rw [Lpos_apply_of_nonneg (M.1 - L.1) (M.2.sub L.2) hf]
-    refine rkSup_le (M.1 - L.1) hf (fun g hg0 hgf => ?_)
-    rw [LinearMap.sub_apply]
-    -- (M - L) g = M g - L g ≤ N g - L g ≤ N f - L f
-    have h1 : M.1 g - L.1 g ≤ N.1 g - L.1 g := by linarith [hMN g hg0]
-    have h2 : N.1 g - L.1 g ≤ N.1 f - L.1 f := by
-      -- N - L ≥ 0 on the cone and f - g ≥ 0
-      have hpos : 0 ≤ N.1 (f - g) - L.1 (f - g) := by
-        have := hLN (f - g) (sub_nonneg.mpr hgf)
-        linarith
-      rw [map_sub, map_sub] at hpos
-      linarith
-    linarith
+  le_sup_left L M f hf := rk_le_sup_left L M f hf
+  le_sup_right L M f hf := rk_le_sup_right L M f hf
+  sup_le L M N hLN hMN f hf := rk_sup_le L M N hLN hMN f hf
 
 /-- Negation reverses the order. -/
 theorem neg_le_neg_iff {L M : OrderBoundedDual E} : (-L) ≤ (-M) ↔ M ≤ L := by

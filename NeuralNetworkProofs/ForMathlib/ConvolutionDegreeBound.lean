@@ -25,8 +25,80 @@ open MeasureTheory
 
 open scoped ContDiff
 
-/-- `(φ ⋆ σ) ⋆ ψ = (φ ⋆ ψ) ⋆ σ` for the real (`mul`) convolution, with `σ` locally integrable and
-`φ, ψ` continuous with compact support. -/
+-- ---------------------------------------------------------------------------
+-- Private helpers for conv_left_comm_mul
+-- ---------------------------------------------------------------------------
+
+/-- `ContinuousLinearMap.mul ℝ ℝ` satisfies the associativity coherence condition for
+`convolution_assoc`. -/
+private lemma mul_bilin_assoc : ∀ (x y z : ℝ),
+    ((ContinuousLinearMap.mul ℝ ℝ) ((ContinuousLinearMap.mul ℝ ℝ) x y)) z
+      = (ContinuousLinearMap.mul ℝ ℝ) x ((ContinuousLinearMap.mul ℝ ℝ) y z) := by
+  intro x y z; simp [mul_assoc]
+
+/-- Local integrability of `‖σ‖` follows from local integrability of `σ`. -/
+private lemma locallyIntegrable_norm {σ : ℝ → ℝ} (hσ : LocallyIntegrable σ volume) :
+    LocallyIntegrable (fun y => ‖σ y‖) volume := by
+  intro x; obtain ⟨s, hs, hint⟩ := hσ x; exact ⟨s, hs, hint.norm⟩
+
+/-- Continuity of `‖σ‖ ⋆ ‖ψ‖` when `σ` is locally integrable, `ψ` continuous with compact
+support. -/
+private lemma norm_conv_continuous {σ ψ : ℝ → ℝ} (hσ : LocallyIntegrable σ volume)
+    (hψ : Continuous ψ) (hψc : HasCompactSupport ψ) :
+    Continuous (convolution (fun y => ‖σ y‖) (fun y => ‖ψ y‖)
+      (ContinuousLinearMap.mul ℝ ℝ) volume) :=
+  hψc.norm.continuous_convolution_right (ContinuousLinearMap.mul ℝ ℝ)
+    (locallyIntegrable_norm hσ) hψ.norm
+
+/-- LHS associativity step: `(φ ⋆ σ) ⋆ ψ = φ ⋆ (σ ⋆ ψ)` pointwise. -/
+private lemma conv_assoc_lhs {σ φ ψ : ℝ → ℝ} (hσ : LocallyIntegrable σ volume)
+    (hφ : Continuous φ) (hφc : HasCompactSupport φ)
+    (hψ : Continuous ψ) (hψc : HasCompactSupport ψ) (x : ℝ) :
+    convolution (convolution φ σ (ContinuousLinearMap.mul ℝ ℝ) volume) ψ
+        (ContinuousLinearMap.mul ℝ ℝ) volume x
+      = convolution φ (convolution σ ψ (ContinuousLinearMap.mul ℝ ℝ) volume)
+        (ContinuousLinearMap.mul ℝ ℝ) volume x := by
+  refine convolution_assoc (ContinuousLinearMap.mul ℝ ℝ) (ContinuousLinearMap.mul ℝ ℝ)
+    (ContinuousLinearMap.mul ℝ ℝ) (ContinuousLinearMap.mul ℝ ℝ) mul_bilin_assoc
+    hφ.aestronglyMeasurable hσ.aestronglyMeasurable hψ.aestronglyMeasurable ?_ ?_ ?_
+  · exact Filter.Eventually.of_forall
+      (fun y => ConvolutionPolynomial.convolutionExists_left_mul hφ hφc hσ y)
+  · exact Filter.Eventually.of_forall
+      (fun y => ConvolutionPolynomial.convolutionExists_right_mul
+        (locallyIntegrable_norm hσ) hψ.norm hψc.norm y)
+  · exact ConvolutionPolynomial.convolutionExists_left_mul hφ.norm hφc.norm
+      (norm_conv_continuous hσ hψ hψc).locallyIntegrable x
+
+/-- RHS associativity step: `(φ ⋆ ψ) ⋆ σ = φ ⋆ (ψ ⋆ σ)` pointwise. -/
+private lemma conv_assoc_rhs {σ φ ψ : ℝ → ℝ} (hσ : LocallyIntegrable σ volume)
+    (hφ : Continuous φ) (hφc : HasCompactSupport φ)
+    (hψ : Continuous ψ) (hψc : HasCompactSupport ψ) (x : ℝ) :
+    convolution (convolution φ ψ (ContinuousLinearMap.mul ℝ ℝ) volume) σ
+        (ContinuousLinearMap.mul ℝ ℝ) volume x
+      = convolution φ (convolution ψ σ (ContinuousLinearMap.mul ℝ ℝ) volume)
+        (ContinuousLinearMap.mul ℝ ℝ) volume x := by
+  refine convolution_assoc (ContinuousLinearMap.mul ℝ ℝ) (ContinuousLinearMap.mul ℝ ℝ)
+    (ContinuousLinearMap.mul ℝ ℝ) (ContinuousLinearMap.mul ℝ ℝ) mul_bilin_assoc
+    hφ.aestronglyMeasurable hψ.aestronglyMeasurable hσ.aestronglyMeasurable ?_ ?_ ?_
+  · exact Filter.Eventually.of_forall
+      (fun y => ConvolutionPolynomial.convolutionExists_left_mul hφ hφc hψ.locallyIntegrable y)
+  · exact Filter.Eventually.of_forall
+      (fun y => ConvolutionPolynomial.convolutionExists_left_mul hψ.norm hψc.norm
+        (locallyIntegrable_norm hσ) y)
+  · have hcom :
+        convolution (fun y => ‖ψ y‖) (fun y => ‖σ y‖) (ContinuousLinearMap.mul ℝ ℝ) volume
+          = convolution (fun y => ‖σ y‖) (fun y => ‖ψ y‖) (ContinuousLinearMap.mul ℝ ℝ) volume :=
+      ConvolutionPolynomial.convolution_comm_mul _ _
+    rw [hcom]
+    exact ConvolutionPolynomial.convolutionExists_left_mul hφ.norm hφc.norm
+      (norm_conv_continuous hσ hψ hψc).locallyIntegrable x
+
+-- ---------------------------------------------------------------------------
+-- Public theorem (1 of 2) — needed by the helpers below
+-- ---------------------------------------------------------------------------
+
+/-- `(φ ⋆ σ) ⋆ ψ = (φ ⋆ ψ) ⋆ σ` for the real (`mul`) convolution, with `σ` locally integrable
+and `φ, ψ` continuous with compact support. -/
 theorem conv_left_comm_mul {σ φ ψ : ℝ → ℝ} (hσ : LocallyIntegrable σ volume)
     (hφ : Continuous φ) (hφc : HasCompactSupport φ)
     (hψ : Continuous ψ) (hψc : HasCompactSupport ψ) :
@@ -34,55 +106,61 @@ theorem conv_left_comm_mul {σ φ ψ : ℝ → ℝ} (hσ : LocallyIntegrable σ 
         (ContinuousLinearMap.mul ℝ ℝ) volume
       = convolution (convolution φ ψ (ContinuousLinearMap.mul ℝ ℝ) volume) σ
         (ContinuousLinearMap.mul ℝ ℝ) volume := by
-  set L := ContinuousLinearMap.mul ℝ ℝ with hL
-  -- measurability of the three factors
-  have hσint : LocallyIntegrable σ volume := hσ
-  have hσm : AEStronglyMeasurable σ volume := hσ.aestronglyMeasurable
-  have hφm : AEStronglyMeasurable φ volume := hφ.aestronglyMeasurable
-  have hψm : AEStronglyMeasurable ψ volume := hψ.aestronglyMeasurable
-  -- the coherence side-goal is `mul_assoc`
-  have hcoh : ∀ (x y z : ℝ), (L ((L x) y)) z = (L x) ((L y) z) := by
-    intro x y z; simp [hL, mul_assoc]
-  -- norm versions of the factors
-  have hφnc : Continuous (fun y => ‖φ y‖) := hφ.norm
-  have hψnc : Continuous (fun y => ‖ψ y‖) := hψ.norm
-  have hφnk : HasCompactSupport (fun y => ‖φ y‖) := hφc.norm
-  have hψnk : HasCompactSupport (fun y => ‖ψ y‖) := hψc.norm
-  have hσnint : LocallyIntegrable (fun y => ‖σ y‖) volume := by
-    intro x; obtain ⟨s, hs, hint⟩ := hσint x; exact ⟨s, hs, hint.norm⟩
-  -- `‖σ‖ ⋆ ‖ψ‖` is continuous (locally integrable × continuous compact support)
-  have hcSψ : Continuous (convolution (fun y => ‖σ y‖) (fun y => ‖ψ y‖) L volume) :=
-    hψnk.continuous_convolution_right L hσnint hψnc
   funext x
   -- LHS: `(φ ⋆ σ) ⋆ ψ = φ ⋆ (σ ⋆ ψ)`
-  have hLHS : convolution (convolution φ σ L volume) ψ L volume x
-      = convolution φ (convolution σ ψ L volume) L volume x := by
-    refine convolution_assoc L L L L hcoh hφm hσm hψm ?_ ?_ ?_
-    · exact Filter.Eventually.of_forall
-        (fun y => ConvolutionPolynomial.convolutionExists_left_mul hφ hφc hσint y)
-    · exact Filter.Eventually.of_forall
-        (fun y => ConvolutionPolynomial.convolutionExists_right_mul hσnint hψnc hψnk y)
-    · exact ConvolutionPolynomial.convolutionExists_left_mul hφnc hφnk hcSψ.locallyIntegrable x
+  have hLHS := conv_assoc_lhs hσ hφ hφc hψ hψc x
   -- RHS: `(φ ⋆ ψ) ⋆ σ = φ ⋆ (ψ ⋆ σ)`
-  have hRHS : convolution (convolution φ ψ L volume) σ L volume x
-      = convolution φ (convolution ψ σ L volume) L volume x := by
-    refine convolution_assoc L L L L hcoh hφm hψm hσm ?_ ?_ ?_
-    · exact Filter.Eventually.of_forall
-        (fun y => ConvolutionPolynomial.convolutionExists_left_mul hφ hφc
-          (hψ.locallyIntegrable) y)
-    · exact Filter.Eventually.of_forall
-        (fun y => ConvolutionPolynomial.convolutionExists_left_mul hψnc hψnk hσnint y)
-    · -- `‖ψ‖ ⋆ ‖σ‖ = ‖σ‖ ⋆ ‖ψ‖` is continuous, so `‖φ‖ ⋆ (‖ψ‖⋆‖σ‖)` exists
-      have hcom : convolution (fun y => ‖ψ y‖) (fun y => ‖σ y‖) (ContinuousLinearMap.mul ℝ ℝ) volume
-          = convolution (fun y => ‖σ y‖) (fun y => ‖ψ y‖) (ContinuousLinearMap.mul ℝ ℝ) volume :=
-        ConvolutionPolynomial.convolution_comm_mul _ _
-      rw [hcom]
-      exact ConvolutionPolynomial.convolutionExists_left_mul hφnc hφnk hcSψ.locallyIntegrable x
+  have hRHS := conv_assoc_rhs hσ hφ hφc hψ hψc x
   rw [hLHS, hRHS]
   -- inner factors agree by commutativity: `σ ⋆ ψ = ψ ⋆ σ`
   congr 1
-  rw [show L = ContinuousLinearMap.mul ℝ ℝ from hL]
   exact ConvolutionPolynomial.convolution_comm_mul σ ψ
+
+-- ---------------------------------------------------------------------------
+-- Private helpers for exists_uniform_degree_bound
+-- ---------------------------------------------------------------------------
+
+/-- Orientation bridge: `(p.eval) ⋆ ψ` as a convolution equals the explicit integral form
+used by `natDegree_poly_conv_eq`. -/
+private lemma poly_conv_bridge (p : Polynomial ℝ) (ψ : ℝ → ℝ) :
+    convolution (fun x => p.eval x) ψ (ContinuousLinearMap.mul ℝ ℝ) volume
+      = fun x => ∫ y, p.eval (x - y) * ψ y := by
+  rw [ConvolutionPolynomial.convolution_comm_mul]
+  funext x
+  rw [convolution_def]
+  refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
+  simp [mul_comm]
+
+/-- Route A: `(φ ⋆ ψ₀) ⋆ σ = q1.eval` via rewriting through `(φ ⋆ σ) ⋆ ψ₀ = pφ ⋆ ψ₀`. -/
+private lemma route_A_eq {σ φ ψ₀ : ℝ → ℝ} (hσ : LocallyIntegrable σ volume)
+    (hφcont : Continuous φ) (hφc : HasCompactSupport φ)
+    (hψ₀cont : Continuous ψ₀) (hψ₀c : HasCompactSupport ψ₀)
+    {pφ : Polynomial ℝ}
+    (hpφ : convolution φ σ (ContinuousLinearMap.mul ℝ ℝ) volume = fun t => pφ.eval t)
+    {q1 : Polynomial ℝ}
+    (hq1 : (fun x => ∫ y, pφ.eval (x - y) * ψ₀ y) = fun x => q1.eval x) :
+    convolution (convolution φ ψ₀ (ContinuousLinearMap.mul ℝ ℝ) volume) σ
+        (ContinuousLinearMap.mul ℝ ℝ) volume
+      = fun x => q1.eval x := by
+  rw [← conv_left_comm_mul hσ hφcont hφc hψ₀cont hψ₀c, hpφ, poly_conv_bridge, hq1]
+
+/-- Route B: `(φ ⋆ ψ₀) ⋆ σ = q2.eval` via rewriting through `(ψ₀ ⋆ φ) ⋆ σ = p₀ ⋆ φ`. -/
+private lemma route_B_eq {σ φ ψ₀ : ℝ → ℝ} (hσ : LocallyIntegrable σ volume)
+    (hφcont : Continuous φ) (hφc : HasCompactSupport φ)
+    (hψ₀cont : Continuous ψ₀) (hψ₀c : HasCompactSupport ψ₀)
+    {p₀ : Polynomial ℝ}
+    (hp₀ : convolution ψ₀ σ (ContinuousLinearMap.mul ℝ ℝ) volume = fun t => p₀.eval t)
+    {q2 : Polynomial ℝ}
+    (hq2 : (fun x => ∫ y, p₀.eval (x - y) * φ y) = fun x => q2.eval x) :
+    convolution (convolution φ ψ₀ (ContinuousLinearMap.mul ℝ ℝ) volume) σ
+        (ContinuousLinearMap.mul ℝ ℝ) volume
+      = fun x => q2.eval x := by
+  rw [ConvolutionPolynomial.convolution_comm_mul φ ψ₀,
+    ← conv_left_comm_mul hσ hψ₀cont hψ₀c hφcont hφc, hp₀, poly_conv_bridge, hq2]
+
+-- ---------------------------------------------------------------------------
+-- Public theorem (2 of 2)
+-- ---------------------------------------------------------------------------
 
 /-- **Uniform degree bound.** If convolving a fixed locally integrable `σ` against every `C^∞`
 compactly-supported kernel `φ` is an everywhere polynomial, then there is a single `d : ℕ` bounding
@@ -93,8 +171,8 @@ The proof is elementary and Baire-free. Fix a normalized smooth bump `ψ₀` wit
 hypothesis `ψ₀ ⋆ σ` is a polynomial `p₀`, and we show `d := p₀.natDegree` works. For any test `φ`,
 with `φ ⋆ σ = pφ`, compute `(φ ⋆ ψ₀) ⋆ σ` two ways via convolution associativity/commutativity
 (`conv_left_comm_mul`): one route gives `pφ ⋆ ψ₀`, which has `natDegree = pφ.natDegree` since
-convolving against `ψ₀` preserves degree (`∫ ψ₀ = 1 ≠ 0`, `natDegree_poly_conv_eq`); the other gives
-`p₀ ⋆ φ`, which has `natDegree ≤ p₀.natDegree` (`poly_conv_isPoly`). Both represent the same
+convolving against `ψ₀` preserves degree (`∫ ψ₀ = 1 ≠ 0`, `natDegree_poly_conv_eq`); the other
+gives `p₀ ⋆ φ`, which has `natDegree ≤ p₀.natDegree` (`poly_conv_isPoly`). Both represent the same
 function, so `pφ.natDegree ≤ p₀.natDegree` (`Polynomial.funext`), and the bound follows from
 `iteratedDeriv_succ_eq_zero_of_natDegree_le`. -/
 theorem exists_uniform_degree_bound {σ : ℝ → ℝ} (hσ : LocallyIntegrable σ volume)
@@ -111,16 +189,6 @@ theorem exists_uniform_degree_bound {σ : ℝ → ℝ} (hσ : LocallyIntegrable 
   have hψ₀c : HasCompactSupport ψ₀ := b0.hasCompactSupport_normed
   have hψ₀int : (∫ y, ψ₀ y) = 1 := b0.integral_normed
   have hψ₀mom : (∫ y, ψ₀ y) ≠ 0 := by rw [hψ₀int]; exact one_ne_zero
-  -- bridge: `(p.eval) ⋆ ψ` in the convolution orientation of Task 3's integral
-  have hbridge : ∀ (p : Polynomial ℝ) (ψ : ℝ → ℝ),
-      convolution (fun x => p.eval x) ψ (ContinuousLinearMap.mul ℝ ℝ) volume
-        = fun x => ∫ y, p.eval (x - y) * ψ y := by
-    intro p ψ
-    rw [ConvolutionPolynomial.convolution_comm_mul]
-    funext x
-    rw [convolution_def]
-    refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
-    simp [mul_comm]
   -- degree of `ψ₀ ⋆ σ` gives the uniform bound `d₀`
   obtain ⟨p₀, hp₀⟩ := H ψ₀ hψ₀sm hψ₀c
   refine ⟨p₀.natDegree, fun φ hφ hφc => ?_⟩
@@ -130,21 +198,13 @@ theorem exists_uniform_degree_bound {σ : ℝ → ℝ} (hσ : LocallyIntegrable 
   suffices hbound : pφ.natDegree ≤ p₀.natDegree by
     rw [hpφ]
     exact IteratedDerivPolynomial.iteratedDeriv_succ_eq_zero_of_natDegree_le hbound
-  -- `F := (φ ⋆ ψ₀) ⋆ σ`, computed two ways
-  -- Route A: via `(φ ⋆ σ) ⋆ ψ₀ = pφ.eval ⋆ ψ₀`, degree `= pφ.natDegree`
+  -- Route A: via `(φ ⋆ σ) ⋆ ψ₀ = pφ ⋆ ψ₀`, degree `= pφ.natDegree`
   obtain ⟨q1, hq1, hq1deg⟩ := ConvolutionPolynomial.natDegree_poly_conv_eq hψ₀cont hψ₀c pφ hψ₀mom
-  -- Route B: via `(ψ₀ ⋆ σ) ⋆ φ = p₀.eval ⋆ φ`, degree `≤ p₀.natDegree`
+  -- Route B: via `(ψ₀ ⋆ σ) ⋆ φ = p₀ ⋆ φ`, degree `≤ p₀.natDegree`
   obtain ⟨q2, hq2, hq2deg, -⟩ := ConvolutionPolynomial.poly_conv_isPoly hφcont hφc p₀
   -- the two polynomial representations of `F` agree, so `q1 = q2`
-  have hFA : convolution (convolution φ ψ₀ (ContinuousLinearMap.mul ℝ ℝ) volume) σ
-        (ContinuousLinearMap.mul ℝ ℝ) volume
-      = fun x => q1.eval x := by
-    rw [← conv_left_comm_mul hσ hφcont hφc hψ₀cont hψ₀c, hpφ, hbridge, hq1]
-  have hFB : convolution (convolution φ ψ₀ (ContinuousLinearMap.mul ℝ ℝ) volume) σ
-        (ContinuousLinearMap.mul ℝ ℝ) volume
-      = fun x => q2.eval x := by
-    rw [ConvolutionPolynomial.convolution_comm_mul φ ψ₀,
-      ← conv_left_comm_mul hσ hψ₀cont hψ₀c hφcont hφc, hp₀, hbridge, hq2]
+  have hFA := route_A_eq hσ hφcont hφc hψ₀cont hψ₀c hpφ hq1
+  have hFB := route_B_eq hσ hφcont hφc hψ₀cont hψ₀c hp₀ hq2
   have hq12 : q1 = q2 :=
     Polynomial.funext (fun r => congrFun (hFA.symm.trans hFB) r)
   rw [← hq1deg, hq12]

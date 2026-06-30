@@ -79,6 +79,13 @@ private lemma hasCompactSupport_antideriv {h : ℝ → ℝ}
     intro y hy
     exact hzero y (fun hmem => hy (le_trans hmem.2 hhi.le))
 
+/-- `deriv (antideriv g) = g` pointwise, for `g` continuous and compactly supported. -/
+private lemma deriv_antideriv_eq {g : ℝ → ℝ} (hg : Continuous g)
+    (hgc : HasCompactSupport g) : deriv (antideriv g) = g := by
+  funext x
+  exact (hasDerivAt_antideriv hg
+    (integrableOn_Iic_of_compactSupport hg hgc) x).deriv
+
 /-- **Moment shift under integration.** Integration by parts relates the `j`-th moment of the
 indefinite integral of a `C^∞` compactly-supported `h` to the `(j+1)`-th moment of `h`:
 `(j+1) * ∫ y, y^j * (antideriv h) y = - ∫ y, y^(j+1) * h y`. -/
@@ -93,14 +100,12 @@ private lemma moment_antideriv {h : ℝ → ℝ} (hh : ContDiff ℝ ∞ h)
   have hpoly : ∀ x : ℝ, HasDerivAt (fun y : ℝ => y ^ (j + 1)) (((j : ℝ) + 1) * x ^ j) x := by
     intro x; simpa using hasDerivAt_pow (j + 1) x
   -- Integrability of the three products appearing in integration by parts.
-  have hcpoly : Continuous (fun y : ℝ => ((j : ℝ) + 1) * y ^ j) := by fun_prop
-  have hcpoly1 : Continuous (fun y : ℝ => y ^ (j + 1)) := by fun_prop
   have hi_uv' : Integrable (antideriv h * fun y => ((j : ℝ) + 1) * y ^ j) :=
-    ((hAcont.mul hcpoly).integrable_of_hasCompactSupport (hAsupp.mul_right))
+    ((hAcont.mul (by fun_prop)).integrable_of_hasCompactSupport (hAsupp.mul_right))
   have hi_u'v : Integrable (h * fun y => y ^ (j + 1)) :=
-    ((hcont.mul hcpoly1).integrable_of_hasCompactSupport (hhc.mul_right))
+    ((hcont.mul (by fun_prop)).integrable_of_hasCompactSupport (hhc.mul_right))
   have hi_uv : Integrable (antideriv h * fun y => y ^ (j + 1)) :=
-    ((hAcont.mul hcpoly1).integrable_of_hasCompactSupport (hAsupp.mul_right))
+    ((hAcont.mul (by fun_prop)).integrable_of_hasCompactSupport (hAsupp.mul_right))
   -- Integration by parts on (-∞, ∞).
   have key := MeasureTheory.integral_mul_deriv_eq_deriv_mul_of_integrable
     (u := antideriv h) (v := fun y => y ^ (j + 1)) (u' := h)
@@ -111,6 +116,19 @@ private lemma moment_antideriv {h : ℝ → ℝ} (hh : ContDiff ℝ ∞ h)
       = antideriv h x * (((j : ℝ) + 1) * x ^ j) from fun x => by ring,
     show ∀ x : ℝ, x ^ (j + 1) * h x = h x * x ^ (j + 1) from fun x => by ring]
   exact key
+
+/-- If `g` is `C^∞`, compactly supported, `∫ g = 0`, and the `(j+1)`-st moments of `g` vanish
+for `j ≤ d`, then the `j`-th moments of `antideriv g` vanish for `j ≤ d`. -/
+private lemma moments_zero_antideriv {g : ℝ → ℝ} (hg : ContDiff ℝ ∞ g)
+    (hgc : HasCompactSupport g) (hint : ∫ y, g y = 0) (d : ℕ)
+    (hmom : ∀ j ≤ d + 1, ∫ y, y ^ j * g y = 0) :
+    ∀ j ≤ d, ∫ y, y ^ j * antideriv g y = 0 := by
+  intro j hj
+  have hcoeff : ((j : ℝ) + 1) ≠ 0 := by positivity
+  have hkey := moment_antideriv hg hgc hint j
+  have hzero : ∫ y, y ^ (j + 1) * g y = 0 := hmom (j + 1) (by omega)
+  rw [hzero, neg_zero] at hkey
+  exact (mul_eq_zero.1 hkey).resolve_left hcoeff
 
 /-- If `g : ℝ → ℝ` is `C^∞`, compactly supported, and has vanishing moments
 `∫ y, (y ^ j) * g y = 0` for all `j ≤ d`, then `g = iteratedDeriv (d+1) φ` for some `C^∞`
@@ -125,30 +143,19 @@ theorem exists_iteratedDeriv_eq_of_moments_zero {g : ℝ → ℝ} (d : ℕ)
     -- Single antiderivative: `∫ g = 0` makes it compactly supported, and its derivative is `g`.
     have hint : ∫ y, g y = 0 := by simpa using hmom 0 (le_refl 0)
     refine ⟨antideriv g, contDiff_antideriv hg hgc, hasCompactSupport_antideriv hgc hint, ?_⟩
-    have hderiv : ∀ x, HasDerivAt (antideriv g) (g x) x := fun x =>
-      hasDerivAt_antideriv hg.continuous
-        (integrableOn_Iic_of_compactSupport hg.continuous hgc) x
     rw [iteratedDeriv_one]
-    funext x; exact (hderiv x).deriv
+    exact deriv_antideriv_eq hg.continuous hgc
   | succ d ih =>
     -- Step: `h := antideriv g` is `C^∞`, compactly supported, and its moments up to `d` vanish.
     have hint : ∫ y, g y = 0 := by simpa using hmom 0 (Nat.zero_le _)
     have hhsmooth : ContDiff ℝ ∞ (antideriv g) := contDiff_antideriv hg hgc
     have hhsupp : HasCompactSupport (antideriv g) := hasCompactSupport_antideriv hgc hint
-    have hhmom : ∀ j ≤ d, ∫ y, y ^ j * antideriv g y = 0 := by
-      intro j hj
-      have hcoeff : ((j : ℝ) + 1) ≠ 0 := by positivity
-      have hkey := moment_antideriv hg hgc hint j
-      have hzero : ∫ y, y ^ (j + 1) * g y = 0 := hmom (j + 1) (by omega)
-      rw [hzero, neg_zero] at hkey
-      exact (mul_eq_zero.1 hkey).resolve_left hcoeff
+    have hhmom : ∀ j ≤ d, ∫ y, y ^ j * antideriv g y = 0 :=
+      moments_zero_antideriv hg hgc hint d hmom
     obtain ⟨ψ, hψsmooth, hψsupp, hψeq⟩ := ih (g := antideriv g) hhsmooth hhsupp hhmom
     refine ⟨ψ, hψsmooth, hψsupp, ?_⟩
     -- `iteratedDeriv (d+2) ψ = deriv (iteratedDeriv (d+1) ψ) = deriv (antideriv g) = g`.
     rw [iteratedDeriv_succ, hψeq]
-    have hderiv : ∀ x, HasDerivAt (antideriv g) (g x) x := fun x =>
-      hasDerivAt_antideriv hg.continuous
-        (integrableOn_Iic_of_compactSupport hg.continuous hgc) x
-    funext x; exact (hderiv x).deriv
+    exact deriv_antideriv_eq hg.continuous hgc
 
 end SmoothCompactAntideriv
