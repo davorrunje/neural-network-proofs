@@ -97,8 +97,15 @@ exported lemma's consumers are always in downstream (not-yet-decomposed) files:
 
 - **Subagent-driven development** (the Phase 2 workflow): one implementer per
   task (stage-only — `git add`, never commit), then a task reviewer (spec
-  compliance + code quality). Controller commits **and signs** each task as it
-  lands (SSH signing is working again — no deferred batch re-sign this time).
+  compliance + code quality). Controller commits each task as it lands
+  **unsigned** (`git -c commit.gpgsign=false commit`).
+- **Deferred signing (hard requirement).** SSH commit-signing requires the
+  user's live presence to confirm the agent operation, which is *not* available
+  during autonomous execution. Therefore **no commit is signed during
+  execution**; the entire branch is **batch-signed in a single step immediately
+  before opening the PR** (`git rebase --exec 'git commit --amend --no-edit -S'
+  <base>`), a step the user must be present for. The PR is opened only after
+  every commit shows `G`.
 - **Two concurrent tracks:** the controller may have one Cybenko task and one
   Leshno task in flight at once (disjoint files — no commit contention).
 - **Ledger** at `.superpowers/sdd/progress.md` records each task completion
