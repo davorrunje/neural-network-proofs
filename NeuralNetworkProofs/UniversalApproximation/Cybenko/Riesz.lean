@@ -70,6 +70,49 @@ private noncomputable def cscFunctional [CompactSpace ↥K] (Lp : C(↥K, ℝ) �
       have := (CompactlySupportedContinuousMap.le_def.mp hf) x
       simpa using this))
 
+/-- For two finite measures the truncated-difference measures satisfy the symmetric
+identity `(μ - ν) + ν = (ν - μ) + μ` (both sides equal the pointwise supremum
+`μ ⊔ ν`). Proved by comparing the two measures on a Hahn decomposition set and its
+complement, where on each piece one truncated difference vanishes. -/
+private lemma measure_sub_add_comm {X : Type*} [MeasurableSpace X] (μ ν : Measure X)
+    [IsFiniteMeasure μ] [IsFiniteMeasure ν] : (μ - ν) + ν = (ν - μ) + μ := by
+  obtain ⟨s, hs⟩ := exists_isHahnDecomposition μ ν
+  have hms := hs.measurableSet
+  have rs : ((μ - ν) + ν).restrict s = ((ν - μ) + μ).restrict s := by
+    rw [Measure.restrict_add, Measure.restrict_add,
+      Measure.restrict_sub_eq_restrict_sub_restrict hms,
+      Measure.restrict_sub_eq_restrict_sub_restrict hms,
+      Measure.sub_eq_zero_of_le hs.le_on, zero_add, Measure.sub_add_cancel_of_le hs.le_on]
+  have rsc : ((μ - ν) + ν).restrict sᶜ = ((ν - μ) + μ).restrict sᶜ := by
+    rw [Measure.restrict_add, Measure.restrict_add,
+      Measure.restrict_sub_eq_restrict_sub_restrict hms.compl,
+      Measure.restrict_sub_eq_restrict_sub_restrict hms.compl,
+      Measure.sub_eq_zero_of_le hs.compl.le_on, zero_add,
+      Measure.sub_add_cancel_of_le hs.compl.le_on]
+  rw [← Measure.restrict_add_restrict_compl (μ := (μ - ν) + ν) hms,
+    ← Measure.restrict_add_restrict_compl (μ := (ν - μ) + μ) hms, rs, rsc]
+
+/-- The signed integral against a difference of two finite measures splits as the
+difference of the two Bochner integrals, provided `g` is integrable against every
+finite measure. Unfolds `signedIntegral` via the Jordan decomposition of the
+difference and uses `measure_sub_add_comm` to relate the truncated-difference parts. -/
+private lemma signedIntegral_toSignedMeasure_sub (μ ν : Measure ↥K)
+    [IsFiniteMeasure μ] [IsFiniteMeasure ν] (g : ↥K → ℝ)
+    (hgint : ∀ ρ : Measure ↥K, IsFiniteMeasure ρ → Integrable g ρ) :
+    signedIntegral (μ.toSignedMeasure - ν.toSignedMeasure) g =
+      (∫ x, g x ∂μ) - ∫ x, g x ∂ν := by
+  unfold signedIntegral
+  rw [Measure.toJordanDecomposition_toSignedMeasure_sub,
+    Measure.jordanDecompositionOfToSignedMeasureSub_posPart,
+    Measure.jordanDecompositionOfToSignedMeasureSub_negPart]
+  haveI : IsFiniteMeasure (μ - ν) := Measure.isFiniteMeasure_sub
+  haveI : IsFiniteMeasure (ν - μ) := Measure.isFiniteMeasure_sub
+  have hkey : ∫ x, g x ∂((μ - ν) + ν) = ∫ x, g x ∂((ν - μ) + μ) := by
+    rw [measure_sub_add_comm]
+  rw [integral_add_measure (hgint _ inferInstance) (hgint _ inferInstance),
+    integral_add_measure (hgint _ inferInstance) (hgint _ inferInstance)] at hkey
+  linarith
+
 /-- Riesz representation of `(C(K,ℝ))*` by signed regular Borel measures, assembled
 from the Riesz–Kantorovich decomposition (`exists_positive_decomposition`) and the
 positive Riesz–Markov–Kakutani theorem (`RealRMK.rieszMeasure`). -/
@@ -113,35 +156,7 @@ theorem riesz_repr [CompactSpace ↥K] (L : C(↥K, ℝ) →L[ℝ] ℝ) :
     -- Jordan parts of the difference are `μp - μn` and `μn - μp`.
     have hsi : signedIntegral μ (⇑g) = ∫ x, g x ∂μp - ∫ x, g x ∂μn := by
       rw [hμ_def]
-      unfold signedIntegral
-      rw [Measure.toJordanDecomposition_toSignedMeasure_sub,
-        Measure.jordanDecompositionOfToSignedMeasureSub_posPart,
-        Measure.jordanDecompositionOfToSignedMeasureSub_negPart]
-      haveI : IsFiniteMeasure (μp - μn) := Measure.isFiniteMeasure_sub
-      haveI : IsFiniteMeasure (μn - μp) := Measure.isFiniteMeasure_sub
-      -- `(μp - μn) + μn = (μn - μp) + μp` (both equal `μp ⊔ μn`).
-      obtain ⟨s, hs⟩ := exists_isHahnDecomposition μp μn
-      have hms := hs.measurableSet
-      have hmeq : (μp - μn) + μn = (μn - μp) + μp := by
-        have rs : ((μp - μn) + μn).restrict s = ((μn - μp) + μp).restrict s := by
-          rw [Measure.restrict_add, Measure.restrict_add,
-            Measure.restrict_sub_eq_restrict_sub_restrict hms,
-            Measure.restrict_sub_eq_restrict_sub_restrict hms,
-            Measure.sub_eq_zero_of_le hs.le_on, zero_add, Measure.sub_add_cancel_of_le hs.le_on]
-        have rsc : ((μp - μn) + μn).restrict sᶜ = ((μn - μp) + μp).restrict sᶜ := by
-          rw [Measure.restrict_add, Measure.restrict_add,
-            Measure.restrict_sub_eq_restrict_sub_restrict hms.compl,
-            Measure.restrict_sub_eq_restrict_sub_restrict hms.compl,
-            Measure.sub_eq_zero_of_le hs.compl.le_on, zero_add,
-            Measure.sub_add_cancel_of_le hs.compl.le_on]
-        rw [← Measure.restrict_add_restrict_compl (μ := (μp - μn) + μn) hms,
-          ← Measure.restrict_add_restrict_compl (μ := (μn - μp) + μp) hms, rs, rsc]
-      -- integrate the measure identity
-      have hkey : ∫ x, g x ∂((μp - μn) + μn) = ∫ x, g x ∂((μn - μp) + μp) := by
-        rw [hmeq]
-      rw [integral_add_measure (hgint _ inferInstance) (hgint _ inferInstance),
-        integral_add_measure (hgint _ inferInstance) (hgint _ inferInstance)] at hkey
-      linarith
+      exact signedIntegral_toSignedMeasure_sub μp μn (⇑g) hgint
     rw [hsi, hip, hin]
     change L g = Lp g - Lm g
     have := hL g
