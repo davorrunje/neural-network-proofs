@@ -19,9 +19,8 @@ For a resolution `m`, grid points are indexed by `k : Fin d → Fin (m + 1)`, wi
 sampling a monotone `f` at the grid gives a labelling that respects the order, which is exactly the
 hypothesis consumed by the interpolation theorem (Task 3).
 
-* `gridPoint` — the point of a grid index; `gridPoint_mem_Icc`, `gridPoint_monotone`,
-  `gridPoint_injective` its basic order/injectivity facts.
-* `grid` — the finite set of grid points.
+* `gridPoint` — the point of a grid index; `gridPoint_mem_Icc`, `gridPoint_injective` its basic
+  order/injectivity facts.
 * `gridEnum` — an injective enumeration `Fin _ → (Fin d → ℝ)` of the grid, with
   `gridEnum_monotone_dataset` the monotone-dataset property for a monotone `f`.
 * `grid_neighbors` — for `x` in the cube, grid indices whose points sandwich `x` coordinatewise with
@@ -50,13 +49,6 @@ theorem gridPoint_mem_Icc {d : ℕ} (m : ℕ) (k : Fin d → Fin (m + 1)) :
       have : (k i : ℕ) ≤ m := Nat.lt_succ_iff.mp (k i).is_lt
       exact_mod_cast this
 
-/-- The index-to-point map is monotone for the coordinatewise (Pi) orders. -/
-theorem gridPoint_monotone {d : ℕ} (m : ℕ) : Monotone (gridPoint (d := d) m) := by
-  intro k l hkl i
-  simp only [gridPoint]
-  gcongr
-  exact_mod_cast hkl i
-
 /-- When `0 < m`, distinct grid indices give distinct grid points. -/
 theorem gridPoint_injective {d : ℕ} {m : ℕ} (hm : 0 < m) :
     Function.Injective (gridPoint (d := d) m) := by
@@ -69,10 +61,6 @@ theorem gridPoint_injective {d : ℕ} {m : ℕ} (hm : 0 < m) :
     exact hi
   have : (k i : ℕ) = (l i : ℕ) := by exact_mod_cast this
   exact Fin.ext this
-
-/-- The finite set of grid points at resolution `m`. -/
-noncomputable def grid {d : ℕ} (m : ℕ) : Finset (Fin d → ℝ) :=
-  Finset.univ.image (gridPoint (d := d) m)
 
 /-- An injective enumeration of the grid indices by `Fin _`, and hence of the grid points via
 `gridPoint`.  Concretely, `gridEnum m := gridPoint m ∘ e.symm` where `e` is the canonical

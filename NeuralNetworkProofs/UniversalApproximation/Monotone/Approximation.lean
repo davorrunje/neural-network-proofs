@@ -109,7 +109,6 @@ theorem monotone_approximation {d : ℕ} (f : (Fin d → ℝ) → ℝ)
   have hfl : f xl ≤ f x := hmono hxlmem hx hxl
   have hfr : f x ≤ f xr := hmono hx hxrmem hxr
   -- the interval `[f xl, f xr]` has width at most `ε`
-  have hmpos : (0 : ℝ) < m := by exact_mod_cast hm
   have hxlr : xl ≤ xr := le_trans hxl hxr
   have hdist : dist xr xl ≤ 1 / m := by
     apply dist_le_of_coord (by positivity)
