@@ -33,6 +33,35 @@ namespace UniversalApproximation.Leshno
 open Topology
 open scoped RealInnerProductSpace ContDiff
 
+/-- Every generator of the smooth engine's span `Sg (mollify σ φ) I` lies in the continuous core
+`T σ I`. A generator `t ↦ mollify σ φ (lb.1 * t + lb.2)` is exactly the dilated/translated ridge of
+the mollification with weight `w = 1`, bias `b = 0`, dilation `lb.1`, shift `lb.2`, so
+`mollify_ridge_mem_T` (the hard `M`-class core) places it in `T σ I`. -/
+private lemma smoothMollify_span_le_T {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff ℝ ∞ φ)
+    (hφc : HasCompactSupport φ) {I : Set ℝ} (hI : IsCompact I)
+    (hcont : Continuous (mollify σ φ)) :
+    Sg (mollify σ φ) I hcont ≤ T σ I := by
+  rw [Sg, Submodule.span_le]
+  rintro _ ⟨lb, rfl⟩
+  -- The generator `t ↦ mollify σ φ (lb.1 * t + lb.2)` is the mollified ridge with `w = 1, b = 0`.
+  have hridge : Continuous fun t : ↥I =>
+      mollify σ φ (lb.1 * (⟪(1 : ℝ), (t : ℝ)⟫ + 0) + lb.2) := by
+    have haff : Continuous fun t : ↥I => lb.1 * (⟪(1 : ℝ), (t : ℝ)⟫ + 0) + lb.2 := by
+      simp only [RCLike.inner_apply, conj_trivial]; fun_prop
+    exact hcont.comp haff
+  have hmem := mollify_ridge_mem_T hσ hφ hφc I hI (1 : ℝ) 0 lb.1 lb.2 hridge
+  -- The generator equals this mollified ridge (using `⟪(1:ℝ), t⟫ = t`).
+  change (⟨fun t : ↥I => mollify σ φ (lb.1 * (t : ℝ) + lb.2), by exact hcont.comp (by fun_prop)⟩
+      : C(↥I, ℝ)) ∈ T σ I
+  have heq : (⟨fun t : ↥I => mollify σ φ (lb.1 * (t : ℝ) + lb.2), by exact hcont.comp (by fun_prop)⟩
+      : C(↥I, ℝ))
+      = (⟨fun t : ↥I => mollify σ φ (lb.1 * (⟪(1 : ℝ), (t : ℝ)⟫ + 0) + lb.2), hridge⟩
+          : C(↥I, ℝ)) := by
+    ext t
+    simp
+  rw [heq]
+  exact hmem
+
 /-- For an `M`-class non-a.e.-polynomial `σ`, every continuous function on a compact `I ⊆ ℝ` is
 approximable by `genSpan σ I`, i.e. `T σ I = ⊤`. -/
 theorem univariate_density {σ : ℝ → ℝ} (hσ : ClassM σ) (hnp : ¬ IsAEPolynomial σ) :
@@ -45,28 +74,8 @@ theorem univariate_density {σ : ℝ → ℝ} (hσ : ClassM σ) (hnp : ¬ IsAEPo
   -- The smooth engine fills out the closure of `Sg g₀`.
   have heng : (Sg g₀ I hg₀.continuous).topologicalClosure = ⊤ := smooth_engine hg₀ hnp₀ I hI
   -- Each generator of `Sg g₀` is a mollified ridge living in `T σ I`.
-  have hgen_le : Sg g₀ I hg₀.continuous ≤ T σ I := by
-    rw [Sg, Submodule.span_le]
-    rintro _ ⟨lb, rfl⟩
-    -- The generator `t ↦ g₀ (lb.1 * t + lb.2)` is the mollified ridge with `w = 1, b = 0`.
-    have hcontg₀ : Continuous g₀ := hg₀.continuous
-    have hcont : Continuous fun t : ↥I =>
-        mollify σ φ (lb.1 * (⟪(1 : ℝ), (t : ℝ)⟫ + 0) + lb.2) := by
-      have haff : Continuous fun t : ↥I => lb.1 * (⟪(1 : ℝ), (t : ℝ)⟫ + 0) + lb.2 := by
-        simp only [RCLike.inner_apply, conj_trivial]; fun_prop
-      exact hcontg₀.comp haff
-    have hmem := mollify_ridge_mem_T hσ hφ hφc I hI (1 : ℝ) 0 lb.1 lb.2 hcont
-    -- The generator equals this mollified ridge (using `⟪(1:ℝ), t⟫ = t`).
-    change (⟨fun t : ↥I => g₀ (lb.1 * (t : ℝ) + lb.2), by exact hcontg₀.comp (by fun_prop)⟩
-        : C(↥I, ℝ)) ∈ T σ I
-    have heq : (⟨fun t : ↥I => g₀ (lb.1 * (t : ℝ) + lb.2), by exact hcontg₀.comp (by fun_prop)⟩
-        : C(↥I, ℝ))
-        = (⟨fun t : ↥I => mollify σ φ (lb.1 * (⟪(1 : ℝ), (t : ℝ)⟫ + 0) + lb.2), hcont⟩
-            : C(↥I, ℝ)) := by
-      ext t
-      simp [hg₀def]
-    rw [heq]
-    exact hmem
+  have hgen_le : Sg g₀ I hg₀.continuous ≤ T σ I :=
+    smoothMollify_span_le_T hσ hφ hφc hI hg₀.continuous
   -- `T σ I` is closed and contains `Sg g₀`, so it contains the closure `= ⊤`.
   have hclosed : IsClosed (T σ I : Set C(↥I, ℝ)) := T_isClosed σ hI
   have hle : (Sg g₀ I hg₀.continuous).topologicalClosure ≤ T σ I :=
