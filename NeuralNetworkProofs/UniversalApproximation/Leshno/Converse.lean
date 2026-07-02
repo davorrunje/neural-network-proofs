@@ -76,6 +76,14 @@ theorem monomial_notMem_Pd (d : ℕ) : restrictLM (Polynomial.X ^ (d + 1)) ∉ P
     exact_mod_cast (Nat.lt_succ_self d)
   exact absurd hq hlt.not_ge
 
+/-- The monomial `t^(d+1)` restricted to `[0,1]` has strictly positive distance to the (closed,
+finite-dimensional) space `Pd d` of degree-`≤ d` polynomial functions. -/
+private theorem infDist_monomial_Pd_pos (d : ℕ) :
+    0 < Metric.infDist (restrictLM (Polynomial.X ^ (d + 1))) (Pd d : Set C(↥II, ℝ)) := by
+  rw [← Metric.infDist_pos_iff_notMem_closure ⟨0, (Pd d).zero_mem⟩,
+    (Pd_isClosed d).closure_eq]
+  exact monomial_notMem_Pd d
+
 /-- The affine map `t ↦ a*t+b` (with `a ≠ 0`) is quasi measure preserving for Lebesgue measure. -/
 theorem quasiMeasurePreserving_affine {a b : ℝ} (ha : a ≠ 0) :
     Measure.QuasiMeasurePreserving (fun t : ℝ => a * t + b) volume volume := by
@@ -90,6 +98,17 @@ theorem quasiMeasurePreserving_affine {a b : ℝ} (ha : a ≠ 0) :
     ext t; simp
   rwa [this] at hcomp
 
+/-- Composing `p` with a polynomial `L` of degree `≤ 1` (e.g. an affine reparametrisation) does
+not raise the degree past `p.natDegree`. -/
+private theorem degree_comp_le_of_natDegree_le_one (p L : Polynomial ℝ) (hL : L.natDegree ≤ 1) :
+    (p.comp L).degree ≤ (p.natDegree : WithBot ℕ) := by
+  have hnat : (p.comp L).natDegree ≤ p.natDegree := by
+    refine le_trans Polynomial.natDegree_comp_le ?_
+    calc p.natDegree * L.natDegree ≤ p.natDegree * 1 := Nat.mul_le_mul_left _ hL
+      _ = p.natDegree := mul_one _
+  calc (p.comp L).degree ≤ ((p.comp L).natDegree : WithBot ℕ) := Polynomial.degree_le_natDegree
+    _ ≤ (p.natDegree : WithBot ℕ) := by exact_mod_cast hnat
+
 /-- Given `σ =ᵐ p.eval`, the rescaled function `t ↦ σ(a*t+b)` agrees a.e. with a polynomial of
 degree `≤ p.natDegree` (in fact `p.comp (a•X + b)`). Handles `a = 0` (constant) too. -/
 theorem aeEq_poly_of_affine {σ : ℝ → ℝ} {p : Polynomial ℝ} (hp : σ =ᵐ[volume] fun t => p.eval t)
@@ -103,20 +122,13 @@ theorem aeEq_poly_of_affine {σ : ℝ → ℝ} {p : Polynomial ℝ} (hp : σ =�
     simp [ha]
   · -- `a ≠ 0`: compose `σ =ᵐ p.eval` with the affine map.
     set L : Polynomial ℝ := Polynomial.C a * Polynomial.X + Polynomial.C b with hL
-    refine ⟨p.comp L, ?_, ?_⟩
-    · -- degree of comp ≤ natDegree p, via natDegree
-      have hLnat : L.natDegree ≤ 1 := by
-        rw [hL]
-        refine le_trans (Polynomial.natDegree_add_le _ _) (max_le ?_ ?_)
-        · exact le_trans (Polynomial.natDegree_C_mul_le a Polynomial.X)
-            (by simp [Polynomial.natDegree_X])
-        · simp [Polynomial.natDegree_C]
-      have hnat : (p.comp L).natDegree ≤ p.natDegree := by
-        refine le_trans Polynomial.natDegree_comp_le ?_
-        calc p.natDegree * L.natDegree ≤ p.natDegree * 1 := Nat.mul_le_mul_left _ hLnat
-          _ = p.natDegree := mul_one _
-      calc (p.comp L).degree ≤ ((p.comp L).natDegree : WithBot ℕ) := Polynomial.degree_le_natDegree
-        _ ≤ (p.natDegree : WithBot ℕ) := by exact_mod_cast hnat
+    have hLnat : L.natDegree ≤ 1 := by
+      rw [hL]
+      refine le_trans (Polynomial.natDegree_add_le _ _) (max_le ?_ ?_)
+      · exact le_trans (Polynomial.natDegree_C_mul_le a Polynomial.X)
+          (by simp [Polynomial.natDegree_X])
+      · simp [Polynomial.natDegree_C]
+    refine ⟨p.comp L, degree_comp_le_of_natDegree_le_one p L hLnat, ?_⟩
     · have hae := (quasiMeasurePreserving_affine (a := a) (b := b) ha).ae_eq_comp hp
       have hcomp2 : (fun t => p.eval t) ∘ (fun t : ℝ => a * t + b)
           = fun t : ℝ => (p.comp L).eval t := by
@@ -229,10 +241,7 @@ theorem aePolynomial_not_dense {σ : ℝ → ℝ} (hp : IsAEPolynomial σ) : ¬ 
     with hf
   -- The target monomial restricted to `[0,1]` and its positive distance to `Pd d`.
   set F₀ : C(↥II, ℝ) := restrictLM (Polynomial.X ^ (d + 1)) with hF₀
-  have hδ : 0 < Metric.infDist F₀ (Pd d : Set C(↥II, ℝ)) := by
-    rw [← Metric.infDist_pos_iff_notMem_closure ⟨0, (Pd d).zero_mem⟩,
-      (Pd_isClosed d).closure_eq] at *
-    exact monomial_notMem_Pd d
+  have hδ : 0 < Metric.infDist F₀ (Pd d : Set C(↥II, ℝ)) := infDist_monomial_Pd_pos d
   set δ := Metric.infDist F₀ (Pd d : Set C(↥II, ℝ)) with hδdef
   -- Apply density at `ε = δ/2`.
   obtain ⟨g, hg, hgε⟩ := hdense Kset isCompact_Kset f (ε := δ / 2) (by linarith)

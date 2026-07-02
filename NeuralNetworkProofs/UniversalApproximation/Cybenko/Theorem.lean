@@ -22,6 +22,29 @@ open scoped RealInnerProductSpace
 
 variable {n : ℕ}
 
+/-- A continuous linear functional `f` on a normed `ℝ`-space that is *strictly bounded
+below* by a constant `u` on a submodule `V` (i.e. `u < f b` for every `b ∈ V`) must
+vanish identically on `V`.
+
+This is the linear-algebra core of the backward direction of
+`dense_iff_forall_functional_eq_zero`: geometric Hahn–Banach only yields a strict lower
+bound on the separating functional, but scaling elements of the subspace forces that
+functional to be zero on the subspace. -/
+private lemma eq_zero_of_lt_on_submodule
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (V : Submodule ℝ E) (f : E →L[ℝ] ℝ) {u : ℝ} (hfb : ∀ b ∈ V, u < f b) :
+    ∀ b ∈ V, f b = 0 := by
+  intro b hb
+  by_contra hfb0
+  have key : ∀ t : ℝ, u < t * f b := by
+    intro t
+    have hmem : (t • b) ∈ V := V.smul_mem t hb
+    have := hfb (t • b) hmem
+    rwa [map_smul, smul_eq_mul] at this
+  have := key ((u - 1) / f b)
+  rw [div_mul_cancel₀ _ hfb0] at this
+  linarith
+
 /-- **PROVED.** A subspace `V` of `C(K, ℝ)` is dense (its topological closure is
 everything) iff every continuous linear functional vanishing on `V` is the zero
 functional. This is the Hahn–Banach reduction underlying the UAT proof.
@@ -69,17 +92,8 @@ theorem dense_iff_forall_functional_eq_zero
     obtain ⟨f, u, hfx, hfb⟩ := geometric_hahn_banach_point_closed hconv hclosed hxset
     have hVsub : (V : Set C(↥K, ℝ)) ⊆ (V.topologicalClosure : Set C(↥K, ℝ)) :=
       V.le_topologicalClosure
-    have hfV : ∀ b ∈ V, f b = 0 := by
-      intro b hb
-      by_contra hfb0
-      have key : ∀ t : ℝ, u < t * f b := by
-        intro t
-        have hmem : (t • b) ∈ V := V.smul_mem t hb
-        have := hfb (t • b) (hVsub hmem)
-        rwa [map_smul, smul_eq_mul] at this
-      have := key ((u - 1) / f b)
-      rw [div_mul_cancel₀ _ hfb0] at this
-      linarith
+    have hfV : ∀ b ∈ V, f b = 0 :=
+      eq_zero_of_lt_on_submodule V f (fun b hb => hfb b (hVsub hb))
     have hf0 : f = 0 := h f hfV
     have hfx0 : f x = 0 := by rw [hf0]; rfl
     have hu0 : u < 0 := by

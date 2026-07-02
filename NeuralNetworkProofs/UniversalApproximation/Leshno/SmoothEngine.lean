@@ -59,6 +59,59 @@ private lemma taylor_seg_bound {G : ℝ → ℝ} (hG : Differentiable ℝ G) (u 
     _ ≤ ε * ‖(u + h) - u‖ := hbound
     _ = ε * |h| := by rw [Real.norm_eq_abs]; ring_nf
 
+/-- Difference-quotient form of the Taylor bound. For differentiable `G`, `s ≠ 0`, and a segment
+bound `|G' − G' u| ≤ ε` along `[u, u + s·w]`, the quotient `(G (u + s·w) − G u)/s` differs from the
+linear guess `w · G' u` by at most `ε · |w|`.  (Special case `h = s·w` of `taylor_seg_bound`,
+divided by `s`.) -/
+private lemma diff_quot_bound {G : ℝ → ℝ} (hG : Differentiable ℝ G) (u w s ε : ℝ) (hs : s ≠ 0)
+    (hseg : ∀ x ∈ segment ℝ u (u + s * w), |deriv G x - deriv G u| ≤ ε) :
+    |(G (u + s * w) - G u) / s - w * deriv G u| ≤ ε * |w| := by
+  have htaylor := taylor_seg_bound hG u (s * w) ε hseg
+  have heq : (G (u + s * w) - G u) / s - w * deriv G u
+      = (G (u + s * w) - G u - (s * w) * deriv G u) / s := by
+    field_simp
+  rw [heq, abs_div, div_le_iff₀ (by positivity)]
+  calc |G (u + s * w) - G u - s * w * deriv G u|
+      ≤ ε * |s * w| := htaylor
+    _ = ε * (|s| * |w|) := by rw [abs_mul]
+    _ = ε * |w| * |s| := by ring
+
+/-- Region containment for the segment used in `deriv_pow_mem`. With `R = |lam|·M + |b| + M`,
+`|tv| ≤ M`, and `|s| ≤ 1`, the whole segment from `u = lam·tv + b` to `u + s·tv` lies in the
+compact interval `Icc (-R) R`; a per-point `|x − u| ≤ |s·tv|` bound is returned alongside. -/
+private lemma seg_in_region (lam b M tv s : ℝ) (hM : |tv| ≤ M) (hs : |s| ≤ 1) :
+    ∀ x ∈ segment ℝ (lam * tv + b) (lam * tv + b + s * tv),
+      x ∈ Set.Icc (-(|lam| * M + |b| + M)) (|lam| * M + |b| + M)
+        ∧ |x - (lam * tv + b)| ≤ |s * tv| := by
+  have hMnn : 0 ≤ M := le_trans (abs_nonneg tv) hM
+  set R : ℝ := |lam| * M + |b| + M with hR
+  set u : ℝ := lam * tv + b with hu
+  have huabs : |u| ≤ |lam| * M + |b| := by
+    calc |u| = |lam * tv + b| := by rw [hu]
+      _ ≤ |lam * tv| + |b| := abs_add_le _ _
+      _ = |lam| * |tv| + |b| := by rw [abs_mul]
+      _ ≤ |lam| * M + |b| := by gcongr
+  have hu_mem : u ∈ Set.Icc (-R) R := by
+    rw [Set.mem_Icc, hR]; rw [abs_le] at huabs
+    constructor <;> [linarith [huabs.1, hMnn]; linarith [huabs.2, hMnn]]
+  have huhabs : |u + s * tv| ≤ R := by
+    calc |u + s * tv| ≤ |u| + |s * tv| := abs_add_le _ _
+      _ = |u| + |s| * |tv| := by rw [abs_mul]
+      _ ≤ (|lam| * M + |b|) + 1 * M := by gcongr
+      _ = R := by rw [hR]; ring
+  have huh : u + s * tv ∈ Set.Icc (-R) R := by
+    rw [Set.mem_Icc]; rw [abs_le] at huhabs
+    exact ⟨by linarith [huhabs.1], huhabs.2⟩
+  intro x hx
+  refine ⟨(convex_Icc (-R) R).segment_subset hu_mem huh hx, ?_⟩
+  obtain ⟨a, c, ha, hc, hac, rfl⟩ := hx
+  have hxsub : a • u + c • (u + s * tv) - u = c * (s * tv) := by
+    simp only [smul_eq_mul]; linear_combination u * hac
+  rw [hxsub, abs_mul]
+  calc |c| * |s * tv| ≤ 1 * |s * tv| := by
+        gcongr; rw [abs_of_nonneg hc]; linarith [hac]
+    _ = |s * tv| := one_mul _
+
 /-- B1 (leaf). For smooth `g`, the function `t ↦ tᵏ · g⁽ᵏ⁾(λt+b)` lies in the closure of `Sg g`.
 
 Proved by induction on `k` (generalizing `λ, b`). The base case is a generator of `Sg g`. For the
@@ -156,62 +209,28 @@ theorem deriv_pow_mem {g : ℝ → ℝ} (hg : ContDiff ℝ ∞ g) (I : Set ℝ) 
         set tv : ℝ := (t : ℝ) with htv
         set u : ℝ := lam * tv + b with hu
         have htvM : |tv| ≤ M := hMbd t
-        -- segment endpoints in the region.
-        have huabs : |u| ≤ |lam| * M + |b| := by
-          calc |u| = |lam * tv + b| := by rw [hu]
-            _ ≤ |lam * tv| + |b| := abs_add_le _ _
-            _ = |lam| * |tv| + |b| := by rw [abs_mul]
-            _ ≤ |lam| * M + |b| := by gcongr
-        have hu_mem : u ∈ Set.Icc (-R) R := by
-          rw [Set.mem_Icc, hR]
-          rw [abs_le] at huabs
-          constructor <;> [linarith [huabs.1]; linarith [huabs.2]]
-        have huhabs : |u + s * tv| ≤ R := by
-          calc |u + s * tv| ≤ |u| + |s * tv| := abs_add_le _ _
-            _ = |u| + |s| * |tv| := by rw [abs_mul]
-            _ ≤ (|lam| * M + |b|) + 1 * M := by gcongr
-            _ = R := by rw [hR]; ring
-        have huh : u + s * tv ∈ Set.Icc (-R) R := by
-          rw [Set.mem_Icc]; rw [abs_le] at huhabs
-          exact ⟨by linarith [huhabs.1], huhabs.2⟩
-        have hseg_mem : ∀ x ∈ segment ℝ u (u + s * tv), x ∈ Set.Icc (-R) R :=
-          fun x hx => (convex_Icc (-R) R).segment_subset hu_mem huh hx
-        -- Apply the per-point Taylor bound with tolerance `ε'`.
+        have hs0' : s ≠ 0 := by
+          intro h; rw [h, abs_zero] at hs0; exact lt_irrefl 0 hs0
+        -- The whole segment lies in the region `Icc (-R) R`, with `|x − u| ≤ |s·tv|`.
+        have hregion := seg_in_region lam b M tv s htvM hsM
+        -- Segment `G'`-oscillation is `≤ ε'` by uniform continuity on the region.
         have hsegbound : ∀ x ∈ segment ℝ u (u + s * tv), |deriv G x - deriv G u| ≤ ε' := by
           intro x hx
-          have hxIcc := hseg_mem x hx
-          -- `x` lies in segment, so `|x-u| ≤ |(u+s tv)-u| = |s tv|`.
-          have hxu : |x - u| ≤ |s * tv| := by
-            obtain ⟨a, c, ha, hc, hac, rfl⟩ := hx
-            have hxsub : a • u + c • (u + s * tv) - u = c * (s * tv) := by
-              simp only [smul_eq_mul]; linear_combination u * hac
-            rw [hxsub, abs_mul]
-            calc |c| * |s * tv| ≤ 1 * |s * tv| := by
-                  gcongr; rw [abs_of_nonneg hc]; linarith [hac]
-              _ = |s * tv| := one_mul _
+          obtain ⟨hxIcc, hxu⟩ := hregion x hx
+          have hu_mem : u ∈ Set.Icc (-R) R := by
+            simpa [hR, hu] using
+              (hregion u (left_mem_segment ℝ u (u + s * tv))).1
           have hdist : dist x u ≤ δ₀ := by
             calc dist x u = |x - u| := Real.dist_eq x u
               _ ≤ |s * tv| := hxu
               _ = |s| * |tv| := by rw [abs_mul]
               _ ≤ |s| * M := by gcongr
               _ ≤ δ₀ := hsδ₀
-          have hduc := hδ₀ x hxIcc u hu_mem hdist
+          have hduc := hδ₀ x (by simpa [hR, hu] using hxIcc) u hu_mem hdist
           rwa [Real.dist_eq] at hduc
-        have htaylor := taylor_seg_bound hGdiff u (s * tv) ε' hsegbound
-        -- Convert to a bound on the difference quotient.
-        -- `|(G(u+s tv)-G u)/s - tv * G' u| ≤ ε' * |tv|`.
-        have hquot : |(G (u + s * tv) - G u) / s - tv * deriv G u| ≤ ε' * |tv| := by
-          have hs0' : s ≠ 0 := by
-            intro h; rw [h, abs_zero] at hs0; exact lt_irrefl 0 hs0
-          have : (G (u + s * tv) - G u) / s - tv * deriv G u
-              = (G (u + s * tv) - G u - (s * tv) * deriv G u) / s := by
-            field_simp
-          rw [this, abs_div]
-          rw [div_le_iff₀ (by positivity)]
-          calc |G (u + s * tv) - G u - s * tv * deriv G u|
-              ≤ ε' * |s * tv| := htaylor
-            _ = ε' * (|s| * |tv|) := by rw [abs_mul]
-            _ = ε' * |tv| * |s| := by ring
+        -- Difference-quotient bound `|(G(u+s·tv)−G u)/s − tv·G' u| ≤ ε'·|tv|`.
+        have hquot : |(G (u + s * tv) - G u) / s - tv * deriv G u| ≤ ε' * |tv| :=
+          diff_quot_bound hGdiff u tv s ε' hs0' hsegbound
         -- Multiply through by `t^k` and bound by `ε`.
         rw [Real.dist_eq, hDval s t, hΨval t]
         -- restate using `tv`, `u`.
@@ -264,6 +283,25 @@ theorem exists_deriv_ne {g : ℝ → ℝ} (hg : ContDiff ℝ ∞ g)
     iteratedDeriv_eq_zero_imp_poly (f := g) (n := k) (hg.of_le (by exact_mod_cast le_top)) h
   exact hnp ⟨p, funext hp⟩
 
+/-- Every monomial `t ↦ tᵏ` lies in the closed span `Sg g`. Combines `deriv_pow_mem` at dilation
+`λ = 0` (giving `(g⁽ᵏ⁾ b) • (t ↦ tᵏ)`) with a nonzero `g⁽ᵏ⁾ b` from `exists_deriv_ne`, then divides
+out the scalar using that the closure is a submodule. -/
+private lemma monomial_mem {g : ℝ → ℝ} (hg : ContDiff ℝ ∞ g) (hnp : ¬ IsPolynomialFun g)
+    (I : Set ℝ) (hI : IsCompact I) (k : ℕ) :
+    (⟨fun t => (t : ℝ) ^ k, by fun_prop⟩ : C(↥I, ℝ))
+      ∈ (Sg g I hg.continuous).topologicalClosure := by
+  obtain ⟨b, hb⟩ := exists_deriv_ne hg hnp k
+  have hmem := deriv_pow_mem hg I hI k 0 b
+  -- the generator `t ↦ tᵏ · g⁽ᵏ⁾(0·t+b) = (g⁽ᵏ⁾ b) • (t ↦ tᵏ)`.
+  have hsmul : (⟨fun t => (t : ℝ) ^ k * iteratedDeriv k g (0 * (t : ℝ) + b), by
+        have := hg.continuous_iteratedDeriv k (by exact_mod_cast le_top); fun_prop⟩ : C(↥I, ℝ))
+      = iteratedDeriv k g b • (⟨fun t => (t : ℝ) ^ k, by fun_prop⟩ : C(↥I, ℝ)) := by
+    ext t
+    simp [mul_comm]
+  rw [hsmul] at hmem
+  have := (Sg g I hg.continuous).topologicalClosure.smul_mem (iteratedDeriv k g b)⁻¹ hmem
+  rwa [smul_smul, inv_mul_cancel₀ hb, one_smul] at this
+
 /-- B3 (glue). For smooth non-polynomial `g`, the closed span of its dilations/translations is all
 of `C(I,ℝ)` on every compact set `I`. -/
 theorem smooth_engine {g : ℝ → ℝ} (hg : ContDiff ℝ ∞ g) (hnp : ¬ IsPolynomialFun g)
@@ -272,19 +310,8 @@ theorem smooth_engine {g : ℝ → ℝ} (hg : ContDiff ℝ ∞ g) (hnp : ¬ IsPo
   haveI : CompactSpace (↥I) := isCompact_iff_compactSpace.mp hI
   set C := (Sg g I hg.continuous).topologicalClosure with hC
   -- Step 1+2: every monomial `t ↦ tᵏ` lies in the closure `C`.
-  have hmono : ∀ k : ℕ, (⟨fun t => (t : ℝ) ^ k, by fun_prop⟩ : C(↥I, ℝ)) ∈ C := by
-    intro k
-    obtain ⟨b, hb⟩ := exists_deriv_ne hg hnp k
-    have hmem := deriv_pow_mem hg I hI k 0 b
-    -- the generator `t ↦ tᵏ · g⁽ᵏ⁾(0·t+b) = (g⁽ᵏ⁾ b) • (t ↦ tᵏ)`.
-    have hsmul : (⟨fun t => (t : ℝ) ^ k * iteratedDeriv k g (0 * (t : ℝ) + b), by
-          have := hg.continuous_iteratedDeriv k (by exact_mod_cast le_top); fun_prop⟩ : C(↥I, ℝ))
-        = iteratedDeriv k g b • (⟨fun t => (t : ℝ) ^ k, by fun_prop⟩ : C(↥I, ℝ)) := by
-      ext t
-      simp [mul_comm]
-    rw [hsmul] at hmem
-    have := C.smul_mem (iteratedDeriv k g b)⁻¹ hmem
-    rwa [smul_smul, inv_mul_cancel₀ hb, one_smul] at this
+  have hmono : ∀ k : ℕ, (⟨fun t => (t : ℝ) ^ k, by fun_prop⟩ : C(↥I, ℝ)) ∈ C :=
+    fun k => monomial_mem hg hnp I hI k
   -- Step 3: every polynomial function lies in `C` (by polynomial induction, `C` a submodule).
   have hpoly : ∀ p : Polynomial ℝ, p.toContinuousMapOn I ∈ C := by
     intro p

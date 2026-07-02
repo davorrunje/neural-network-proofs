@@ -88,6 +88,64 @@ theorem contDiff_mollify {σ φ : ℝ → ℝ} (hσ : ClassM σ) (hφ : ContDiff
   rw [mollify_eq_convolution]
   exact hφc.contDiff_convolution_left _ hφ hσ.locallyIntegrable
 
+/-- The reflection `g' y = g (-y)` of a test function keeps its moments vanishing up to `d`: for
+`j ≤ d`, `∫ y, y ^ j * g (-y) = (-1) ^ j * ∫ y, y ^ j * g y = 0`, using neg-invariance of Lebesgue
+measure (`integral_neg_eq_self`) to fold the reflection back into the moment integral. -/
+private theorem reflect_moments_zero {g : ℝ → ℝ} {d : ℕ}
+    (hmom : ∀ j ≤ d, ∫ y, y ^ j * g y = 0) :
+    ∀ j ≤ d, ∫ y, y ^ j * g (-y) = 0 := by
+  intro j hj
+  have hflip : ∫ y, y ^ j * g (-y) = ∫ y, (-1 : ℝ) ^ j * (y ^ j * g y) := by
+    rw [← integral_neg_eq_self (fun y => (-1 : ℝ) ^ j * (y ^ j * g y)) volume]
+    refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
+    change y ^ j * g (-y) = (-1) ^ j * ((-y) ^ j * g (-y))
+    rw [← mul_assoc, ← mul_pow]; norm_num
+  rw [hflip, integral_const_mul, hmom j hj, mul_zero]
+
+/-- Non-polynomial-preservation step for `exists_nonpoly_mollify`. Under the uniform degree bound
+`iteratedDeriv (d+1) (mollify σ φ) = 0` for every smooth compact `φ`, the `M`-class `σ` annihilates
+every moment-vanishing test function `g`: `∫ y, g y * σ y = 0`.
+
+Argument: reflect `g` to `g' y = g (-y)` (smooth, compactly supported, moments still vanish up to
+`d` by `reflect_moments_zero`); write `g' = iteratedDeriv (d+1) ψ` for a smooth compact `ψ`
+(`SmoothCompactAntideriv.exists_iteratedDeriv_eq_of_moments_zero`); differentiate through the
+convolution (`ConvolutionIteratedDeriv.iteratedDeriv_convolution_left` via `mollify_eq_convolution`)
+to get `mollify σ g' = iteratedDeriv (d+1) (mollify σ ψ) = 0`; finally the point value
+`mollify σ g' 0 = ∫ y, σ (-y) * g (-y) = ∫ y, σ y * g y` (neg-invariance) gives the annihilation. -/
+private theorem mollify_annihilates_of_iteratedDeriv_zero {σ : ℝ → ℝ}
+    (hσ : LocallyIntegrable σ volume) {d : ℕ}
+    (hd : ∀ φ : ℝ → ℝ, ContDiff ℝ ∞ φ → HasCompactSupport φ →
+      iteratedDeriv (d + 1) (mollify σ φ) = 0)
+    {g : ℝ → ℝ} (hg : ContDiff ℝ ∞ g) (hgc : HasCompactSupport g)
+    (hmom : ∀ j ≤ d, ∫ y, y ^ j * g y = 0) :
+    ∫ y, g y * σ y = 0 := by
+  -- Reflection `g̃ y = g (-y)`: smooth, compactly supported, moments still vanish up to `d`.
+  set g' : ℝ → ℝ := fun y => g (-y) with hg'def
+  have hg'smooth : ContDiff ℝ ∞ g' := hg.comp contDiff_neg
+  have hg'supp : HasCompactSupport g' :=
+    hgc.comp_homeomorph (Homeomorph.neg ℝ)
+  have hg'mom : ∀ j ≤ d, ∫ y, y ^ j * g' y = 0 := reflect_moments_zero hmom
+  -- Write `g̃ = iteratedDeriv (d+1) ψ` for a smooth compact `ψ`.
+  obtain ⟨ψ, hψ, hψc, hψeq⟩ :=
+    SmoothCompactAntideriv.exists_iteratedDeriv_eq_of_moments_zero d hg'smooth hg'supp hg'mom
+  -- `mollify σ g̃ = iteratedDeriv (d+1) (mollify σ ψ) = 0`.
+  have hmoll : mollify σ g' = 0 := by
+    have h1 : iteratedDeriv (d + 1) (mollify σ ψ) = mollify σ g' := by
+      rw [mollify_eq_convolution σ ψ,
+        ConvolutionIteratedDeriv.iteratedDeriv_convolution_left (d + 1) hψ hψc hσ,
+        hψeq, ← mollify_eq_convolution σ g']
+    rw [← h1, hd ψ hψ hψc]
+  -- The point value at `0` is the annihilation integral, after a neg substitution.
+  have hpt : mollify σ g' 0 = 0 := by rw [hmoll]; rfl
+  have hexpand : mollify σ g' 0 = ∫ y, σ y * g y := by
+    have : mollify σ g' 0 = ∫ y, σ (-y) * g (-y) := by
+      simp only [mollify, zero_sub, hg'def]
+    rw [this]
+    exact integral_neg_eq_self (fun y => σ y * g y) volume
+  rw [← hpt, hexpand]
+  refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
+  ring
+
 /-- D (proved). A non-a.e.-polynomial `M`-class `σ` admits a smooth compactly-supported kernel whose
 mollification is not an everywhere polynomial.
 
@@ -131,42 +189,7 @@ theorem exists_nonpoly_mollify {σ : ℝ → ℝ} (hσ : ClassM σ) (hnp : ¬ Is
   apply PolynomialDistribution.aePolynomial_of_annihilates_moment_vanishing d
     hσ.locallyIntegrable
   intro g hg hgc hmom
-  -- Reflection `g̃ y = g (-y)`: smooth, compactly supported, moments still vanish up to `d`.
-  set g' : ℝ → ℝ := fun y => g (-y) with hg'def
-  have hg'smooth : ContDiff ℝ ∞ g' := hg.comp contDiff_neg
-  have hg'supp : HasCompactSupport g' :=
-    hgc.comp_homeomorph (Homeomorph.neg ℝ)
-  have hg'mom : ∀ j ≤ d, ∫ y, y ^ j * g' y = 0 := by
-    intro j hj
-    have hflip : ∫ y, y ^ j * g' y = ∫ y, (-1 : ℝ) ^ j * (y ^ j * g y) := by
-      rw [← integral_neg_eq_self (fun y => (-1 : ℝ) ^ j * (y ^ j * g y)) volume]
-      refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
-      change y ^ j * g (-y) = (-1) ^ j * ((-y) ^ j * g (-y))
-      rw [← mul_assoc, ← mul_pow]; norm_num
-    rw [hflip, integral_const_mul, hmom j hj, mul_zero]
-  -- Write `g̃ = iteratedDeriv (d+1) ψ` for a smooth compact `ψ`.
-  obtain ⟨ψ, hψ, hψc, hψeq⟩ :=
-    SmoothCompactAntideriv.exists_iteratedDeriv_eq_of_moments_zero d hg'smooth hg'supp hg'mom
-  -- `mollify σ g̃ = iteratedDeriv (d+1) (mollify σ ψ) = 0`.
-  have hmoll : mollify σ g' = 0 := by
-    have h1 : iteratedDeriv (d + 1) (mollify σ ψ) = mollify σ g' := by
-      rw [mollify_eq_convolution σ ψ,
-        ConvolutionIteratedDeriv.iteratedDeriv_convolution_left (d + 1) hψ hψc
-          hσ.locallyIntegrable,
-        hψeq, ← mollify_eq_convolution σ g']
-    rw [← h1, hd ψ hψ hψc]
-  -- The point value at `0` is the annihilation integral, after a neg substitution.
-  have hpt : mollify σ g' 0 = 0 := by rw [hmoll]; rfl
-  have hval : ∫ y, g y * σ y = 0 := by
-    have hexpand : mollify σ g' 0 = ∫ y, σ y * g y := by
-      have : mollify σ g' 0 = ∫ y, σ (-y) * g (-y) := by
-        simp only [mollify, zero_sub, hg'def]
-      rw [this]
-      exact integral_neg_eq_self (fun y => σ y * g y) volume
-    rw [← hpt, hexpand]
-    refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
-    ring
-  exact hval
+  exact mollify_annihilates_of_iteratedDeriv_zero hσ.locallyIntegrable hd hg hgc hmom
 
 /-- Assembly core (σ-regularity-independent): if the ridge `x ↦ (σ⋆φ)(lam*(⟪w,x⟫+b)+c)` is a
 uniform-on-`K` limit of the point-sampling Riemann sums (each of which is a `genSpan` element via

@@ -15,22 +15,28 @@ open scoped RealInnerProductSpace
 
 variable {n : ℕ}
 
+/-- Near `+∞` a sigmoidal `σ` is within `1` of its limit `1`, hence eventually `|σ| ≤ 2`. -/
+private theorem Sigmoidal.eventually_abs_le_atTop {σ : ℝ → ℝ} (hσ : Sigmoidal σ) :
+    ∀ᶠ t in Filter.atTop, |σ t| ≤ 2 := by
+  have := hσ.atTop.eventually (eventually_abs_sub_lt 1 (by norm_num : (0:ℝ) < 1))
+  filter_upwards [this] with t ht
+  have : |σ t - 1| < 1 := ht
+  rw [abs_sub_lt_iff] at this
+  rw [abs_le]; constructor <;> linarith [this.1, this.2]
+
+/-- Near `-∞` a sigmoidal `σ` is within `1` of its limit `0`, hence eventually `|σ| ≤ 1`. -/
+private theorem Sigmoidal.eventually_abs_le_atBot {σ : ℝ → ℝ} (hσ : Sigmoidal σ) :
+    ∀ᶠ t in Filter.atBot, |σ t| ≤ 1 := by
+  have := hσ.atBot.eventually (eventually_abs_sub_lt 0 (by norm_num : (0:ℝ) < 1))
+  filter_upwards [this] with t ht
+  have : |σ t - 0| < 1 := ht
+  simp only [sub_zero] at this
+  linarith [this]
+
 /-- A sigmoidal function is bounded: continuity plus finite limits at ±∞. -/
 theorem Sigmoidal.bounded {σ : ℝ → ℝ} (hσ : Sigmoidal σ) : ∃ C, ∀ t, |σ t| ≤ C := by
-  -- Near `+∞`, `σ` is within `1` of `1`, hence `|σ| ≤ 2`.
-  have hT : ∀ᶠ t in Filter.atTop, |σ t| ≤ 2 := by
-    have := hσ.atTop.eventually (eventually_abs_sub_lt 1 (by norm_num : (0:ℝ) < 1))
-    filter_upwards [this] with t ht
-    have : |σ t - 1| < 1 := ht
-    rw [abs_sub_lt_iff] at this
-    rw [abs_le]; constructor <;> linarith [this.1, this.2]
-  -- Near `-∞`, `σ` is within `1` of `0`, hence `|σ| ≤ 1`.
-  have hB : ∀ᶠ t in Filter.atBot, |σ t| ≤ 1 := by
-    have := hσ.atBot.eventually (eventually_abs_sub_lt 0 (by norm_num : (0:ℝ) < 1))
-    filter_upwards [this] with t ht
-    have : |σ t - 0| < 1 := ht
-    simp only [sub_zero] at this
-    linarith [this]
+  have hT := hσ.eventually_abs_le_atTop
+  have hB := hσ.eventually_abs_le_atBot
   rw [eventually_atTop] at hT
   rw [eventually_atBot] at hB
   obtain ⟨A, hA⟩ := hT
@@ -48,6 +54,18 @@ theorem Sigmoidal.bounded {σ : ℝ → ℝ} (hσ : Sigmoidal σ) : ∃ C, ∀ t
     have := hC t hmem
     rw [Real.norm_eq_abs] at this
     exact le_trans this (le_max_left _ _)
+
+/-- A sigmoidal `σ` takes at least two distinct values: eventually `σ > 1/2` near `+∞` and
+`σ < 1/2` near `-∞`, so witnesses on each side differ. -/
+private theorem Sigmoidal.exists_ne {σ : ℝ → ℝ} (hσ : Sigmoidal σ) :
+    ∃ φ₁ φ₂ : ℝ, σ φ₁ ≠ σ φ₂ := by
+  have hT : ∀ᶠ t in Filter.atTop, (1 : ℝ) / 2 < σ t :=
+    hσ.atTop.eventually (eventually_gt_nhds (by norm_num : (1 : ℝ) / 2 < 1))
+  have hB : ∀ᶠ t in Filter.atBot, σ t < (1 : ℝ) / 2 :=
+    hσ.atBot.eventually (eventually_lt_nhds (by norm_num : (0 : ℝ) < 1 / 2))
+  obtain ⟨t1, ht1⟩ := hT.exists
+  obtain ⟨t2, ht2⟩ := hB.exists
+  exact ⟨t1, t2, by intro h; rw [h] at ht1; linarith⟩
 
 /-- As `m → ∞`, `σ (m * t + φ) → 1` when `t > 0`: the inner argument tends to `+∞`. -/
 theorem sigmoidal_tendsto_pos {σ : ℝ → ℝ} (hσ : Sigmoidal σ) {t : ℝ} (ht : 0 < t) (φ : ℝ) :
@@ -209,14 +227,7 @@ theorem signed_halfspace_eq_zero (hσ : Sigmoidal σ) {μ : SignedMeasure ↥K}
     rw [eq_comm] at hlim0
     linarith [hlim0]
   -- Step (4): two distinct values of `σ` solve the linear system.
-  obtain ⟨φ₁, φ₂, hne⟩ : ∃ φ₁ φ₂ : ℝ, σ φ₁ ≠ σ φ₂ := by
-    have hT : ∀ᶠ t in Filter.atTop, (1 : ℝ) / 2 < σ t :=
-      hσ.atTop.eventually (eventually_gt_nhds (by norm_num : (1 : ℝ) / 2 < 1))
-    have hB : ∀ᶠ t in Filter.atBot, σ t < (1 : ℝ) / 2 :=
-      hσ.atBot.eventually (eventually_lt_nhds (by norm_num : (0 : ℝ) < 1 / 2))
-    obtain ⟨t1, ht1⟩ := hT.exists
-    obtain ⟨t2, ht2⟩ := hB.exists
-    exact ⟨t1, t2, by intro h; rw [h] at ht1; linarith⟩
+  obtain ⟨φ₁, φ₂, hne⟩ := hσ.exists_ne
   have e1 := key φ₁
   have e2 := key φ₂
   have hdiff : (σ φ₁ - σ φ₂) * μ Hy = 0 := by ring_nf; linarith [e1, e2]
@@ -226,6 +237,44 @@ theorem signed_halfspace_eq_zero (hσ : Sigmoidal σ) {μ : SignedMeasure ↥K}
     · exact hz
   refine ⟨?_, hHy⟩
   rw [hHy] at e1; simpa using e1
+
+/-- **Closed half-spaces are annihilated too.** Under the hypotheses of
+`signed_halfspace_eq_zero`, every closed half-space `{⟪w, x⟫ ≤ a}` also has signed measure `0`:
+it is the disjoint union of the open half-space `{⟪w, x⟫ < a}` and the hyperplane `{⟪w, x⟫ = a}`,
+both of signed measure `0` (apply `signed_halfspace_eq_zero` in direction `-w` with shift `a`). -/
+private theorem signed_closed_halfspace_eq_zero (hσ : Sigmoidal σ) {μ : SignedMeasure ↥K}
+    (H0 : ∀ (w : EuclideanSpace ℝ (Fin n)) (b : ℝ),
+        signedIntegral μ (fun x => σ (⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ + b)) = 0)
+    (w : EuclideanSpace ℝ (Fin n)) (a : ℝ) :
+    μ {x : ↥K | ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ ≤ a} = 0 := by
+  have hfc : Continuous (fun x : ↥K => ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫) := by fun_prop
+  have hfm : Measurable (fun x : ↥K => ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫) := hfc.measurable
+  have hopen := signed_halfspace_eq_zero hσ H0 (-w) a
+  -- `{0 < ⟪-w, x⟫ + a} = {⟪w, x⟫ < a}` and `{⟪-w, x⟫ + a = 0} = {⟪w, x⟫ = a}`.
+  have hset1 : {x : ↥K | 0 < ⟪(-w), (x : EuclideanSpace ℝ (Fin n))⟫ + a}
+             = {x : ↥K | ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ < a} := by
+    ext x
+    simp only [Set.mem_setOf_eq, inner_neg_left]
+    constructor <;> intro h <;> linarith
+  have hset2 : {x : ↥K | ⟪(-w), (x : EuclideanSpace ℝ (Fin n))⟫ + a = 0}
+             = {x : ↥K | ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ = a} := by
+    ext x
+    simp only [Set.mem_setOf_eq, inner_neg_left]
+    constructor <;> intro h <;> linarith
+  rw [hset1, hset2] at hopen
+  obtain ⟨hlt, heq⟩ := hopen
+  have hmlt : MeasurableSet {x : ↥K | ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ < a} :=
+    hfm measurableSet_Iio
+  have hmeq : MeasurableSet {x : ↥K | ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ = a} :=
+    hfm (measurableSet_singleton a)
+  have hdisj : Disjoint {x : ↥K | ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ < a}
+      {x : ↥K | ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ = a} := by
+    rw [Set.disjoint_left]; intro x hx hx'; simp only [Set.mem_setOf_eq] at hx hx'; linarith
+  have hunion : {x : ↥K | ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ ≤ a}
+      = {x : ↥K | ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ < a}
+        ∪ {x : ↥K | ⟪w, (x : EuclideanSpace ℝ (Fin n))⟫ = a} := by
+    ext x; simp only [Set.mem_setOf_eq, Set.mem_union]; exact le_iff_lt_or_eq
+  rw [hunion, MeasureTheory.VectorMeasure.of_union hdisj hmlt hmeq, hlt, heq, add_zero]
 
 /-- **The characteristic function of `μ` vanishes.** If a signed measure `μ` annihilates every
 affine pre-composition of a sigmoidal `σ`, then for every direction `w` both the cosine and sine
@@ -242,31 +291,9 @@ theorem charFun_eq_zero (hσ : Sigmoidal σ) {μ : SignedMeasure ↥K}
   have hfm : Measurable f := hfc.measurable
   set μp := μ.toJordanDecomposition.posPart with hμp
   set μn := μ.toJordanDecomposition.negPart with hμn
-  -- (1) Every closed half-space `{f ≤ a}` has signed measure `0`: it is the disjoint union of
-  -- the open half-space `{f < a}` and the hyperplane `{f = a}`, both of signed measure `0`.
-  have hclosed : ∀ a : ℝ, μ {x : ↥K | f x ≤ a} = 0 := by
-    intro a
-    have hopen := signed_halfspace_eq_zero hσ H0 (-w) a
-    -- `{0 < ⟪-w, x⟫ + a} = {f x < a}` and `{⟪-w, x⟫ + a = 0} = {f x = a}`.
-    have hset1 : {x : ↥K | 0 < ⟪(-w), (x : EuclideanSpace ℝ (Fin n))⟫ + a}
-               = {x : ↥K | f x < a} := by
-      ext x
-      simp only [Set.mem_setOf_eq, hfdef, inner_neg_left]
-      constructor <;> intro h <;> linarith
-    have hset2 : {x : ↥K | ⟪(-w), (x : EuclideanSpace ℝ (Fin n))⟫ + a = 0}
-               = {x : ↥K | f x = a} := by
-      ext x
-      simp only [Set.mem_setOf_eq, hfdef, inner_neg_left]
-      constructor <;> intro h <;> linarith
-    rw [hset1, hset2] at hopen
-    obtain ⟨hlt, heq⟩ := hopen
-    have hmlt : MeasurableSet {x : ↥K | f x < a} := hfm measurableSet_Iio
-    have hmeq : MeasurableSet {x : ↥K | f x = a} := hfm (measurableSet_singleton a)
-    have hdisj : Disjoint {x : ↥K | f x < a} {x : ↥K | f x = a} := by
-      rw [Set.disjoint_left]; intro x hx hx'; simp only [Set.mem_setOf_eq] at hx hx'; linarith
-    have hunion : {x : ↥K | f x ≤ a} = {x : ↥K | f x < a} ∪ {x : ↥K | f x = a} := by
-      ext x; simp only [Set.mem_setOf_eq, Set.mem_union]; exact le_iff_lt_or_eq
-    rw [hunion, MeasureTheory.VectorMeasure.of_union hdisj hmlt hmeq, hlt, heq, add_zero]
+  -- (1) Every closed half-space `{f ≤ a}` has signed measure `0`.
+  have hclosed : ∀ a : ℝ, μ {x : ↥K | f x ≤ a} = 0 :=
+    fun a => signed_closed_halfspace_eq_zero hσ H0 w a
   -- (2) On every closed half-space, the Jordan parts have equal mass (since the signed measure
   -- there is `0` and both parts are finite).
   have hagree : ∀ a : ℝ, μp (f ⁻¹' Set.Iic a) = μn (f ⁻¹' Set.Iic a) := by

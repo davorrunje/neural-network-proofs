@@ -122,79 +122,100 @@ def Tplain (σ : ℝ → ℝ) (K : Set (EuclideanSpace ℝ (Fin n))) :
 theorem mem_T_iff_mem_Tplain {σ : ℝ → ℝ} {K : Set (EuclideanSpace ℝ (Fin n))} (h : C(↥K, ℝ)) :
     h ∈ T σ K ↔ (h : ↥K → ℝ) ∈ Tplain σ K := Iff.rfl
 
+/-- The inclusion `↥K ↪ (Fin n → ℝ)` reading a point of the subspace as its plain coordinates. -/
+private def incl (K : Set (EuclideanSpace ℝ (Fin n))) : ↥K → (Fin n → ℝ) :=
+  fun x => (x : EuclideanSpace ℝ (Fin n))
+
+/-- Precomposition with `incl`: `(Fin n → ℝ) → ℝ` functions restricted to `↥K`. -/
+private def funLeftIncl (K : Set (EuclideanSpace ℝ (Fin n))) :
+    ((Fin n → ℝ) → ℝ) →ₗ[ℝ] (↥K → ℝ) := LinearMap.funLeft ℝ ℝ (incl K)
+
+/-- Coordinate functions `x ↦ xᵢ` as continuous maps on `↥K`. -/
+private def coordCM (K : Set (EuclideanSpace ℝ (Fin n))) : Fin n → C(↥K, ℝ) :=
+  fun i => ⟨fun x => (x : EuclideanSpace ℝ (Fin n)) i, by fun_prop⟩
+
+/-- Each ridge power `x ↦ ⟪a, x⟫ ^ k` lies, as an unbundled function, in `Tplain σ K`. -/
+private theorem ridgePow_mem_Tplain {σ : ℝ → ℝ} (hσu : UnivariateDense σ)
+    (K : Set (EuclideanSpace ℝ (Fin n))) (hK : IsCompact K)
+    (a : EuclideanSpace ℝ (Fin n)) (k : ℕ) :
+    (fun x : ↥K => (⟪a, (x : EuclideanSpace ℝ (Fin n))⟫ : ℝ) ^ k) ∈ Tplain σ K := by
+  have := ridge_mem_T hσu K hK a ((ContinuousMap.id ℝ) ^ k)
+  rw [mem_T_iff_mem_Tplain] at this
+  simpa using this
+
+/-- `funLeftIncl` carries each ridge-power generator `x ↦ (∑ i, aᵢ xᵢ) ^ k` into `Tplain σ K`. -/
+private theorem funLeftIncl_ridgePow_mem_Tplain {σ : ℝ → ℝ} (hσu : UnivariateDense σ)
+    (K : Set (EuclideanSpace ℝ (Fin n))) (hK : IsCompact K) (k : ℕ) (a : Fin n → ℝ) :
+    funLeftIncl K (fun x : Fin n → ℝ => (∑ i, a i * x i) ^ k) ∈ Tplain σ K := by
+  have h1 := ridgePow_mem_Tplain hσu K hK ((WithLp.equiv 2 (Fin n → ℝ)).symm a) k
+  have heq : (funLeftIncl K (fun x : Fin n → ℝ => (∑ i, a i * x i) ^ k))
+      = (fun x : ↥K =>
+          (⟪(WithLp.equiv 2 (Fin n → ℝ)).symm a, (x : EuclideanSpace ℝ (Fin n))⟫ : ℝ) ^ k) := by
+    funext x
+    simp only [funLeftIncl, incl, LinearMap.funLeft_apply]
+    congr 1
+    rw [PiLp.inner_apply]
+    simp [RCLike.inner_apply, mul_comm]
+  rw [heq]; exact h1
+
+/-- `funLeftIncl` carries any homogeneous-degree-`k` polynomial function into `Tplain σ K`,
+via the ridge-power span identity `RidgePowersSpan.ridgePow_span`. -/
+private theorem funLeftIncl_homogeneous_mem_Tplain {σ : ℝ → ℝ} (hσu : UnivariateDense σ)
+    (K : Set (EuclideanSpace ℝ (Fin n))) (hK : IsCompact K) (k : ℕ)
+    (q : MvPolynomial (Fin n) ℝ) (hq : q ∈ MvPolynomial.homogeneousSubmodule (Fin n) ℝ k) :
+    funLeftIncl K (MvPolynomial.evalₗ ℝ (Fin n) q) ∈ Tplain σ K := by
+  have hspan : MvPolynomial.evalₗ ℝ (Fin n) q
+      ∈ Submodule.span ℝ
+          (Set.range fun a : Fin n → ℝ => (fun x : Fin n → ℝ => (∑ i, a i * x i) ^ k)) := by
+    rw [RidgePowersSpan.ridgePow_span k]
+    exact Submodule.mem_map_of_mem hq
+  have := Submodule.apply_mem_span_image_of_mem_span (R := ℝ) (R₂ := ℝ) (funLeftIncl K)
+    (s := Set.range fun a : Fin n → ℝ => (fun x : Fin n → ℝ => (∑ i, a i * x i) ^ k)) hspan
+  refine Submodule.span_le.mpr ?_ this
+  rintro _ ⟨_, ⟨a, rfl⟩, rfl⟩
+  exact funLeftIncl_ridgePow_mem_Tplain hσu K hK k a
+
+/-- Bridge: evaluating a multivariate polynomial at the coordinate maps agrees, as a plain
+function `↥K → ℝ`, with `funLeftIncl` applied to its linear evaluation `evalₗ`. -/
+private theorem aeval_coordCM_eq_funLeftIncl_evalₗ {K : Set (EuclideanSpace ℝ (Fin n))}
+    (p : MvPolynomial (Fin n) ℝ) :
+    (⇑(MvPolynomial.aeval (coordCM K) p) : ↥K → ℝ)
+      = funLeftIncl K (MvPolynomial.evalₗ ℝ (Fin n) p) := by
+  funext x
+  simp only [funLeftIncl, incl, LinearMap.funLeft_apply, MvPolynomial.evalₗ_apply]
+  induction p using MvPolynomial.induction_on with
+  | C a => simp
+  | add p q hp hq => simp [hp, hq]
+  | mul_X p i hp =>
+      rw [map_mul, MvPolynomial.aeval_X, MvPolynomial.eval_mul, MvPolynomial.eval_X]
+      change ((MvPolynomial.aeval (coordCM K) p) x) * (coordCM K i x) = _
+      rw [hp]; rfl
+
+/-- Every polynomial function on `↥K` (built from the coordinate maps) lies in `T σ K`, obtained
+by summing the homogeneous components and transferring each through `funLeftIncl`. -/
+private theorem aeval_coordCM_mem_T {σ : ℝ → ℝ} (hσu : UnivariateDense σ)
+    (K : Set (EuclideanSpace ℝ (Fin n))) (hK : IsCompact K) (p : MvPolynomial (Fin n) ℝ) :
+    MvPolynomial.aeval (coordCM K) p ∈ T σ K := by
+  rw [mem_T_iff_mem_Tplain, aeval_coordCM_eq_funLeftIncl_evalₗ p]
+  have hsum : MvPolynomial.evalₗ ℝ (Fin n) p
+      = ∑ k ∈ Finset.range (p.totalDegree + 1),
+          MvPolynomial.evalₗ ℝ (Fin n) (MvPolynomial.homogeneousComponent k p) := by
+    rw [← map_sum, MvPolynomial.sum_homogeneousComponent]
+  rw [hsum, map_sum]
+  refine Submodule.sum_mem _ (fun k _ => ?_)
+  exact funLeftIncl_homogeneous_mem_Tplain hσu K hK k _
+    (MvPolynomial.homogeneousComponent_mem k p)
+
 /-- The ridge density theorem: `T σ K = ⊤` for every compact `K ⊆ ℝⁿ`. -/
 theorem ridge_density {σ : ℝ → ℝ} (hσu : UnivariateDense σ)
     (K : Set (EuclideanSpace ℝ (Fin n))) (hK : IsCompact K) :
     T σ K = ⊤ := by
   haveI := isCompact_iff_compactSpace.mp hK
-  -- Each ridge power `x ↦ ⟪a, x⟫ ^ k` lies (as an unbundled function) in `Tplain σ K`.
-  have hridgePow : ∀ (a : EuclideanSpace ℝ (Fin n)) (k : ℕ),
-      (fun x : ↥K => (⟪a, (x : EuclideanSpace ℝ (Fin n))⟫ : ℝ) ^ k) ∈ Tplain σ K := by
-    intro a k
-    have := ridge_mem_T hσu K hK a ((ContinuousMap.id ℝ) ^ k)
-    rw [mem_T_iff_mem_Tplain] at this
-    simpa using this
-  -- The inclusion `↥K → (Fin n → ℝ)` and precomposition `Λ`.
-  set incl : ↥K → (Fin n → ℝ) := fun x => (x : EuclideanSpace ℝ (Fin n)) with hincl
-  set Λ : ((Fin n → ℝ) → ℝ) →ₗ[ℝ] (↥K → ℝ) := LinearMap.funLeft ℝ ℝ incl with hΛ
-  -- `Λ` carries the ridge-power generators of `ridgePow_span` into `Tplain σ K`.
-  have hΛridge : ∀ (k : ℕ) (a : Fin n → ℝ),
-      Λ (fun x : Fin n → ℝ => (∑ i, a i * x i) ^ k) ∈ Tplain σ K := by
-    intro k a
-    have h1 := hridgePow ((WithLp.equiv 2 (Fin n → ℝ)).symm a) k
-    have heq : (Λ (fun x : Fin n → ℝ => (∑ i, a i * x i) ^ k))
-        = (fun x : ↥K =>
-            (⟪(WithLp.equiv 2 (Fin n → ℝ)).symm a, (x : EuclideanSpace ℝ (Fin n))⟫ : ℝ) ^ k) := by
-      funext x
-      simp only [hΛ, LinearMap.funLeft_apply, hincl]
-      congr 1
-      rw [PiLp.inner_apply]
-      simp [RCLike.inner_apply, mul_comm]
-    rw [heq]; exact h1
-  -- `Λ` carries any homogeneous-degree-`k` polynomial *function* into `Tplain σ K`.
-  have hΛhom : ∀ (k : ℕ) (q : MvPolynomial (Fin n) ℝ),
-      q ∈ MvPolynomial.homogeneousSubmodule (Fin n) ℝ k →
-      Λ (MvPolynomial.evalₗ ℝ (Fin n) q) ∈ Tplain σ K := by
-    intro k q hq
-    have hspan : MvPolynomial.evalₗ ℝ (Fin n) q
-        ∈ Submodule.span ℝ
-            (Set.range fun a : Fin n → ℝ => (fun x : Fin n → ℝ => (∑ i, a i * x i) ^ k)) := by
-      rw [RidgePowersSpan.ridgePow_span k]
-      exact Submodule.mem_map_of_mem hq
-    have := Submodule.apply_mem_span_image_of_mem_span (R := ℝ) (R₂ := ℝ) Λ
-      (s := Set.range fun a : Fin n → ℝ => (fun x : Fin n → ℝ => (∑ i, a i * x i) ^ k)) hspan
-    refine Submodule.span_le.mpr ?_ this
-    rintro _ ⟨_, ⟨a, rfl⟩, rfl⟩
-    exact hΛridge k a
-  -- Coordinate functions as continuous maps on `↥K`.
-  set coordCM : Fin n → C(↥K, ℝ) :=
-    fun i => ⟨fun x => (x : EuclideanSpace ℝ (Fin n)) i, by fun_prop⟩ with hcoord
-  -- `⇑(aeval coordCM p) = Λ (evalₗ p)` for every `p`.
-  have hcoe : ∀ p : MvPolynomial (Fin n) ℝ,
-      (⇑(MvPolynomial.aeval coordCM p) : ↥K → ℝ) = Λ (MvPolynomial.evalₗ ℝ (Fin n) p) := by
-    intro p
-    funext x
-    simp only [hΛ, LinearMap.funLeft_apply, MvPolynomial.evalₗ_apply, hincl]
-    induction p using MvPolynomial.induction_on with
-    | C a => simp
-    | add p q hp hq => simp [hp, hq]
-    | mul_X p i hp =>
-        rw [map_mul, MvPolynomial.aeval_X, MvPolynomial.eval_mul, MvPolynomial.eval_X]
-        change ((MvPolynomial.aeval coordCM p) x) * (coordCM i x) = _
-        rw [hp]; rfl
   -- Every polynomial function lies in `T σ K`.
-  have hpoly_mem : ∀ p : MvPolynomial (Fin n) ℝ, MvPolynomial.aeval coordCM p ∈ T σ K := by
-    intro p
-    rw [mem_T_iff_mem_Tplain, hcoe p]
-    have hsum : MvPolynomial.evalₗ ℝ (Fin n) p
-        = ∑ k ∈ Finset.range (p.totalDegree + 1),
-            MvPolynomial.evalₗ ℝ (Fin n) (MvPolynomial.homogeneousComponent k p) := by
-      rw [← map_sum, MvPolynomial.sum_homogeneousComponent]
-    rw [hsum, map_sum]
-    refine Submodule.sum_mem _ (fun k _ => ?_)
-    exact hΛhom k _ (MvPolynomial.homogeneousComponent_mem k p)
+  have hpoly_mem : ∀ p : MvPolynomial (Fin n) ℝ, MvPolynomial.aeval (coordCM K) p ∈ T σ K :=
+    fun p => aeval_coordCM_mem_T hσu K hK p
   -- The subalgebra of polynomial functions.
-  set A : Subalgebra ℝ C(↥K, ℝ) := (MvPolynomial.aeval coordCM).range with hA
+  set A : Subalgebra ℝ C(↥K, ℝ) := (MvPolynomial.aeval (coordCM K)).range with hA
   -- `A` separates points (its coordinate functions do).
   have hsep : A.SeparatesPoints := by
     intro u v huv
@@ -203,9 +224,9 @@ theorem ridge_density {σ : ℝ → ℝ} (hσu : UnivariateDense σ)
       intro hcontra
       exact huv (Subtype.ext (by ext i; exact congrFun hcontra i))
     obtain ⟨i, hi⟩ := Function.ne_iff.mp hne
-    refine ⟨(coordCM i : ↥K → ℝ), ⟨coordCM i, ?_, rfl⟩, ?_⟩
-    · exact ⟨MvPolynomial.X i, by simp [hcoord]⟩
-    · simpa [hcoord] using hi
+    refine ⟨(coordCM K i : ↥K → ℝ), ⟨coordCM K i, ?_, rfl⟩, ?_⟩
+    · exact ⟨MvPolynomial.X i, by simp [coordCM]⟩
+    · simpa [coordCM] using hi
   -- `A ⊆ T σ K`.
   have hAle : (A : Set C(↥K, ℝ)) ⊆ (T σ K : Set C(↥K, ℝ)) := by
     rintro f ⟨p, rfl⟩
