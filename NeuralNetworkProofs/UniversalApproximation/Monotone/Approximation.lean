@@ -46,15 +46,6 @@ private theorem exists_delta_uniform {d : ℕ} (f : (Fin d → ℝ) → ℝ)
   rw [Real.dist_eq] at this
   exact le_of_lt this
 
-/-- If two points of `Fin d → ℝ` agree per-coordinate to within `c`, their sup-metric distance is at
-most `c`.  Used to convert the per-coordinate grid gap `1 / m` into a `dist` bound. -/
-private theorem dist_le_of_coord {d : ℕ} {a b : Fin d → ℝ} {c : ℝ} (hc : 0 ≤ c)
-    (h : ∀ i, |a i - b i| ≤ c) : dist a b ≤ c := by
-  rw [dist_pi_le_iff hc]
-  intro i
-  rw [Real.dist_eq]
-  exact h i
-
 end UniversalApproximation.Monotone
 
 namespace UniversalApproximation.Monotone
@@ -71,33 +62,31 @@ theorem monotone_approximation {d : ℕ} (f : (Fin d → ℝ) → ℝ)
     {ε : ℝ} (hε : 0 < ε) :
     ∃ N : MonoNet d, N.IsMonotone ∧ N.depth = 4 ∧
       ∀ x ∈ Set.Icc (0 : Fin d → ℝ) 1, |N.toFun x - f x| ≤ ε := by
+  -- bridge the frozen longhand monotonicity hypothesis to `MonotoneOn`
+  have hmonoOn : MonotoneOn f (Set.Icc (0 : Fin d → ℝ) 1) :=
+    fun a ha b hb hab => hmono ha hb hab
   -- uniform continuity gives a modulus `δ`
   obtain ⟨δ, hδ, hunif⟩ := exists_delta_uniform f hf hε
-  -- choose a resolution `m := m₀ + 1` with `1 / m < δ` (and hence `0 < m`)
-  obtain ⟨m₀, hm0⟩ := exists_nat_one_div_lt hδ
-  set m : ℕ := m₀ + 1 with hmdef
-  have hm : 0 < m := Nat.succ_pos m₀
-  have hmδ : (1 : ℝ) / m ≤ δ := by
-    rw [hmdef]
-    push_cast
-    exact le_of_lt hm0
+  -- choose a resolution `m` with grid gap `1 / (m + 1) ≤ δ`
+  obtain ⟨m, hmδ0⟩ := exists_nat_one_div_lt hδ
+  have hmδ : (1 : ℝ) / (m + 1) ≤ δ := le_of_lt hmδ0
   -- interpolate the grid dataset exactly
   obtain ⟨N, hNmono, hNdepth, hNeq⟩ :=
     monotone_interpolation (gridEnum (d := d) m) (fun j => f (gridEnum m j))
-      (fun a b hab => gridEnum_monotone_dataset m f hmono a b hab)
-      (gridEnum_injective hm)
+      (fun a b hab => gridEnum_monotone_dataset m f hmonoOn a b hab)
+      (gridEnum_injective m)
   refine ⟨N, hNmono, hNdepth, fun x hx => ?_⟩
   -- monotone network denotation
   have hNmt : Monotone N.toFun := N.monotone_toFun hNmono
   -- grid points are hit exactly by `N`: `N (gridPoint m k) = f (gridPoint m k)`
-  have hgrid : ∀ k : Fin d → Fin (m + 1),
+  have hgrid : ∀ k : Fin d → Fin (m + 2),
       N.toFun (gridPoint m k) = f (gridPoint m k) := by
     intro k
-    have hj := hNeq ((Fintype.equivFin (Fin d → Fin (m + 1))) k)
+    have hj := hNeq ((Fintype.equivFin (Fin d → Fin (m + 2))) k)
     simp only [gridEnum, Equiv.symm_apply_apply] at hj
     exact hj
   -- the sandwiching neighbours
-  obtain ⟨kl, kr, hxl, hxr, hgap⟩ := grid_neighbors hm x hx
+  obtain ⟨kl, kr, hxl, hxr, hgap⟩ := grid_neighbors m x hx
   set xl := gridPoint m kl with hxldef
   set xr := gridPoint m kr with hxrdef
   have hxlmem : xl ∈ Set.Icc (0 : Fin d → ℝ) 1 := gridPoint_mem_Icc m kl
@@ -110,7 +99,7 @@ theorem monotone_approximation {d : ℕ} (f : (Fin d → ℝ) → ℝ)
   have hfr : f x ≤ f xr := hmono hx hxrmem hxr
   -- the interval `[f xl, f xr]` has width at most `ε`
   have hxlr : xl ≤ xr := le_trans hxl hxr
-  have hdist : dist xr xl ≤ 1 / m := by
+  have hdist : dist xr xl ≤ 1 / (m + 1) := by
     apply dist_le_of_coord (by positivity)
     intro i
     have hle : xl i ≤ xr i := hxlr i
