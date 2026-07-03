@@ -43,6 +43,12 @@ The subtle ones (1–4) are the ones unaided reviews miss; do not skip them.
 8. **Hygiene.** Missing docstrings on public decls; leftover `set_option maxHeartbeats`; any
    `sorry`/`admit`.
 9. **Cross-file ripple.** Which findings, if fixed, change a signature that other files consume.
+10. **Imports & build time.** `import Mathlib` pulls in the entire library, making `lake build` slow
+    and worsening `Too many open files` (EMFILE) on parallel builds. Mathlib's own standard is
+    *minimal, precise* imports — blanket `import Mathlib` is a genuine build-time + idiom cost, not a
+    neutral convention. Flag it, and point at `lake exe shake` (unused-import check) / `#min_imports`
+    to derive the real set — but note those UNDER-report (open-scoped notation, instances, tactics),
+    so any minimization must be confirmed by a build.
 
 ## Verify before you assert
 
@@ -54,10 +60,15 @@ Never invent lemma names.
 ## Respect the repo's conventions (avoid false positives)
 
 Read `CLAUDE.md` / neighboring files for the local norm first. Do NOT flag as issues:
-- Blanket `import Mathlib` when the repo uses it by convention (only upstream-facing `ForMathlib`-style
-  files need minimal imports).
 - Absence of unit tests / `example`s — Mathlib does not unit-test its lemmas.
 - Missing `@[simp]`/attribute tags, unless there is a concrete reason.
+
+On imports (checklist 10): still flag blanket `import Mathlib`, but calibrate severity to the repo's
+intent — REQUIRED (blocking) for upstream-facing / `ForMathlib`-style files; if `CLAUDE.md` documents
+a *deliberate* decision to keep blanket imports for internal code (often because minimization proved
+fragile), record it as an optional/low-severity build-time note rather than a blocking defect. Do not
+silently drop it — the build-time cost is real. Default: treat any file NOT under a directory the
+repo designates as upstream-facing (e.g. `ForMathlib/`) as internal.
 
 ## Output contract (the findings list)
 

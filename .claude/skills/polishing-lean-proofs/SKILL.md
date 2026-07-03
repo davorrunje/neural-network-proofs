@@ -76,3 +76,7 @@ converge on the audit, not on the diff.
   smells remaining.
 - Changing a theorem's *statement* to make it "cleaner" — out of scope; frozen headlines are frozen.
 - Applying changes beyond the audit findings (scope creep).
+- Import minimization (cutting `import Mathlib` down to precise imports for build speed / upstream
+  readiness) is a legitimate polish target from the audit — but the min-imports tooling under-reports
+  (open-scoped notation, instances, tactics), so confirm each reduction by building, and respect a
+  documented decision to keep blanket imports for internal code rather than looping on it forever.

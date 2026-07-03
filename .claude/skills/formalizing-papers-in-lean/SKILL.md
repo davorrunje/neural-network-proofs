@@ -66,6 +66,7 @@ Expect exactly `[propext, Classical.choice, Quot.sound]`. Any `sorryAx` = unprov
 | `#print axioms` reads the compiled `.olean`, not source | After edits/moves/renames, `lake build` **before** trusting `#print axioms` (stale olean reports old axioms). |
 | Default target must transitively import a theorem or `lake build` won't check it | Re-export headlines from the root module. |
 | Many `import Mathlib` modules building at once → `Too many open files` (EMFILE); this Lake has no `-j` | After a mass invalidation, build serially one module at a time in dependency order (Mathlib stays cached). |
+| `import Mathlib` (whole-library) makes `lake build` slow and worsens EMFILE | Not Mathlib-idiomatic — the standard is minimal precise imports. Prefer targeted imports where practical (`lake exe shake` / `#min_imports`, confirmed by a build); a repo may keep blanket imports for internal code by explicit, documented decision. |
 | Line length | ≤ 100 **codepoints** (Mathlib glyphs are 1 cp; byte tools over-report — measure codepoints). |
 | SSH-signed commits + no-force-push branch rules | If signing needs live confirmation and you're unattended, commit unsigned and batch-sign **only the unpushed** commits before the PR (`git rebase --exec 'git commit --amend --no-edit -S' <last-pushed>`) — never re-sign already-pushed commits. |
 
