@@ -54,33 +54,12 @@ private theorem reindex_y_monotone (x : Fin n → (Fin d → ℝ)) (y : Fin n �
   · exact le_of_eq h.1
 
 /-- The reindexing is a linear extension: comparability of the reindexed points forces the
-index order. -/
+index order.  This is the general `sort_key_linear_extension` (from `Basic`) instantiated with
+the targets `y` and the points `x`. -/
 private theorem reindex_linear_extension (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
     (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x) {a b : Fin n}
-    (hx : x (reindex x y a) ≤ x (reindex x y b)) : a ≤ b := by
-  by_contra hab
-  rw [not_le] at hab
-  -- from `b < a` and monotone sort we get `key (reindex b) ≤ key (reindex a)`
-  have hkey : (sortKey x y ∘ reindex x y) b ≤ (sortKey x y ∘ reindex x y) a :=
-    sortKey_comp_reindex_monotone x y hab.le
-  -- but the assumed comparability gives the reverse
-  have hy : y (reindex x y a) ≤ y (reindex x y b) := hmono _ _ hx
-  have hxle : toLinearExtension (x (reindex x y a)) ≤ toLinearExtension (x (reindex x y b)) :=
-    toLinearExtension.monotone hx
-  have hkey' : (sortKey x y ∘ reindex x y) a ≤ (sortKey x y ∘ reindex x y) b := by
-    simp only [Function.comp_apply, sortKey, Prod.Lex.le_iff, ofLex_toLex]
-    rcases lt_or_eq_of_le hy with h | h
-    · exact Or.inl h
-    · exact Or.inr ⟨h, hxle⟩
-  have hEq : (sortKey x y ∘ reindex x y) a = (sortKey x y ∘ reindex x y) b :=
-    le_antisymm hkey' hkey
-  -- equal keys force equal points, contradicting injectivity of `x ∘ reindex`
-  simp only [Function.comp_apply, sortKey] at hEq
-  have hxeq : x (reindex x y a) = x (reindex x y b) := by
-    have := (Prod.ext_iff.1 (toLex.injective hEq)).2
-    exact this
-  have : reindex x y a = reindex x y b := hinj hxeq
-  exact absurd ((reindex x y).injective this) (ne_of_gt hab)
+    (hx : x (reindex x y a) ≤ x (reindex x y b)) : a ≤ b :=
+  sort_key_linear_extension y x hmono hinj hx
 
 end Reindex
 
@@ -90,10 +69,15 @@ variable {d n : ℕ}
 
 /-- Layer 3 of the interpolation network (reverse prefix sum): `Layer n n`.  Neuron `i` sums the
 domination indicators `E r` for `r ≥ i` (weights `if i ≤ r then 1 else 0`, all `≥ 0`) and
-thresholds at `1` (bias `-1`), so under `θ` it fires iff some point `r ≥ i` is dominated. -/
+thresholds at `1` (bias `-1`), so under `heaviside` it fires iff some point `r ≥ i` is
+dominated. -/
 noncomputable def revPrefixLayer (n : ℕ) : NeuralNetwork.Layer n n where
   W := fun i r => if i ≤ r then 1 else 0
   c := fun _ => -1
+
+/-- The reverse-prefix layer has non-negative weights. -/
+private theorem revPrefixLayer_nonneg (n : ℕ) (i r : Fin n) : 0 ≤ (revPrefixLayer n).W i r := by
+  unfold revPrefixLayer; dsimp only; split_ifs <;> norm_num
 
 /-- The depth-`3` threshold stack: the two-layer domination gadget for the reindexed points
 followed by the reverse-prefix-sum layer. -/
@@ -101,40 +85,61 @@ noncomputable def stack₃ (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) :
   .cons (dominationLayer1 (x ∘ reindex x y))
     (.cons (dominationLayer2 d) (.cons (revPrefixLayer n) (.nil n)))
 
-/-- The read-out weights: successive differences of the reindexed targets, with `readW 0 = 0`
-(the base value `y' 0` is carried in the bias instead).  These are non-negative because `y'` is
-nondecreasing. -/
+/-- The reindexed targets `y' i = y (π i)` along the reindexing permutation `π = reindex x y`. -/
+noncomputable def reTarget (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (i : Fin n) : ℝ :=
+  y (reindex x y i)
+
+/-- The telescoping potential: `Y k = y' (k − 1)` at index `k − 1` when it is in range, and `0`
+otherwise (`Nat` subtraction makes `Y 0 = y' 0`).  The read-out weight of neuron `i` is the
+forward difference `Y (i+1) − Y i`, and the read-out bias is `Y 0`.  With this shift the prefix
+sum over `i ≤ j` telescopes (via `Finset.sum_range_sub`) to `Y (j+1) − Y 0 = y' j − y' 0`, so
+adding the bias recovers `y' j` exactly. -/
+noncomputable def potential (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ℕ → ℝ :=
+  fun k => if hk : k - 1 < n then reTarget x y ⟨k - 1, hk⟩ else 0
+
+/-- On the range that the read-out actually samples, the potential reads the reindexed target
+`y' k` at shift `k + 1`. -/
+private theorem potential_succ (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (k : Fin n) :
+    potential x y (k + 1) = reTarget x y k := by
+  unfold potential
+  have hk' : (k : ℕ) + 1 - 1 < n := by simp only [Nat.add_sub_cancel]; exact k.2
+  rw [dif_pos hk']
+  congr 1
+
+/-- The read-out weights: forward differences `Y (i+1) − Y i` of the potential.  These are
+non-negative because the potential is nondecreasing (`y'` is nondecreasing along the
+reindexing). -/
 noncomputable def readW (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : Fin n → ℝ :=
-  fun i => if _h : (i : ℕ) = 0 then 0
-    else y (reindex x y i) -
-      y (reindex x y ⟨i - 1, Nat.lt_of_le_of_lt (Nat.sub_le _ _) i.2⟩)
+  fun i => potential x y ((i : ℕ) + 1) - potential x y (i : ℕ)
 
-/-- The read-out bias: the smallest reindexed target `y' 0` (or `0` if the dataset is empty). -/
+/-- The read-out bias: the potential base `Y 0`, i.e. the smallest reindexed target `y' 0`
+(or `0` if the dataset is empty). -/
 noncomputable def readBias (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ℝ :=
-  if h : 0 < n then y (reindex x y ⟨0, h⟩) else 0
+  potential x y 0
 
-/-- The interpolation network: the depth-`3` stack with the successive-difference read-out. -/
+/-- The interpolation network: the depth-`3` stack with the forward-difference read-out. -/
 noncomputable def interpNet (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : MonoNet d :=
   ⟨n, stack₃ x y, readW x y, readBias x y⟩
 
-/-- The read-out weights are non-negative (from `y'` nondecreasing). -/
+/-- The read-out weights are non-negative: the forward difference `Y (i+1) − Y i` is the target
+gap `y' i − y' (i−1)` (with `y' (i−1) = y' 0` at `i = 0`, giving `0`), which is `≥ 0` because `y'`
+is nondecreasing along the reindexing. -/
 private theorem readW_nonneg (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (i : Fin n) :
     0 ≤ readW x y i := by
   unfold readW
-  split_ifs with h
-  · exact le_refl 0
-  · rw [sub_nonneg]
-    apply reindex_y_monotone x y
-    have : (⟨i - 1, Nat.lt_of_le_of_lt (Nat.sub_le _ _) i.2⟩ : Fin n) ≤ i := by
-      simp only [Fin.le_def]
-      exact Nat.sub_le _ _
-    exact this
+  rw [sub_nonneg, potential_succ]
+  -- `Y i = y' (i−1)` (with `y' (i−1) = y' 0` at `i = 0`), which is `≤ y' i`
+  unfold potential reTarget
+  have hi' : (i : ℕ) - 1 < n := Nat.lt_of_le_of_lt (Nat.sub_le _ _) i.2
+  rw [dif_pos hi']
+  apply reindex_y_monotone
+  simp only [Fin.le_def]; omega
 
 /-- The output of `stack₃` equals the reverse-prefix-sum layer applied to the domination
 output for the reindexed points. -/
 private theorem stack₃_toFun (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (z : Fin d → ℝ) :
     (stack₃ x y).toFun z =
-      (revPrefixLayer n).toFun θ ((dominationStack (x ∘ reindex x y)).toFun z) := by
+      (revPrefixLayer n).toFun heaviside ((dominationStack (x ∘ reindex x y)).toFun z) := by
   rfl
 
 open Classical in
@@ -153,7 +158,7 @@ private theorem revPrefix_apply (x : Fin n → (Fin d → ℝ)) (y : Fin n → �
     simp only [Function.comp_apply] at h
     exact h
   -- unfold the reverse-prefix layer at neuron `i`
-  change θ ((Matrix.mulVec (revPrefixLayer n).W
+  change heaviside ((Matrix.mulVec (revPrefixLayer n).W
       ((dominationStack (x ∘ reindex x y)).toFun (x (reindex x y j)))) i
       + (revPrefixLayer n).c i) = _
   have hsum : (Matrix.mulVec (revPrefixLayer n).W
@@ -178,7 +183,7 @@ private theorem revPrefix_apply (x : Fin n → (Fin d → ℝ)) (y : Fin n → �
           * (if x (reindex x y r) ≤ x (reindex x y j) then 1 else 0))
         (fun r _ => by positivity) (Finset.mem_univ j)
     rw [hterm] at hle
-    rw [if_pos hij, θ, if_pos (by linarith)]
+    rw [if_pos hij, heaviside, if_pos (by linarith)]
   · -- every `r ≥ i > j` fails domination (linear extension), so the sum is `0`, output `0`
     have hzero : ∀ r, (if i ≤ r then (1 : ℝ) else 0)
         * (if x (reindex x y r) ≤ x (reindex x y j) then 1 else 0) = 0 := by
@@ -190,82 +195,45 @@ private theorem revPrefix_apply (x : Fin n → (Fin d → ℝ)) (y : Fin n → �
         exact hij (le_trans hir this)
       · rw [if_neg hir, zero_mul]
     rw [Finset.sum_eq_zero (fun r _ => hzero r)]
-    rw [if_neg hij, θ, if_neg (by norm_num)]
-
-/-- The reindexed targets extended to `ℕ` (junk value `0` outside range): `Ycum k = y' k` for
-`k < n`.  Used as the telescoping potential for the read-out. -/
-private noncomputable def Ycum (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ℕ → ℝ :=
-  fun k => if h : k < n then y (reindex x y ⟨k, h⟩) else 0
-
-/-- The read-out weight `readW i` is the successive difference `Ycum i − Ycum (i − 1)` (with the
-`i = 0` term collapsing to `0` because `Nat` subtraction gives `0 - 1 = 0`). -/
-private theorem readW_eq (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (i : Fin n) :
-    readW x y i = Ycum x y i - Ycum x y ((i : ℕ) - 1) := by
-  have hi : Ycum x y (i : ℕ) = y (reindex x y i) := by
-    unfold Ycum; rw [dif_pos i.2, Fin.eta]
-  have hpred : ((i : ℕ) - 1) < n := Nat.lt_of_le_of_lt (Nat.sub_le _ _) i.2
-  have hip : Ycum x y ((i : ℕ) - 1) = y (reindex x y ⟨(i : ℕ) - 1, hpred⟩) := by
-    unfold Ycum; rw [dif_pos hpred]
-  rw [hi, hip]
-  unfold readW
-  split_ifs with h
-  · have h0 : ((i : ℕ) - 1) = 0 := by omega
-    have hcong : (⟨(i : ℕ) - 1, hpred⟩ : Fin n) = i := by
-      apply Fin.ext; simp [h]
-    rw [hcong]; ring
-  · rfl
-
-/-- A telescoping identity: the prefix sum of successive differences of `Y` equals `Y m − Y 0`. -/
-private theorem telescope_pred (Y : ℕ → ℝ) (m : ℕ) :
-    ∑ k ∈ Finset.range (m + 1), (Y k - Y (k - 1)) = Y m - Y 0 := by
-  induction m with
-  | zero => simp
-  | succ m ih =>
-    rw [Finset.sum_range_succ, ih]
-    have : (m + 1 - 1) = m := by omega
-    rw [this]; ring
+    rw [if_neg hij, heaviside, if_neg (by norm_num)]
 
 /-- The interpolation network reproduces the reindexed target at every reindexed point:
-`N.toFun (x' j) = y' j`.  Combines Lemma 5, the successive-difference read-out, and telescoping. -/
+`N.toFun (x' j) = y' j`.  Combines Lemma 5, the forward-difference read-out, and the telescoping
+identity `Finset.sum_range_sub`. -/
 private theorem interpNet_toFun_reindex (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
     (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x) (j : Fin n) :
     (interpNet x y).toFun (x (reindex x y j)) = y (reindex x y j) := by
   unfold interpNet MonoNet.toFun
   simp only
-  -- rewrite the stack output via Lemma 5 and the read-out weights via successive differences
+  -- rewrite the stack output via Lemma 5 and the read-out weights via forward differences
   have hstep : (∑ i, readW x y i * (stack₃ x y).toFun (x (reindex x y j)) i)
-      = ∑ i : Fin n, (Ycum x y i - Ycum x y ((i : ℕ) - 1))
+      = ∑ i : Fin n, (potential x y ((i : ℕ) + 1) - potential x y (i : ℕ))
           * (if (i : ℕ) ≤ (j : ℕ) then (1 : ℝ) else 0) := by
     apply Finset.sum_congr rfl
     intro i _
-    rw [revPrefix_apply x y hmono hinj i j, readW_eq]
+    rw [revPrefix_apply x y hmono hinj i j]
     rfl
   rw [hstep]
   -- move to a sum over `Finset.range n`
   rw [Fin.sum_univ_eq_sum_range
-      (fun k => (Ycum x y k - Ycum x y (k - 1)) * (if k ≤ (j : ℕ) then (1 : ℝ) else 0)) n]
+      (fun k => (potential x y (k + 1) - potential x y k) * (if k ≤ (j : ℕ) then (1 : ℝ) else 0))
+      n]
   -- restrict to `range (j + 1)`: terms with `k > j` vanish
   have hsub : Finset.range ((j : ℕ) + 1) ⊆ Finset.range n :=
     Finset.range_subset_range.2 (Nat.succ_le_of_lt j.isLt)
   rw [← Finset.sum_subset hsub]
-  · -- on `range (j + 1)` the indicator is `1`, then telescope
-    have : ∀ k ∈ Finset.range ((j : ℕ) + 1),
-        (Ycum x y k - Ycum x y (k - 1)) * (if k ≤ (j : ℕ) then (1 : ℝ) else 0)
-        = Ycum x y k - Ycum x y (k - 1) := by
+  · -- on `range (j + 1)` the indicator is `1`, then telescope forward differences
+    have hind : ∀ k ∈ Finset.range ((j : ℕ) + 1),
+        (potential x y (k + 1) - potential x y k) * (if k ≤ (j : ℕ) then (1 : ℝ) else 0)
+        = potential x y (k + 1) - potential x y k := by
       intro k hk
       rw [Finset.mem_range, Nat.lt_succ_iff] at hk
       rw [if_pos hk, mul_one]
-    rw [Finset.sum_congr rfl this, telescope_pred]
-    -- the bias supplies `Ycum 0 = y' 0`
-    have hbias : readBias x y = Ycum x y 0 := by
-      have hpos : 0 < n := j.pos
-      unfold readBias Ycum
-      simp only [dif_pos hpos]
-    rw [hbias]
-    have hj : Ycum x y (j : ℕ) = y (reindex x y j) := by
-      unfold Ycum
-      rw [dif_pos j.2, Fin.eta]
-    rw [hj]; ring
+    rw [Finset.sum_congr rfl hind, Finset.sum_range_sub (potential x y) ((j : ℕ) + 1)]
+    -- the bias supplies `Y 0`, and `Y (j+1) = y' j`
+    rw [potential_succ x y j]
+    unfold readBias reTarget
+    ring
   · intro k _ hk
     rw [Finset.mem_range, Nat.lt_succ_iff, not_le] at hk
     rw [if_neg (by omega), mul_zero]
@@ -274,18 +242,15 @@ private theorem interpNet_toFun_reindex (x : Fin n → (Fin d → ℝ)) (y : Fin
 theorem interpNet_depth (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) :
     (interpNet x y).depth = 4 := rfl
 
-/-- The interpolation network is monotone: hidden weights and read-out weights are non-negative. -/
+/-- The interpolation network is monotone: hidden weights and read-out weights are non-negative.
+The two domination layers reuse `dominationStack_isMonotone`; the reverse-prefix layer and the
+read-out are checked directly. -/
 private theorem interpNet_isMonotone (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) :
     (interpNet x y).IsMonotone := by
   refine ⟨?_, readW_nonneg x y⟩
-  -- the stack is the domination gadget for `x'` followed by the reverse-prefix layer
-  refine ⟨?_, ?_, ?_, trivial⟩
-  · intro q k
-    unfold dominationLayer1; dsimp only; split_ifs <;> norm_num
-  · intro i q
-    unfold dominationLayer2; dsimp only; split_ifs <;> norm_num
-  · intro i r
-    unfold revPrefixLayer; dsimp only; split_ifs <;> norm_num
+  -- the first two layers ARE the domination gadget for `x'`, so reuse its monotonicity
+  have hdom := dominationStack_isMonotone (x ∘ reindex x y)
+  exact ⟨hdom.1, hdom.2.1, revPrefixLayer_nonneg n, trivial⟩
 
 end Construction
 
