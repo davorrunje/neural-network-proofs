@@ -16,10 +16,9 @@ networks (arXiv:2207.05275, Result 1).
 The grid uses `m + 1` subdivisions per axis, so grid points are indexed by `k : Fin d → Fin (m + 2)`
 with coordinate value `(k i : ℝ) / (m + 1)`.  Because the denominator `m + 1` is always positive,
 the grid is genuine for every `m` (no `0 < m` side condition): all grid points lie in the unit cube,
-the
-index-to-point map is monotone (for the coordinatewise Pi order) and injective, and it yields a
+the index-to-point map is monotone (for the coordinatewise Pi order) and injective, and it yields a
 *monotone dataset* — sampling a monotone `f` at the grid gives a labelling that respects the order,
-which is exactly the hypothesis consumed by the interpolation theorem (Task 3).
+which is exactly the hypothesis consumed by the interpolation theorem.
 
 * `gridPoint` — the point of a grid index; `gridPoint_mem_Icc`, `gridPoint_injective` its basic
   order/injectivity facts.

@@ -18,8 +18,8 @@ of depth `4`.
 
 The proof samples `f` on a uniform grid fine enough (by uniform continuity of `f` on the compact
 cube) that adjacent grid values differ by at most `ε`, interpolates the sampled dataset exactly with
-`monotone_interpolation` (Task 3), and sandwiches every cube point between its grid neighbours (Task
-4): both `N x` and `f x` land in an interval of `f`-width at most `ε`.
+`monotone_interpolation`, and sandwiches every cube point between its grid neighbours: both `N x`
+and `f x` land in an interval of `f`-width at most `ε`.
 
 * `monotone_approximation` — the headline.
 -/
