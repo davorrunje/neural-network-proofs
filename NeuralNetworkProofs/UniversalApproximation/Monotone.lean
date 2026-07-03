@@ -3,6 +3,7 @@ Copyright (c) 2026 Davor Runje. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
+import NeuralNetworkProofs.UniversalApproximation.Monotone.Basic
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Domination
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Grid
@@ -22,9 +23,12 @@ The result states that every monotone continuous function on the unit cube
 depth-4 monotone neural network; and that the data-interpolation analogue holds
 with exact equality on finitely many points.
 
-This module re-exports all five component modules:
+This module re-exports all six component modules:
 
-* `Defs` — `MonoNet`, `MonoNet.toFun`, `MonoNet.depth`, `MonoNet.IsMonotone`.
+* `Basic` — general reusable lemmas (`sum_le_one_card_le_iff`, `dist_le_of_coord`,
+  `sort_key_linear_extension`).
+* `Defs` — `MonoNet`, `MonoNet.toFun`, `MonoNet.depth`, `MonoNet.IsMonotone`;
+  uses `heaviside` as the activation function.
 * `Domination` — the domination-indicator gadget used in the construction.
 * `Grid` — the grid construction and its properties.
 * `Interpolation` — headline theorem `monotone_interpolation`.
