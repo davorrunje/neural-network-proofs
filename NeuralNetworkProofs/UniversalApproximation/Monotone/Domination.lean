@@ -5,6 +5,7 @@ Authors: Davor Runje
 -/
 import Mathlib
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
+import NeuralNetworkProofs.UniversalApproximation.Monotone.Basic
 
 /-!
 # The domination gadget
@@ -14,6 +15,12 @@ This file builds the two-layer threshold gadget from the Mikulincer–Reichman c
 `p : Fin n → (Fin d → ℝ)`, `dominationStack p` is a depth-`2` threshold stack whose output
 coordinate `i` is the *domination indicator* of `p i`: it is `1` exactly when the input `x`
 dominates `p i` coordinatewise (`p i ≤ x` in the Pi order) and `0` otherwise.
+
+The middle layer carries `n * d` neurons, one per pair `(i, r)` of point index and coordinate.
+To avoid reasoning through the flattening `Fin (n * d)`, both layers are described by *curried*
+weight/bias data on `Fin n × Fin d`, flattened to `Fin (n * d)` only at the layer's type boundary
+via `finProdFinEquiv`. The `_apply` proofs then reindex the middle sums with `finProdFinEquiv` and
+`Fintype.sum_prod_type`, so the block structure is visible directly.
 
 * `dominationStack` — the two-layer threshold stack.
 * `dominationStack_depth` — its depth is `2`.
@@ -25,44 +32,19 @@ namespace UniversalApproximation.Monotone
 
 open scoped BigOperators
 
-/-- Sum of threshold values over `Fin d`: since each `θ (x r - (p i) r) ≤ 1`, the sum is at
-most `d`, and reaches `d` exactly when every term is `1`, i.e. when `p i ≤ x`. -/
-private theorem sum_thresh_ge_iff {d : ℕ} (x q : Fin d → ℝ) :
-    (d : ℝ) ≤ ∑ r, θ (x r - q r) ↔ ∀ r, q r ≤ x r := by
-  constructor
-  · intro hsum r
-    by_contra hlt
-    rw [not_le] at hlt
-    -- the `r`th term is `0` while all others are `≤ 1`, so the sum is `< d`
-    have hr : θ (x r - q r) = 0 := by
-      unfold θ; rw [if_neg]; linarith
-    have hbound : ∑ s, θ (x s - q s) < d := by
-      calc ∑ s, θ (x s - q s)
-          < ∑ _s : Fin d, (1 : ℝ) := by
-            apply Finset.sum_lt_sum
-            · intro s _; exact θ_le_one _
-            · exact ⟨r, Finset.mem_univ r, by rw [hr]; norm_num⟩
-        _ = d := by simp
-    linarith
-  · intro hle
-    have hone : ∀ r, θ (x r - q r) = 1 := by
-      intro r; unfold θ; rw [if_pos]; linarith [hle r]
-    have heq : (d : ℝ) = ∑ r, θ (x r - q r) := by
-      rw [Finset.sum_congr rfl (fun r _ => hone r)]
-      simp
-    exact heq.le
-
-/-- Layer 1 of the domination gadget: `Layer d (n * d)`. Neuron `finProdFinEquiv (i, r)`
-copies coordinate `r` of the input (weight row `eᵣ`) and subtracts `(p i) r` (as bias), so
-under `θ` it fires iff `x r ≥ (p i) r`. -/
+/-- Layer 1 of the domination gadget: `Layer d (n * d)`. The neuron flattened from the pair
+`(i, r)` copies coordinate `r` of the input (weight row `eᵣ`) and subtracts `(p i) r` (as bias),
+so under `heaviside` it fires iff `x r ≥ (p i) r`. The weights and bias are described by currying:
+they read the pair `finProdFinEquiv.symm q` and are flattened only through `finProdFinEquiv`. -/
 noncomputable def dominationLayer1 {d n : ℕ} (p : Fin n → (Fin d → ℝ)) :
     NeuralNetwork.Layer d (n * d) where
   W := fun q k => if k = (finProdFinEquiv.symm q).2 then 1 else 0
   c := fun q => -(p (finProdFinEquiv.symm q).1) (finProdFinEquiv.symm q).2
 
 /-- Layer 2 of the domination gadget: `Layer (n * d) n`. Neuron `i` sums the `d` coordinate
-indicators belonging to point `i` and thresholds at `d` (bias `-d`), so under `θ` it fires iff
-all `d` coordinates of `p i` are dominated. -/
+indicators belonging to point `i` and thresholds at `d` (bias `-d`), so under `heaviside` it fires
+iff all `d` coordinates of `p i` are dominated. The weight is `1` exactly on the block of neurons
+whose curried point index is `i`. -/
 noncomputable def dominationLayer2 (d : ℕ) {n : ℕ} :
     NeuralNetwork.Layer (n * d) n where
   W := fun i q => if (finProdFinEquiv.symm q).1 = i then 1 else 0
@@ -90,10 +72,13 @@ theorem dominationStack_isMonotone {d n : ℕ} (p : Fin n → (Fin d → ℝ)) :
     dsimp only
     split_ifs <;> norm_num
 
-/-- The output of layer 1 at neuron `finProdFinEquiv (i, r)` is `θ (x r - (p i) r)`. -/
+/-- The output of layer 1 at the neuron flattened from `(i, r)` is `heaviside (x r - (p i) r)`.
+Stated on the curried index `finProdFinEquiv (i, r)` so `Equiv.symm_apply_apply` collapses the
+weight/bias lookup back to the pair. -/
 private theorem dominationLayer1_apply {d n : ℕ} (p : Fin n → (Fin d → ℝ))
     (x : Fin d → ℝ) (i : Fin n) (r : Fin d) :
-    (dominationLayer1 p).toFun θ x (finProdFinEquiv (i, r)) = θ (x r - (p i) r) := by
+    (dominationLayer1 p).toFun heaviside x (finProdFinEquiv (i, r))
+      = heaviside (x r - (p i) r) := by
   unfold NeuralNetwork.Layer.toFun dominationLayer1
   congr 1
   rw [Matrix.mulVec]
@@ -109,37 +94,44 @@ coordinatewise, and `0` otherwise. -/
 theorem dominationStack_apply {d n : ℕ} (p : Fin n → (Fin d → ℝ))
     (x : Fin d → ℝ) (i : Fin n) :
     (dominationStack p).toFun x i = if p i ≤ x then 1 else 0 := by
-  change (dominationLayer2 d).toFun θ ((dominationLayer1 p).toFun θ x) i = _
+  change (dominationLayer2 d).toFun heaviside
+    ((dominationLayer1 p).toFun heaviside x) i = _
   -- output of layer 2 at neuron `i`
   rw [NeuralNetwork.Layer.toFun]
-  -- compute the mulVec sum: it selects the `d` coordinate indicators of point `i`
+  -- reindex the middle sum by `(j, r)` and collapse the block for `j = i`
   have hsum : (Matrix.mulVec (dominationLayer2 d).W
-        ((dominationLayer1 p).toFun θ x) i)
-      = ∑ r : Fin d, θ (x r - (p i) r) := by
+        ((dominationLayer1 p).toFun heaviside x) i)
+      = ∑ r : Fin d, heaviside (x r - (p i) r) := by
     rw [Matrix.mulVec]
     simp only [dotProduct, dominationLayer2]
-    rw [← finProdFinEquiv.sum_comp
-        (fun q => (if (finProdFinEquiv.symm q).1 = i then 1 else 0)
-          * (dominationLayer1 p).toFun θ x q)]
-    rw [Fintype.sum_prod_type]
+    rw [← finProdFinEquiv.sum_comp, Fintype.sum_prod_type]
     rw [Finset.sum_eq_single i]
-    · congr 1
-      ext r
-      rw [dominationLayer1_apply]
-      simp
+    · refine Finset.sum_congr rfl (fun r _ => ?_)
+      rw [Equiv.symm_apply_apply, dominationLayer1_apply, if_pos rfl, one_mul]
     · intro j _ hj
-      apply Finset.sum_eq_zero
-      intro r _
-      rw [Equiv.symm_apply_apply]
-      dsimp only
-      rw [if_neg hj]; ring
+      refine Finset.sum_eq_zero (fun r _ => ?_)
+      rw [Equiv.symm_apply_apply, if_neg hj, zero_mul]
     · intro h; exact absurd (Finset.mem_univ _) h
   rw [hsum]
-  -- now `θ (∑ - d) = 1` iff `∑ ≥ d` iff `p i ≤ x`
-  change θ ((∑ r : Fin d, θ (x r - (p i) r)) + (dominationLayer2 d).c i) = _
+  -- now `heaviside (∑ - d) = 1` iff `∑ ≥ d` iff `p i ≤ x`
+  change heaviside ((∑ r : Fin d, heaviside (x r - (p i) r))
+    + (dominationLayer2 d).c i) = _
   simp only [dominationLayer2]
-  rw [θ, show (∑ r : Fin d, θ (x r - (p i) r)) + -(d : ℝ)
-        = (∑ r : Fin d, θ (x r - (p i) r)) - d by ring]
-  simp only [sub_nonneg, sum_thresh_ge_iff, Pi.le_def]
+  rw [heaviside, show (∑ r : Fin d, heaviside (x r - (p i) r)) + -(d : ℝ)
+        = (∑ r : Fin d, heaviside (x r - (p i) r)) - d by ring]
+  have hcard : (d : ℝ) = (Fintype.card (Fin d) : ℝ) := by rw [Fintype.card_fin]
+  simp only [sub_nonneg, hcard, sum_le_one_card_le_iff (fun r => heaviside_le_one _), Pi.le_def]
+  -- both conditions are `∀`s; show them equivalent coordinatewise, branches are equal
+  refine if_congr (forall_congr' fun r => ?_) rfl rfl
+  constructor
+  · intro h
+    unfold heaviside at h
+    by_contra hlt
+    rw [not_le] at hlt
+    rw [if_neg (by linarith)] at h
+    exact zero_ne_one h
+  · intro h
+    unfold heaviside
+    rw [if_pos (by linarith)]
 
 end UniversalApproximation.Monotone
