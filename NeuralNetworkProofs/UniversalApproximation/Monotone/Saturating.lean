@@ -74,6 +74,16 @@ theorem reflect_leftSaturating {σ : ℝ → ℝ} (h : RightSaturating σ) :
     Filter.tendsto_neg_atTop_iff.mpr Filter.tendsto_id
   exact (hL.comp hneg).neg
 
+/-- Proposition 3.8 (biconditional): `reflect σ` is right-saturating iff `σ` is left-saturating. -/
+theorem reflect_rightSaturating_iff {σ : ℝ → ℝ} :
+    RightSaturating (reflect σ) ↔ LeftSaturating σ :=
+  ⟨fun h => reflect_reflect σ ▸ reflect_leftSaturating h, reflect_rightSaturating⟩
+
+/-- Proposition 3.8 (biconditional): `reflect σ` is left-saturating iff `σ` is right-saturating. -/
+theorem reflect_leftSaturating_iff {σ : ℝ → ℝ} :
+    LeftSaturating (reflect σ) ↔ RightSaturating σ :=
+  ⟨fun h => reflect_reflect σ ▸ reflect_rightSaturating h, reflect_leftSaturating⟩
+
 /-!
 ## Quantitative half-space limit (Lemma 3.6, ε-form)
 
