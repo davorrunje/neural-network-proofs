@@ -74,4 +74,98 @@ theorem reflect_leftSaturating {σ : ℝ → ℝ} (h : RightSaturating σ) :
     Filter.tendsto_neg_atTop_iff.mpr Filter.tendsto_id
   exact (hL.comp hneg).neg
 
+/-!
+## Quantitative half-space limit (Lemma 3.6, ε-form)
+
+The lemmas below turn the *qualitative* saturation limits of Definition 3.3 into the
+*quantitative* estimates the interpolation construction needs. Reading a layer-1 neuron as
+`t ↦ σ (λ · t)` with gain `λ`, a right-saturating activation is driven within `ε` of its
+right limit `L⁺` on the half-line `t ≥ m > 0`, uniformly, once the gain exceeds a threshold
+`Λ` depending only on `ε` and the margin `m`. Dually for left-saturating activations on
+`t ≤ -m`. Task 4 instantiates `m` at the finite dataset's separation margin.
+-/
+
+/-- The `ε`-`M` unpacking of a right-saturation limit: if `σ` tends to `L` at `+∞`, then for
+every `ε > 0` there is a threshold `M` beyond which `σ` stays within `ε` of `L`. -/
+theorem rightSaturating_eventually {σ : ℝ → ℝ} {L : ℝ}
+    (hL : Filter.Tendsto σ Filter.atTop (nhds L)) {ε : ℝ} (hε : 0 < ε) :
+    ∃ M : ℝ, ∀ z : ℝ, M ≤ z → |σ z - L| ≤ ε := by
+  rw [Metric.tendsto_atTop] at hL
+  obtain ⟨M, hM⟩ := hL ε hε
+  refine ⟨M, fun z hz => ?_⟩
+  have := hM z hz
+  rw [Real.dist_eq] at this
+  exact le_of_lt this
+
+/-- Lemma 3.6 (ε-form, right-saturating). For a right-saturating activation with right limit
+`L⁺`, any target accuracy `ε > 0`, and any positive margin `m`, there is a gain threshold
+`Λ > 0` such that for every gain `λ ≥ Λ` and every input `t ≥ m`, the scaled neuron `σ (λ · t)`
+lies within `ε` of `L⁺`. This is the quantitative form of the half-space limit: a large gain
+drives the activation to its saturation value off the margin. -/
+theorem rightSaturating_scaled_approx {σ : ℝ → ℝ} {L : ℝ}
+    (hL : Filter.Tendsto σ Filter.atTop (nhds L)) {ε m : ℝ} (hε : 0 < ε) (hm : 0 < m) :
+    ∃ Λ : ℝ, 0 < Λ ∧ ∀ lam : ℝ, Λ ≤ lam → ∀ t : ℝ, m ≤ t → |σ (lam * t) - L| ≤ ε := by
+  obtain ⟨M, hM⟩ := rightSaturating_eventually hL hε
+  refine ⟨max 1 (M / m), lt_of_lt_of_le one_pos (le_max_left _ _), fun lam hlam t ht => ?_⟩
+  have hΛpos : 0 < lam := lt_of_lt_of_le (lt_of_lt_of_le one_pos (le_max_left _ _)) hlam
+  apply hM
+  -- Goal: M ≤ lam * t. First M ≤ lam * m, then lam * m ≤ lam * t.
+  have hMm : M / m ≤ lam := le_trans (le_max_right _ _) hlam
+  have h1 : M ≤ lam * m := by
+    rw [div_le_iff₀ hm] at hMm
+    linarith [hMm]
+  have h2 : lam * m ≤ lam * t := by
+    apply mul_le_mul_of_nonneg_left ht (le_of_lt hΛpos)
+  linarith
+
+/-- The `ε`-`M` unpacking of a left-saturation limit: if `σ` tends to `L` at `−∞`, then for
+every `ε > 0` there is a threshold `M` below which `σ` stays within `ε` of `L`. -/
+theorem leftSaturating_eventually {σ : ℝ → ℝ} {L : ℝ}
+    (hL : Filter.Tendsto σ Filter.atBot (nhds L)) {ε : ℝ} (hε : 0 < ε) :
+    ∃ M : ℝ, ∀ z : ℝ, z ≤ M → |σ z - L| ≤ ε := by
+  have hball : ∀ᶠ z in Filter.atBot, σ z ∈ Metric.ball L ε :=
+    hL.eventually (Metric.ball_mem_nhds L hε)
+  obtain ⟨M, hM⟩ := Filter.eventually_atBot.mp hball
+  refine ⟨M, fun z hz => ?_⟩
+  have := hM z hz
+  rw [Metric.mem_ball, Real.dist_eq] at this
+  exact le_of_lt this
+
+/-- Lemma 3.6 (ε-form, left-saturating). For a left-saturating activation with left limit `L⁻`,
+any target accuracy `ε > 0`, and any positive margin `m`, there is a gain threshold `Λ > 0` such
+that for every gain `λ ≥ Λ` and every input `t ≤ -m`, the scaled neuron `σ (λ · t)` lies within
+`ε` of `L⁻`. This is the dual of `rightSaturating_scaled_approx` on the left half-line. -/
+theorem leftSaturating_scaled_approx {σ : ℝ → ℝ} {L : ℝ}
+    (hL : Filter.Tendsto σ Filter.atBot (nhds L)) {ε m : ℝ} (hε : 0 < ε) (hm : 0 < m) :
+    ∃ Λ : ℝ, 0 < Λ ∧ ∀ lam : ℝ, Λ ≤ lam → ∀ t : ℝ, t ≤ -m → |σ (lam * t) - L| ≤ ε := by
+  obtain ⟨M, hM⟩ := leftSaturating_eventually hL hε
+  refine ⟨max 1 (-M / m), lt_of_lt_of_le one_pos (le_max_left _ _), fun lam hlam t ht => ?_⟩
+  have hΛpos : 0 < lam := lt_of_lt_of_le (lt_of_lt_of_le one_pos (le_max_left _ _)) hlam
+  apply hM
+  -- Goal: lam * t ≤ M. First lam * t ≤ lam * (-m) = -(lam * m), then -(lam * m) ≤ M.
+  have hMm : -M / m ≤ lam := le_trans (le_max_right _ _) hlam
+  have h1 : -M ≤ lam * m := by
+    rw [div_le_iff₀ hm] at hMm
+    linarith [hMm]
+  have h2 : lam * t ≤ lam * (-m) := by
+    apply mul_le_mul_of_nonneg_left ht (le_of_lt hΛpos)
+  have h3 : lam * (-m) = -(lam * m) := by ring
+  linarith
+
+/-- Two-sided quantitative half-space limit (Lemma 3.6, combined). For an activation that is both
+right- and left-saturating, a single gain threshold `Λ > 0` drives the scaled neuron `σ (λ · t)`
+within `ε` of the right limit `L⁺` on `t ≥ m` and within `ε` of the left limit `L⁻` on `t ≤ -m`,
+for every gain `λ ≥ Λ`. This packages both half-lines under one threshold for downstream use. -/
+theorem saturating_scaled_approx_two_sided {σ : ℝ → ℝ} {Lp Lm : ℝ}
+    (hLp : Filter.Tendsto σ Filter.atTop (nhds Lp))
+    (hLm : Filter.Tendsto σ Filter.atBot (nhds Lm)) {ε m : ℝ} (hε : 0 < ε) (hm : 0 < m) :
+    ∃ Λ : ℝ, 0 < Λ ∧
+      (∀ lam : ℝ, Λ ≤ lam → ∀ t : ℝ, m ≤ t → |σ (lam * t) - Lp| ≤ ε) ∧
+      (∀ lam : ℝ, Λ ≤ lam → ∀ t : ℝ, t ≤ -m → |σ (lam * t) - Lm| ≤ ε) := by
+  obtain ⟨Λp, hΛp_pos, hΛp⟩ := rightSaturating_scaled_approx hLp hε hm
+  obtain ⟨Λm, hΛm_pos, hΛm⟩ := leftSaturating_scaled_approx hLm hε hm
+  refine ⟨max Λp Λm, lt_of_lt_of_le hΛp_pos (le_max_left _ _), ?_, ?_⟩
+  · exact fun lam hlam t ht => hΛp lam (le_trans (le_max_left _ _) hlam) t ht
+  · exact fun lam hlam t ht => hΛm lam (le_trans (le_max_right _ _) hlam) t ht
+
 end UniversalApproximation.Monotone
