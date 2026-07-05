@@ -1,0 +1,87 @@
+# Phase 2b — Theorem 3.5 co-design (resolving the depth-4 assembly crux)
+
+> Status note, not yet an execution plan. Records the resolution of the Task-4 (`saturating_
+> interpolation`, Thm 3.5) blocker reported in `.superpowers/sdd/sat23-task-4-report.md`
+> (git-ignored scratch), so the design work survives. Awaiting a go/architecture decision.
+
+## Why Task 4 stopped (honest blocker, no `sorry`)
+
+Task 4 returned `NEEDS_CONTEXT`. The depth-4 construction of Thm 3.5 (arXiv:2505.02537) does **not**
+follow by assembling the Tasks 1–3 lemmas as the plan assumed: those lemmas are per-layer half-space
+(Lemma 3.6) and single-layer intersection (Lemma 3.7) estimates, but the theorem chains **three
+nested one-sided-saturating activations** (`σ₁,σ₂,σ₃`, alternating `𝒮⁻,𝒮⁺,𝒮⁻`). The design spec
+already flagged this "Phase-2 co-design" as unresolved. Three coupled gaps, and their resolution:
+
+### Gap 1 — the non-saturating side is unbounded
+
+A `𝒮⁻` activation has a finite limit only at `−∞`; its `+∞` side may diverge. So a layer-1 neuron's
+"on" output is unbounded, with no finite target to feed layer 2.
+
+**Resolution.** Do not send a single global gain `λ→∞`. Choose each layer's gain **sequentially and
+finitely**: `λ₁` large enough that L1's *saturating* side is within `η₁` of its finite limit, then
+shift by that limit `c₁ = σ₁(−∞)` so L1 outputs are `≥ 0`, `≈ 0` on the saturating side and `≥ m₁`
+(a definite, finite separation, at the finitely many data points) on the other. Polarity is arranged
+(via input sign / `reflect`, Prop 3.10) so the informative distinction always lands on a saturating
+side downstream. Each layer sees a **bounded** input range; no actual `∞` is ever evaluated.
+
+### Gap 2 — `intersection_inside_value` needs *exact* zero interior inputs
+
+`intersection_inside_value` requires `∀ i, h i = 0` exactly to yield `σ b`. A saturating L1 gives
+only `h i ≈ 0`. The naive fix ("`|h i| ≤ δ` ⇒ `|σ(λ∑h+b) − σ(b)| ≤ ε`") is **false** with `δ` fixed
+and `λ→∞`.
+
+**Resolution.** The genuine content is *not* a new deep lemma — it is an ε-δ continuity fact plus
+assembly bookkeeping. New lemma (easy):
+
+```
+approx_interior_value : ContinuousAt σ b → 0 < ε →
+    ∃ δ > 0, ∀ t, |t − b| ≤ δ → |σ t − σ b| ≤ ε
+```
+
+In the assembly, ensure the pre-activation `λ₂·∑h + b` is within `δ` of `b` by choosing the
+*previous* layer's gain `λ₁` large enough that `∑h` is within `δ / λ₂` of `0`. The gains chain
+**backwards** (`λ₃` fixed first → sets L3's input margin → sets L2's required output accuracy →
+sets `λ₂` → sets L1's required accuracy → sets `λ₁`); no joint limit, just nested "∃ large enough".
+
+The interior bias `b` must be a **continuity point** of `σ`. This needs **no extra hypothesis on
+`σ`**: the net is existentially quantified, and a monotone `σ` has only countably many
+discontinuities (`Monotone.countable_not_continuousWithinAt` / dense continuity points in Mathlib),
+so we *choose* `b` at a continuity point inside the existence proof. Faithful to the paper.
+
+### Gap 3 — γ-normalized read-out; Phase-1 engine symbols are `private`
+
+The interior value is `γ = σ³(b)` (an arbitrary real, not `1`), so the level-set neuron outputs
+`≈ γ·𝟙_A`, not `𝟙_A`; the read-out must divide by `γ`. And `readout_error_bound`, `reindex`,
+`readW`, `readBias`, `interpNet_toFun_reindex` in `Interpolation.lean` are `private`.
+
+**Resolution.** (i) Expose the needed Phase-1 read-out lemmas (add public wrappers in
+`Interpolation.lean` — additive, does not touch the frozen M-R headlines). (ii) A γ-normalized
+read-out `readW i = (y'ᵢ − y'ᵢ₋₁)/γ` with its own telescoping identity; `readout_error_bound`'s
+`(∑|readW|)·η ≤ ε` bound then applies with `η` the L3 level-set accuracy. Requires `γ ≠ 0`.
+
+## The one genuine faithfulness question (needs a decision / paper check)
+
+`γ = σ³(b) ≠ 0` is required to normalize. If `σ³` is constant `0` (degenerate: both saturation
+limits `0`), no interpolation is possible. **Does Thm 3.5 carry an implicit non-degeneracy
+hypothesis** (σ non-constant / distinct saturation limits)? Options:
+
+- confirm from the primary source whether Thm 3.5 assumes it, and mirror that hypothesis exactly; or
+- add the minimal faithful non-degeneracy hypothesis (`∃ continuity point b, σ³ b ≠ 0`) with a
+  documented deviation note.
+
+This is a theorem-statement (faithfulness) choice, not an implementation detail — hence escalated.
+
+## Remaining work once the architecture is fixed
+
+1. `approx_interior_value` + "monotone ⇒ choose good bias" existence (`Saturating.lean`; low risk).
+2. Public read-out wrappers in `Interpolation.lean` (additive; frozen headlines byte-identical).
+3. The depth-4 assembly `saturating_interpolation` with backward-chained finite gains, polarity via
+   `reflect`, and γ-normalized telescoping read-out (the bulk; medium-hard bookkeeping, uses the
+   existing `*_intersection_vanishes` / `*_scaled_approx_bias` lemmas per layer).
+4. Then Task 6 (`nonpos_weight_universal`, Prop 3.11) unblocks (it consumes Task 4 + Task 5).
+
+## What is already done and sound (committed, unsigned, this branch)
+
+Def 3.3 predicates, `reflect` + Prop 3.8 (T1); Lemma 3.6 (T2); Lemma 3.7 (T3); Prop 3.10 layer-pair
+equivalence (T5) — all reviewed and axiom-clean. Only Thm 3.5 (T4) and Prop 3.11 (T6, gated on T4)
+remain.
