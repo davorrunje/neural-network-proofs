@@ -109,12 +109,12 @@ private theorem potential_succ (x : Fin n → (Fin d → ℝ)) (y : Fin n → �
 /-- The read-out weights: forward differences `Y (i+1) − Y i` of the potential.  These are
 non-negative because the potential is nondecreasing (`y'` is nondecreasing along the
 reindexing). -/
-noncomputable def readW (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : Fin n → ℝ :=
+private noncomputable def readW (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : Fin n → ℝ :=
   fun i => potential x y ((i : ℕ) + 1) - potential x y (i : ℕ)
 
 /-- The read-out bias: the potential base `Y 0`, i.e. the smallest reindexed target `y' 0`
 (or `0` if the dataset is empty). -/
-noncomputable def readBias (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ℝ :=
+private noncomputable def readBias (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ℝ :=
   potential x y 0
 
 /-- The interpolation network: the depth-`3` stack with the forward-difference read-out. -/
