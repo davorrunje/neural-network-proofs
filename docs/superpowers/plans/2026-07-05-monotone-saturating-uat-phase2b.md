@@ -80,6 +80,25 @@ This is a theorem-statement (faithfulness) choice, not an implementation detail 
    existing `*_intersection_vanishes` / `*_scaled_approx_bias` lemmas per layer).
 4. Then Task 6 (`nonpos_weight_universal`, Prop 3.11) unblocks (it consumes Task 4 + Task 5).
 
+## Paper-confirmed construction (arXiv:2505.02537, Thm 3.5 + Lemmas 3.6/3.7)
+
+Verified against the primary source. Thm 3.5: MLP, non-negative weights, **3 hidden layers**,
+interpolates any monotone non-decreasing `f` on `n` points, provided activations are monotone
+non-decreasing and **alternate saturation** — Case 1 `𝒮⁻,𝒮⁺,𝒮⁻` or Case 2 `𝒮⁺,𝒮⁻,𝒮⁺`.
+**No non-degeneracy hypothesis is stated.** Construction: L1 half-spaces (`σ¹(−∞)=0` normalized,
+`σ¹(+∞)>0`); L2 intersections `⋂_{j>i} A⁻` via Lemma 3.7 → `≈ γ²·𝟙`, `γ²<0`; L3 intersections of
+complements → `≈ γ³·𝟙_{A⁽³⁾}`, `γ³>0`, with `A⁽³⁾ᵢ = {xⱼ : f(xⱼ) ≥ f(xᵢ)}` (the level sets); L4
+read-out `w = [f(x₁)−b, f(x₂)−f(x₁), …]/γ³` telescopes to `f(xᵢ)`. Lemma 3.7 asserts the interior
+`≈0 → ≈γ = σᵏ(b)` (hand-waved via `λ→∞`); bias `b` "chosen post-hoc to achieve desired γ".
+
+**Sharpened faithfulness finding.** The stated hypotheses are strictly weaker than the construction
+rigorously needs. The construction requires: `σ¹(+∞) > σ¹(−∞)` (L1 separates); `σ²` attains a
+suitable (negative) `γ²`; `σ³` attains `γ³ ≠ 0` at a continuity point (read-out divides by `γ³`);
+and `σ²,σ³` continuous at their chosen biases (for a rigorous interior). For a constant σ, or one
+whose image lacks the needed sign, the paper's specific construction does not go through. This is a
+genuine gap between the paper's statement and its proof — resolving it is a theorem-statement
+(faithfulness) decision, analogous to the ε-vs-exact gate.
+
 ## What is already done and sound (committed, unsigned, this branch)
 
 Def 3.3 predicates, `reflect` + Prop 3.8 (T1); Lemma 3.6 (T2); Lemma 3.7 (T3); Prop 3.10 layer-pair
