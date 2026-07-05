@@ -77,7 +77,7 @@ theorem sort_key_linear_extension {n : ℕ} {β : Type*} [PartialOrder β]
     s ≤ t := by
   set key : Fin n → (ℝ ×ₗ LinearExtension β) :=
     fun i => toLex (a i, toLinearExtension (b i)) with hkey
-  set π : Equiv.Perm (Fin n) := Tuple.sort key with hπ
+  set π : Equiv.Perm (Fin n) := Tuple.sort key
   have hsort : Monotone (key ∘ π) := Tuple.monotone_sort key
   by_contra hst
   rw [not_le] at hst

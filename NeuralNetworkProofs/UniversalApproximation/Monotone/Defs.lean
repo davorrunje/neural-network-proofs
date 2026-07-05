@@ -35,7 +35,7 @@ theorem heaviside_monotone : Monotone heaviside := by
   split_ifs with ha hb hb
   · rfl
   · exact absurd (le_trans ha h) hb
-  · norm_num
+  · exact zero_le_one
   · rfl
 
 /-- The threshold gate is non-negative. -/

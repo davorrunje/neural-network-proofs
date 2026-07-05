@@ -46,10 +46,6 @@ private theorem exists_delta_uniform {d : ℕ} (f : (Fin d → ℝ) → ℝ)
   rw [Real.dist_eq] at this
   exact le_of_lt this
 
-end UniversalApproximation.Monotone
-
-namespace UniversalApproximation.Monotone
-
 /-- **Monotone universal approximation (Theorem 2).**  Every function `f` that is continuous and
 monotone (along the coordinatewise order) on the unit cube `Set.Icc (0 : Fin d → ℝ) 1` can be
 uniformly `ε`-approximated on the cube by a monotone threshold network of depth `4`: for every
