@@ -168,4 +168,132 @@ theorem saturating_scaled_approx_two_sided {σ : ℝ → ℝ} {Lp Lm : ℝ}
   · exact fun lam hlam t ht => hΛp lam (le_trans (le_max_left _ _) hlam) t ht
   · exact fun lam hlam t ht => hΛm lam (le_trans (le_max_right _ _) hlam) t ht
 
+/-!
+## Intersection via saturation (Lemma 3.7, ε-form)
+
+The layer-2 units of the interpolation construction take a *non-negative combination* of the
+layer-1 half-space values and pass it through a saturating activation. The paper reads such a
+unit as `σ (b + λ · ∑ᵢ hᵢ)`, where `A` is the intersection of the half-spaces:
+
+* *inside* `A` every input `hᵢ = 0`, so the pre-activation is exactly `b` and the unit outputs
+  the constant `γ = σ b`;
+* *outside* `A` at least one input `hᵢ` is bounded away from `0` on the saturating side (here
+  `hᵢ ≤ -m < 0`), while the remaining inputs are still on that side (`hᵢ ≤ 0`), so the whole sum
+  is `≤ -m` and a large gain drives the pre-activation to `-∞`, where a left-saturating `σ` with
+  `σ(-∞) = 0` outputs a value within `ε` of `0`.
+
+The crux Task 4 needs is the *outside-`A` vanishing*, stated quantitatively below. The inside
+value is the exact identity `σ (lam * 0 + b) = σ b`, recorded separately. The right-saturating
+dual (`σ(+∞) = 0`, inputs `hᵢ ≥ 0` with one `≥ m`) is handled analogously via `reflect`-style
+symmetry, stated directly here.
+-/
+
+/-- Combinatorial core of the outside-`A` bound: over a finite index set `s`, if every input
+`h i` is non-positive and some distinguished index `j ∈ s` has `h j ≤ -m`, then the whole sum is
+`≤ -m`. This packages the "one coordinate saturates, the rest do not fight it" structure of a
+non-negative combination of half-space indicators. -/
+theorem sum_le_neg_of_single {ι : Type*} (s : Finset ι) (h : ι → ℝ) {m : ℝ}
+    {j : ι} (hj : j ∈ s) (hjm : h j ≤ -m) (hnonpos : ∀ i ∈ s, h i ≤ 0) :
+    ∑ i ∈ s, h i ≤ -m := by
+  classical
+  rw [← Finset.add_sum_erase s h hj]
+  have hrest : ∑ i ∈ s.erase j, h i ≤ 0 :=
+    Finset.sum_nonpos fun i hi => hnonpos i (Finset.mem_of_mem_erase hi)
+  linarith
+
+/-- Bias-inclusive left-saturation estimate. If `σ` tends to `L` at `−∞`, then for every target
+accuracy `ε > 0`, every positive margin `m`, and every bias `b`, there is a gain threshold
+`Λ > 0` such that for all gains `λ ≥ Λ` and all inputs `t ≤ -m`, the biased scaled pre-activation
+`σ (λ · t + b)` lies within `ε` of `L`. This is `leftSaturating_scaled_approx` with an additive
+bias absorbed into the threshold. -/
+theorem leftSaturating_scaled_approx_bias {σ : ℝ → ℝ} {L : ℝ}
+    (hL : Filter.Tendsto σ Filter.atBot (nhds L)) {ε m b : ℝ} (hε : 0 < ε) (hm : 0 < m) :
+    ∃ Λ : ℝ, 0 < Λ ∧ ∀ lam : ℝ, Λ ≤ lam → ∀ t : ℝ, t ≤ -m → |σ (lam * t + b) - L| ≤ ε := by
+  obtain ⟨M, hM⟩ := leftSaturating_eventually hL hε
+  refine ⟨max 1 ((b - M) / m), lt_of_lt_of_le one_pos (le_max_left _ _),
+    fun lam hlam t ht => ?_⟩
+  have hΛpos : 0 < lam := lt_of_lt_of_le (lt_of_lt_of_le one_pos (le_max_left _ _)) hlam
+  apply hM
+  -- Goal: lam * t + b ≤ M.  We have t ≤ -m, so lam * t ≤ -(lam * m), and lam ≥ (b - M)/m.
+  have hMm : (b - M) / m ≤ lam := le_trans (le_max_right _ _) hlam
+  have h1 : b - M ≤ lam * m := by
+    rw [div_le_iff₀ hm] at hMm
+    linarith [hMm]
+  have h2 : lam * t ≤ lam * (-m) := mul_le_mul_of_nonneg_left ht (le_of_lt hΛpos)
+  have h3 : lam * (-m) = -(lam * m) := by ring
+  linarith
+
+/-- Lemma 3.7 (ε-form, left-saturating / `𝒮⁻` side), *outside `A`*. Let `σ` be left-saturating
+with `σ(-∞) = 0`, let `s` be the finite family of layer-1 inputs, `b` a bias, and `m > 0` a
+margin. Then there is a gain threshold `Λ > 0` such that for every gain `λ ≥ Λ`, whenever the
+inputs `h : ι → ℝ` witness *being outside the intersection* — every `h i ≤ 0` and some `j ∈ s`
+has `h j ≤ -m` — the saturating unit `σ (λ · ∑ᵢ hᵢ + b)` is within `ε` of `0`.
+
+This is the crux the interpolation read-out consumes: off the margin, the intersection unit
+vanishes to within `ε`. The gain threshold depends only on `ε`, `m`, and `b`, uniformly over
+all outside-`A` input configurations. -/
+theorem leftSaturating_intersection_vanishes {σ : ℝ → ℝ}
+    (hL : Filter.Tendsto σ Filter.atBot (nhds 0)) {ι : Type*} (s : Finset ι) {ε m b : ℝ}
+    (hε : 0 < ε) (hm : 0 < m) :
+    ∃ Λ : ℝ, 0 < Λ ∧ ∀ lam : ℝ, Λ ≤ lam → ∀ h : ι → ℝ, (∀ i ∈ s, h i ≤ 0) →
+      (∃ j ∈ s, h j ≤ -m) → |σ (lam * (∑ i ∈ s, h i) + b) - 0| ≤ ε := by
+  obtain ⟨Λ, hΛpos, hΛ⟩ := leftSaturating_scaled_approx_bias (b := b) hL hε hm
+  refine ⟨Λ, hΛpos, fun lam hlam h hnonpos hout => ?_⟩
+  obtain ⟨j, hj, hjm⟩ := hout
+  exact hΛ lam hlam _ (sum_le_neg_of_single s h hj hjm hnonpos)
+
+/-- Lemma 3.7 (ε-form), *inside `A`*: when all inputs vanish (`h i = 0` for `i ∈ s`, the exact
+inside-intersection condition), the saturating unit outputs the exact constant `σ b = γ`, with no
+dependence on the gain `λ`. This is the companion of `leftSaturating_intersection_vanishes`
+recording the interior value the read-out weights against. -/
+theorem intersection_inside_value {σ : ℝ → ℝ} {ι : Type*} (s : Finset ι) (h : ι → ℝ)
+    (b lam : ℝ) (hzero : ∀ i ∈ s, h i = 0) :
+    σ (lam * (∑ i ∈ s, h i) + b) = σ b := by
+  rw [Finset.sum_eq_zero hzero]
+  simp
+
+/-- Bias-inclusive right-saturation estimate (dual of `leftSaturating_scaled_approx_bias`). If
+`σ` tends to `L` at `+∞`, then for every accuracy `ε > 0`, margin `m > 0`, and bias `b`, there is
+a gain threshold `Λ > 0` with `|σ (λ · t + b) - L| ≤ ε` for all `λ ≥ Λ` and `t ≥ m`. -/
+theorem rightSaturating_scaled_approx_bias {σ : ℝ → ℝ} {L : ℝ}
+    (hL : Filter.Tendsto σ Filter.atTop (nhds L)) {ε m b : ℝ} (hε : 0 < ε) (hm : 0 < m) :
+    ∃ Λ : ℝ, 0 < Λ ∧ ∀ lam : ℝ, Λ ≤ lam → ∀ t : ℝ, m ≤ t → |σ (lam * t + b) - L| ≤ ε := by
+  obtain ⟨M, hM⟩ := rightSaturating_eventually hL hε
+  refine ⟨max 1 ((M - b) / m), lt_of_lt_of_le one_pos (le_max_left _ _),
+    fun lam hlam t ht => ?_⟩
+  have hΛpos : 0 < lam := lt_of_lt_of_le (lt_of_lt_of_le one_pos (le_max_left _ _)) hlam
+  apply hM
+  -- Goal: M ≤ lam * t + b.  We have t ≥ m, so lam * t ≥ lam * m, and lam ≥ (M - b)/m.
+  have hMm : (M - b) / m ≤ lam := le_trans (le_max_right _ _) hlam
+  have h1 : M - b ≤ lam * m := by
+    rw [div_le_iff₀ hm] at hMm
+    linarith [hMm]
+  have h2 : lam * m ≤ lam * t := mul_le_mul_of_nonneg_left ht (le_of_lt hΛpos)
+  linarith
+
+/-- Combinatorial core of the outside-`A` bound, right-saturating side: if every input `h i` is
+non-negative and some `j ∈ s` has `h j ≥ m`, then the whole sum is `≥ m`. -/
+theorem sum_ge_of_single {ι : Type*} (s : Finset ι) (h : ι → ℝ) {m : ℝ}
+    {j : ι} (hj : j ∈ s) (hjm : m ≤ h j) (hnonneg : ∀ i ∈ s, 0 ≤ h i) :
+    m ≤ ∑ i ∈ s, h i := by
+  classical
+  rw [← Finset.add_sum_erase s h hj]
+  have hrest : 0 ≤ ∑ i ∈ s.erase j, h i :=
+    Finset.sum_nonneg fun i hi => hnonneg i (Finset.mem_of_mem_erase hi)
+  linarith
+
+/-- Lemma 3.7 (ε-form, right-saturating / `𝒮⁺` side), *outside `A`*. Dual of
+`leftSaturating_intersection_vanishes`: for a right-saturating `σ` with `σ(+∞) = 0`, if every
+input `h i ≥ 0` and some `j ∈ s` has `h j ≥ m`, then a large gain drives the unit
+`σ (λ · ∑ᵢ hᵢ + b)` to within `ε` of `0`. -/
+theorem rightSaturating_intersection_vanishes {σ : ℝ → ℝ}
+    (hL : Filter.Tendsto σ Filter.atTop (nhds 0)) {ι : Type*} (s : Finset ι) {ε m b : ℝ}
+    (hε : 0 < ε) (hm : 0 < m) :
+    ∃ Λ : ℝ, 0 < Λ ∧ ∀ lam : ℝ, Λ ≤ lam → ∀ h : ι → ℝ, (∀ i ∈ s, 0 ≤ h i) →
+      (∃ j ∈ s, m ≤ h j) → |σ (lam * (∑ i ∈ s, h i) + b) - 0| ≤ ε := by
+  obtain ⟨Λ, hΛpos, hΛ⟩ := rightSaturating_scaled_approx_bias (b := b) hL hε hm
+  refine ⟨Λ, hΛpos, fun lam hlam h hnonneg hout => ?_⟩
+  obtain ⟨j, hj, hjm⟩ := hout
+  exact hΛ lam hlam _ (sum_ge_of_single s h hj hjm hnonneg)
+
 end UniversalApproximation.Monotone
