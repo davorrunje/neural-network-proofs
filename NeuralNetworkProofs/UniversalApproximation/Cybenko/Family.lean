@@ -3,7 +3,10 @@ Copyright (c) 2026 Davor Runje. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
-import Mathlib
+import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.LinearAlgebra.Span.Defs
+import Mathlib.Topology.ContinuousMap.Basic
 import NeuralNetworkProofs.UniversalApproximation.Cybenko.Activation
 import NeuralNetworkProofs.NeuralNetwork.Network
 
