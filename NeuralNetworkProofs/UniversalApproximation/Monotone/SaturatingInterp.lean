@@ -158,4 +158,65 @@ theorem satReadout_error_bound (x : Fin n → (Fin d → ℝ)) (y : Fin n → �
   rw [abs_mul]
   exact mul_le_mul_of_nonneg_left (hv i) (abs_nonneg _)
 
+/-- Layer 1 of the saturating interpolation net: coordinate half-space block layer with gain `lam`
+and half-margin shift `mgn`. Neuron flattened from `(r, c)` reads coordinate `c` (weight `lam`) and
+has bias `−lam·(mgn + (p r) c)`, so under an activation it computes `σ (lam·(x c − (p r) c − mgn))`.
+Same block structure as `dominationLayer1`, scaled/shifted for the saturating construction. -/
+noncomputable def satLayer1 (p : Fin n → (Fin d → ℝ)) (lam mgn : ℝ) :
+    NeuralNetwork.Layer d (n * d) where
+  W := fun q k => if k = (finProdFinEquiv.symm q).2 then lam else 0
+  c := fun q => -lam * (mgn + (p (finProdFinEquiv.symm q).1) (finProdFinEquiv.symm q).2)
+
+/-- Per-neuron value of layer 1 at the neuron flattened from `(r, c)`:
+`σ (lam·(x c − (p r) c − mgn))`. Mirror `dominationLayer1_apply`. -/
+theorem satLayer1_apply (p : Fin n → (Fin d → ℝ)) (σ : ℝ → ℝ) (lam mgn : ℝ)
+    (x : Fin d → ℝ) (r : Fin n) (c : Fin d) :
+    (satLayer1 p lam mgn).toFun σ x (finProdFinEquiv (r, c))
+      = σ (lam * (x c - (p r) c - mgn)) := by
+  unfold NeuralNetwork.Layer.toFun satLayer1
+  congr 1
+  rw [Matrix.mulVec]
+  simp only [dotProduct, Equiv.symm_apply_apply]
+  rw [Finset.sum_eq_single c]
+  · rw [if_pos rfl]; ring
+  · intro k _ hk; rw [if_neg hk]; ring
+  · intro h; exact absurd (Finset.mem_univ _) h
+
+/-- Below/equal bound (saturating side). If `σ` is left-saturating with left limit `L`, then for any
+accuracy `ε>0` and half-margin `mgn>0` there is a gain threshold `Λ>0` such that for `lam ≥ Λ`,
+whenever `x c ≤ (p r) c` (coordinate dominated-by, gap `≤ 0`), the layer-1 neuron is within `ε` of
+`L`: `|σ (lam·(x c − (p r) c − mgn)) − L| ≤ ε`. -/
+theorem satLayer1_below (σ : ℝ → ℝ) {L : ℝ} (hL : Filter.Tendsto σ Filter.atBot (nhds L))
+    {ε mgn : ℝ} (hε : 0 < ε) (hmgn : 0 < mgn) :
+    ∃ Λ : ℝ, 0 < Λ ∧ ∀ lam : ℝ, Λ ≤ lam → ∀ t : ℝ, t ≤ 0 →
+      |σ (lam * (t - mgn)) - L| ≤ ε := by
+  obtain ⟨Λ, hΛpos, hb⟩ := leftSaturating_scaled_approx hL hε hmgn
+  exact ⟨Λ, hΛpos, fun lam hlam t ht => by
+    have hs : t - mgn ≤ -mgn := by linarith
+    exact hb lam hlam (t - mgn) hs⟩
+
+/-- Above bound (non-saturating side, lower bound only). If `σ` is monotone and some value `σ z`
+strictly exceeds the reference level `L` (`∃ z, L < σ z`, the non-degeneracy witness; in the
+assembly `L = σ(−∞)`), then there is a separation `m₁>0` and a gain threshold `Λ>0` such that for
+`lam ≥ Λ`, whenever `x c − (p r) c ≥ mgn·2` (i.e. `t ≥ mgn·2` so `t − mgn ≥ mgn`), the layer-1
+neuron exceeds `L` by at least `m₁`: `L + m₁ ≤ σ (lam·(t − mgn))`. (Left-saturation of `σ` is not
+needed here — only monotonicity and the witness.) -/
+theorem satLayer1_above (σ : ℝ → ℝ) {L : ℝ}
+    (hmono : Monotone σ) (hz : ∃ z, L < σ z) {mgn : ℝ} (hmgn : 0 < mgn) :
+    ∃ m₁ : ℝ, 0 < m₁ ∧ ∃ Λ : ℝ, 0 < Λ ∧ ∀ lam : ℝ, Λ ≤ lam → ∀ t : ℝ, mgn * 2 ≤ t →
+      L + m₁ ≤ σ (lam * (t - mgn)) := by
+  obtain ⟨z, hz⟩ := hz
+  refine ⟨σ z - L, by linarith, max 1 (z / mgn), lt_of_lt_of_le one_pos (le_max_left _ _),
+    fun lam hlam t ht => ?_⟩
+  have hlam_pos : 0 < lam := lt_of_lt_of_le (lt_of_lt_of_le one_pos (le_max_left _ _)) hlam
+  have hmgn_le : t - mgn ≥ mgn := by linarith
+  have hlam_ge : z / mgn ≤ lam := le_trans (le_max_right _ _) hlam
+  have hzm : z ≤ lam * mgn := by
+    rw [div_le_iff₀ hmgn] at hlam_ge; linarith
+  have harg : lam * mgn ≤ lam * (t - mgn) :=
+    mul_le_mul_of_nonneg_left hmgn_le (le_of_lt hlam_pos)
+  have harg' : z ≤ lam * (t - mgn) := le_trans hzm harg
+  have hσ : σ z ≤ σ (lam * (t - mgn)) := hmono harg'
+  linarith
+
 end UniversalApproximation.Monotone
