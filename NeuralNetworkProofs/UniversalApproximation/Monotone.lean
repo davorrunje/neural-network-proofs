@@ -9,6 +9,9 @@ import NeuralNetworkProofs.UniversalApproximation.Monotone.Indicator
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Grid
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Interpolation
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Approximation
+import NeuralNetworkProofs.UniversalApproximation.Monotone.Saturating
+import NeuralNetworkProofs.UniversalApproximation.Monotone.Equivalence
+import NeuralNetworkProofs.UniversalApproximation.Monotone.SaturatingInterp
 
 /-!
 # Universal Approximation for Monotone Neural Networks — root module
@@ -41,10 +44,23 @@ This module re-exports all six component modules:
   the shared ε-indicator engine.
 * `Approximation` — headline theorem `monotone_approximation`.
 
+**Sartor et al. (arXiv:2505.02537) saturating-activation results** build on the same
+activation-generic core:
+
+* `Saturating` — Definition 3.3 (`RightSaturating`/`LeftSaturating`), point reflection
+  `reflect` (Prop 3.8), the quantitative half-space (Lemma 3.6) and intersection (Lemma 3.7)
+  limits, and `approx_interior_value`.
+* `Equivalence` — the weight-sign ↔ saturation-side two-layer equivalence (`prop_3_10_two_layer`,
+  Prop 3.10).
+* `SaturatingInterp` — headline theorem `saturating_interpolation` (Theorem 3.5, the faithful
+  ε-approximate form; three alternating one-sided-saturating activations), built on a
+  γ-normalized read-out engine and the depth-3 core `sat_preadout_approx`.
+
 ## Headlines
 
 ```
 UniversalApproximation.Monotone.monotone_interpolation
 UniversalApproximation.Monotone.monotone_approximation
+UniversalApproximation.Monotone.saturating_interpolation
 ```
 -/
