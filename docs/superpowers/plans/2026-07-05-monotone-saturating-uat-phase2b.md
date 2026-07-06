@@ -99,6 +99,41 @@ whose image lacks the needed sign, the paper's specific construction does not go
 genuine gap between the paper's statement and its proof — resolving it is a theorem-statement
 (faithfulness) decision, analogous to the ε-vs-exact gate.
 
+## Derived construction blueprint (Case 1: σ₁∈𝒮⁻, σ₂∈𝒮⁺, σ₃∈𝒮⁻)
+
+Own construction (the paper's exact proof was not extractable; this is a self-designed equivalent,
+verified correct on paper — Lean is the final backstop). Reindex points `x' = x∘satReindex`, sorted
+so `y'` nondecreasing and `satReindex` a linear extension. Evaluate only at data points `x'_j`.
+
+**Minimal non-degeneracy hypotheses (the faithful additions): `σ₁, σ₂, σ₃` each non-constant**
+(`∃ a b, σ_k a < σ_k b`). Everything else (biases at continuity points) is achieved *inside* the
+existence proof — monotone ⇒ continuity points dense — so no further hypothesis on the `σ_k`.
+
+Monotonicity forces the sign-flips: non-negative weights ⇒ every layer is increasing, so a single
+`𝒮⁻` layer can only make an *increasing* coordinate detector (small below θ, large above). Hence:
+
+- **L1 (σ₁∈𝒮⁻), `d·n` coord neurons.** Neuron `(r,c) = σ₁(λ₁(x_c − (x'_r)_c + m/2))`, `m` = min
+  nonzero coord gap. Shifted by `−c₁ = −σ₁(−∞)`: `≈ 0` if `x_c ≤ (x'_r)_c` (below), else `≥ m₁ > 0`
+  (`m₁>0` needs σ₁ non-constant). Both sides via `leftSaturating_scaled_approx_bias`.
+- **L2 (σ₂∈𝒮⁺), `n` neurons.** Per `r`: `σ₂(λ₂·∑_c (L1_{r,c} − c₁) + b₂)`. Inputs `≥ 0`. Outside
+  (`x ≰ x'_r`, some coord above, input `≥ m₁`): `rightSaturating_intersection_vanishes` ⇒ `≈ c₂⁺`.
+  Inside (`x ≤ x'_r`, all inputs `≈ 0`): `approx_interior_value` (σ₂ cont. at `b₂`) ⇒ `≈ σ₂(b₂)`.
+  Shift by `−c₂⁺=−σ₂(+∞)`: `D'_r ≈ γ₂·𝟙(x ≤ x'_r)`, `γ₂ := σ₂(b₂)−σ₂(+∞) < 0` (needs σ₂ non-const,
+  b₂ below sup). Lower-set indicator; `·γ₂<0` ⇒ increasing ✓.
+- **L3 (σ₃∈𝒮⁻), `n` neurons.** Per `i`: `σ₃(λ₃·∑_{r<i} 1·D'_r + b₃)` (weights `1 ≥ 0`; `−c₂⁺`
+  shifts absorbed into `b₃`). Uses `𝟙(i≤j) = 1 − 𝟙(j ≤ i−1)` and `𝟙(j≤i−1) = ∃ r<i, x'_j ≤ x'_r`.
+  For `j < i`: term `r=j` gives `≈γ₂<0`, others `≤ small`, so the SUM `≤ −m₃` (bounded by term
+  estimates, NOT the intersection lemma) ⇒ `leftSaturating_scaled_approx_bias` ⇒ `≈ c₃⁻`. For
+  `j ≥ i`: all `r<i` have `x'_j ≰ x'_r` (linear ext) so `D'_r ≈ 0`, sum `≈ 0` ⇒ `approx_interior`
+  ⇒ `≈ σ₃(b₃)`. Shift by `−c₃⁻=−σ₃(−∞)`: `V_i ≈ γ₃·𝟙(i≤j)`, `γ₃ := σ₃(b₃)−σ₃(−∞) > 0` (σ₃
+  non-const) ⇒ read-out weights `≥ 0` ✓.
+- **L4 read-out:** `satReadout_error_bound` with `γ = γ₃ > 0`: pre-read-out `V` within `η` of
+  `γ₃·𝟙(i≤j)` ⇒ output within `(∑|satReadW|)·η ≤ ε`.
+
+**Gain chaining (backward, all finite):** fix `b₂,b₃` (continuity pts) ⇒ `γ₂,γ₃,m₃` fixed ⇒ pick
+`λ₃` (L3 outside margin `m₃`, inside radius) ⇒ pick `λ₂` (L2 outside `m₁`, and small enough L2 error
+`δ₂` so L3 interior holds) ⇒ pick `λ₁` (L1 accuracy `δ₁` so L2 interior holds). No joint limit.
+
 ## What is already done and sound (committed, unsigned, this branch)
 
 Def 3.3 predicates, `reflect` + Prop 3.8 (T1); Lemma 3.6 (T2); Lemma 3.7 (T3); Prop 3.10 layer-pair
