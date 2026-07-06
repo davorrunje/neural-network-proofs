@@ -700,7 +700,8 @@ The paper (arXiv:2505.02537) states Thm 3.5 with exact `g(xᵢ)=f(xᵢ)`; that i
 (Def 3.3 saturation is a limit, not attained — e.g. `tanh`), so the faithful finite-net statement is
 this ε-approximate one. The `non-constant` hypotheses (`∃ a b, σ a < σ b`) make explicit the
 non-degeneracy the paper's construction implicitly requires (it divides by `γ₃ = σ₃ b₃ − σ₃(−∞)` and
-separates `σ₁`'s two sides). Case 2 (`𝒮⁺,𝒮⁻,𝒮⁺`) is the `reflect`-dual (Prop 3.8). -/
+separates `σ₁`'s two sides). This is Case 1 (`𝒮⁻,𝒮⁺,𝒮⁻`); Case 2 (`𝒮⁺,𝒮⁻,𝒮⁺`) is the analogous
+`reflect`-dual (Prop 3.8) and is not formalized here. -/
 theorem saturating_interpolation {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
     (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x)
     (σ₁ σ₂ σ₃ : ℝ → ℝ) (hm₁ : Monotone σ₁) (hm₂ : Monotone σ₂) (hm₃ : Monotone σ₃)

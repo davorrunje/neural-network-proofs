@@ -11,10 +11,14 @@ import NeuralNetworkProofs.UniversalApproximation.Monotone.Saturating
 /-!
 # Weight-sign ↔ saturation-side equivalence (Proposition 3.10)
 
-This file formalizes the algebraic equivalence at the heart of Proposition 3.10 of the Sartor
-et al. saturating-activation universal approximation development: a two consecutive layers with
-**non-positive** weights and activation `σ` denote the same map as two consecutive layers with
+This file formalizes the algebraic core of Proposition 3.10 of the Sartor et al.
+saturating-activation universal approximation development. Proposition 3.10 trades the sign of a
+layer pair's weights against the saturation side of the activation: consecutive layers with
+**non-positive** weights and activation `σ` denote the same map as consecutive layers with
 **non-negative** weights and activation `reflect σ` (`reflect σ x = −σ(−x)`, see `Saturating`).
+What is proved here is the underlying two-layer denotation identity (`prop_3_10_two_layer`) that
+this trade is built from, stated at the `Layer.toFun` level; the fully packaged non-positive ⇔
+non-negative statement over a whole `ActStack` is not assembled in this file.
 
 The driving fact is a single-layer identity. Flipping the sign of a layer's weights *and* bias
 and swapping the activation from `σ` to `reflect σ` negates the layer's output:
@@ -87,20 +91,20 @@ theorem negWeights_toFun {b c : ℕ} (M : Layer b c) (τ : ℝ → ℝ) (y : Fin
     congr 1
   simp only [hmul, Pi.neg_apply]
 
-/-- **Proposition 3.10 (two-layer equivalence).** A two-layer segment with activation `σ`, whose
-first layer is the sign-flipped `Layer.neg L₁` (weights `−W₁`, so *non-positive* when `W₁ ≥ 0`)
-and whose second layer has weights `−M.W`, denotes the same map as the two-layer segment with
-activation `reflect σ`, first layer `Layer.neg L₁` and second layer the *original* `M` (weights
-`M.W`, so *non-negative* when `M.W ≥ 0`). The sign flip emitted by layer 1 under `reflect σ`
-(`reflect_negLayer_toFun`) is absorbed by negating layer 2's weight matrix (`negWeights_toFun`).
-
-Concretely, with `L₁ : Layer a b`, `M : Layer b c` and input `x`:
+/-- **Proposition 3.10 (two-layer equivalence, algebraic core).** Running `reflect σ` through the
+two-layer segment `[Layer.neg L₁, M]` (both layers under `reflect σ`; first-layer weights `−W₁`,
+second-layer weights the original `M.W`) equals the segment that runs the original `L₁` under `σ`
+and then a second layer with *negated* weights `−M.W` (bias `M.c` unchanged) under `reflect σ`:
 
   `M.toFun (reflect σ) ((Layer.neg L₁).toFun (reflect σ) x)`
     `= ({ W := -M.W, c := M.c }).toFun (reflect σ) (L₁.toFun σ x)`.
 
-The right-hand side is a genuine two-layer composite; both sides are the second layer applied to
-the first, so this is the composite denotation equivalence Task 6 can chain into an `ActStack`. -/
+The sign flip emitted by layer 1 under `reflect σ` (`reflect_negLayer_toFun`:
+`(Layer.neg L₁).toFun (reflect σ) x = −(L₁.toFun σ x)`) is absorbed by negating layer 2's weight
+matrix (`negWeights_toFun`). This is the algebraic building block of Proposition 3.10's weight-sign
+↔ saturation-side trade (the packaged non-positive ⇔ non-negative layer-pair statement is assembled
+from it — see the file header). Both sides are the second layer applied to the first, so this is a
+composite denotation equivalence that downstream work can chain into an `ActStack`. -/
 theorem prop_3_10_two_layer {a b c : ℕ} (L₁ : Layer a b) (M : Layer b c) (σ : ℝ → ℝ)
     (x : Fin a → ℝ) :
     M.toFun (reflect σ) ((Layer.neg L₁).toFun (reflect σ) x)
