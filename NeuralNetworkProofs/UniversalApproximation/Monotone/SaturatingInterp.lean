@@ -3,7 +3,8 @@ Copyright (c) 2026 Davor Runje. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
-import Mathlib
+import Mathlib.Tactic
+import Mathlib.Topology.Algebra.Module.Cardinality
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Basic
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Saturating
@@ -649,13 +650,12 @@ theorem sat_preadout_approx {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y : Fin
     · -- Outside case `j < i`: `T i ≤ −m₃`, so `V i ≈ c₃`.
       rw [if_neg hij, mul_zero, add_zero]
       have hji : j < i := not_le.mp hij
-      have hjlt : j < i := hji
       have hT_le : T i ≤ -m₃ := by
         simp only [hT]
         -- separate the `r = j` term.
         rw [← Finset.add_sum_erase Finset.univ (fun r => if r < i then D r - c₂ else 0)
           (Finset.mem_univ j)]
-        rw [if_pos hjlt]
+        rw [if_pos hji]
         -- `D j − c₂ ≤ γ₂ + ε₂`.
         have hDj : D j - c₂ ≤ γ₂ + ε₂ := by
           have := hD_inside j (le_refl (p j)); rw [abs_le] at this
