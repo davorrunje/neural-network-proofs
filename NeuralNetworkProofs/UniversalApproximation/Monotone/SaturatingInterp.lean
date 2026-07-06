@@ -255,17 +255,20 @@ theorem satLayer2_apply {n : ℕ} (lam bsh : ℝ) (σ : ℝ → ℝ) (u : Fin (n
   simp only [hsum]
 
 /-- Layer 3 of the saturating net: strict-lower-prefix layer `Layer n n`. Neuron `i` sums the
-values of all neurons `r < i` (weight `lam`, all `≥ 0`), plus a bias `bsh`. Like `revPrefixLayer`
-but summing the strict lower prefix `r < i` instead of `i ≤ r`. -/
-noncomputable def satLayer3 (n : ℕ) (lam bsh : ℝ) : NeuralNetwork.Layer n n where
+values of all neurons `r < i` (weight `lam`, all `≥ 0`), plus a PER-NEURON bias `bsh i`. Like
+`revPrefixLayer` but summing the strict lower prefix `r < i` instead of `i ≤ r`. The bias is a
+function `Fin n → ℝ` because the assembly must absorb the `i`-dependent baseline `i · σ₂(+∞)` of the
+variable-length prefix sum (a constant bias cannot). The per-neuron bias does not affect
+monotonicity — only the weights must be non-negative. -/
+noncomputable def satLayer3 (n : ℕ) (lam : ℝ) (bsh : Fin n → ℝ) : NeuralNetwork.Layer n n where
   W := fun i r => if r < i then lam else 0
-  c := fun _ => bsh
+  c := bsh
 
 /-- Per-neuron value of layer 3 at neuron `i`:
-`σ (lam · ∑_r (if r < i then v r else 0) + bsh)`. -/
-theorem satLayer3_apply (lam bsh : ℝ) (σ : ℝ → ℝ) (v : Fin n → ℝ) (i : Fin n) :
+`σ (lam · ∑_r (if r < i then v r else 0) + bsh i)`. -/
+theorem satLayer3_apply (lam : ℝ) (bsh : Fin n → ℝ) (σ : ℝ → ℝ) (v : Fin n → ℝ) (i : Fin n) :
     (satLayer3 n lam bsh).toFun σ v i
-      = σ (lam * (∑ r : Fin n, (if r < i then v r else 0)) + bsh) := by
+      = σ (lam * (∑ r : Fin n, (if r < i then v r else 0)) + bsh i) := by
   unfold NeuralNetwork.Layer.toFun satLayer3
   congr 1
   have hsum : (Matrix.mulVec (fun i r => if r < i then lam else 0) v i)
