@@ -282,4 +282,76 @@ theorem satLayer3_apply (lam : ℝ) (bsh : Fin n → ℝ) (σ : ℝ → ℝ) (v 
     rw [← Finset.mul_sum]
   simp only [hsum]
 
+/-!
+## Analysis foundations for the depth-4 assembly
+
+The following five lemmas are self-contained analysis foundations used by the Theorem 3.5
+depth-4 assembly: saturation-limit bounds, continuity-point existence for monotone functions,
+and a finite coordinate-margin lemma.
+-/
+
+/-- For a monotone `σ` with left limit `L` at `−∞`, `L` is a lower bound: `L ≤ σ x` for all
+`x`. (The limit at `atBot` is the infimum.) -/
+theorem monotone_atBot_le {σ : ℝ → ℝ} {L : ℝ} (hmono : Monotone σ)
+    (hL : Filter.Tendsto σ Filter.atBot (nhds L)) (x : ℝ) : L ≤ σ x :=
+  Monotone.le_of_tendsto hmono hL x
+
+/-- For a monotone `σ` with right limit `L` at `+∞`, `L` is an upper bound: `σ x ≤ L`
+for all `x`. -/
+theorem monotone_le_atTop {σ : ℝ → ℝ} {L : ℝ} (hmono : Monotone σ)
+    (hL : Filter.Tendsto σ Filter.atTop (nhds L)) (x : ℝ) : σ x ≤ L :=
+  Monotone.ge_of_tendsto hmono hL x
+
+/-- A monotone function has a continuity point at which its value is strictly below any level
+`L` that it is somewhere below. (Continuity points of a monotone function are co-countable,
+hence dense; the sublevel set `{z | σ z < L}` contains a nondegenerate interval when nonempty.)
+-/
+theorem exists_continuousAt_lt_of_monotone {σ : ℝ → ℝ} {L : ℝ} (hmono : Monotone σ)
+    (ha : ∃ a, σ a < L) : ∃ b, ContinuousAt σ b ∧ σ b < L := by
+  obtain ⟨a, haL⟩ := ha
+  let D := {x | ¬ContinuousAt σ x}
+  have hD : D.Countable := hmono.countable_not_continuousAt
+  have hdense : Dense Dᶜ := hD.dense_compl ℝ
+  have hopen : IsOpen (Set.Ioo (a - 1) a) := isOpen_Ioo
+  have hne : (Set.Ioo (a - 1) a).Nonempty := ⟨a - 1 / 2, by constructor <;> linarith⟩
+  obtain ⟨b, hbI, hbD⟩ := hdense.inter_open_nonempty (Set.Ioo (a - 1) a) hopen hne
+  simp only [D, Set.mem_compl_iff, Set.mem_setOf_eq, not_not] at hbD
+  exact ⟨b, hbD, lt_of_le_of_lt (hmono (le_of_lt hbI.2)) haL⟩
+
+/-- Dual: a monotone function has a continuity point at which its value is strictly above any
+level `L` that it is somewhere above. -/
+theorem exists_continuousAt_gt_of_monotone {σ : ℝ → ℝ} {L : ℝ} (hmono : Monotone σ)
+    (ha : ∃ a, L < σ a) : ∃ b, ContinuousAt σ b ∧ L < σ b := by
+  obtain ⟨a, haL⟩ := ha
+  let D := {x | ¬ContinuousAt σ x}
+  have hD : D.Countable := hmono.countable_not_continuousAt
+  have hdense : Dense Dᶜ := hD.dense_compl ℝ
+  have hopen : IsOpen (Set.Ioo a (a + 1)) := isOpen_Ioo
+  have hne : (Set.Ioo a (a + 1)).Nonempty := ⟨a + 1 / 2, by constructor <;> linarith⟩
+  obtain ⟨b, hbI, hbD⟩ := hdense.inter_open_nonempty (Set.Ioo a (a + 1)) hopen hne
+  simp only [D, Set.mem_compl_iff, Set.mem_setOf_eq, not_not] at hbD
+  exact ⟨b, hbD, lt_of_lt_of_le haL (hmono (le_of_lt hbI.1))⟩
+
+/-- Finite coordinate margin: for finitely many points `p : Fin n → (Fin d → ℝ)` there is
+`m > 0` such that any two coordinate values are either equal or at least `m` apart. -/
+theorem exists_coord_margin {d n : ℕ} (p : Fin n → (Fin d → ℝ)) :
+    ∃ m : ℝ, 0 < m ∧ ∀ a b : Fin n, ∀ c : Fin d,
+      (p a) c ≠ (p b) c → m ≤ |(p a) c - (p b) c| := by
+  let S : Finset ℝ := ((Finset.univ : Finset (Fin n × Fin n × Fin d)).image
+    (fun t => |(p t.1) t.2.2 - (p t.2.1) t.2.2|)).filter (fun z => z ≠ 0)
+  by_cases hne : S.Nonempty
+  · refine ⟨S.min' hne, ?_, fun a b c hneq => ?_⟩
+    · rw [Finset.lt_min'_iff]
+      intro z hz
+      simp only [S, Finset.mem_filter, Finset.mem_image, Finset.mem_univ, true_and] at hz
+      obtain ⟨⟨t, _, rfl⟩, hnez⟩ := hz
+      exact abs_pos.mpr (abs_ne_zero.mp hnez)
+    · apply Finset.min'_le
+      rw [Finset.mem_filter, Finset.mem_image]
+      exact ⟨⟨(a, b, c), Finset.mem_univ _, rfl⟩, by rwa [abs_ne_zero, sub_ne_zero]⟩
+  · refine ⟨1, one_pos, fun a b c hneq => absurd ?_ hne⟩
+    exact ⟨|(p a) c - (p b) c|, by
+      rw [Finset.mem_filter, Finset.mem_image]
+      exact ⟨⟨(a, b, c), Finset.mem_univ _, rfl⟩, by rwa [abs_ne_zero, sub_ne_zero]⟩⟩
+
 end UniversalApproximation.Monotone
