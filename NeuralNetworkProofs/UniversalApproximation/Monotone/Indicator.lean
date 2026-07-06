@@ -8,29 +8,41 @@ import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Basic
 
 /-!
-# The domination gadget
+# ε-indicators and the domination gadget
 
-This file builds the two-layer threshold gadget from the Mikulincer–Reichman construction
-(arXiv:2207.05275, Result 1, paper layers 1–2). Given finitely many points
-`p : Fin n → (Fin d → ℝ)`, `dominationStack p` is a depth-`2` threshold stack whose output
-coordinate `i` is the *domination indicator* of `p i`: it is `1` exactly when the input `x`
-dominates `p i` coordinatewise (`p i ≤ x` in the Pi order) and `0` otherwise.
+This file introduces the *ε-indicator* abstraction and instantiates it with the two-layer
+threshold gadget from the Mikulincer–Reichman construction (arXiv:2207.05275, Result 1, paper
+layers 1–2).
 
-The middle layer carries `n * d` neurons, one per pair `(i, r)` of point index and coordinate.
-To avoid reasoning through the flattening `Fin (n * d)`, both layers are described by *curried*
-weight/bias data on `Fin n × Fin d`, flattened to `Fin (n * d)` only at the layer's type boundary
-via `finProdFinEquiv`. The `_apply` proofs then reindex the middle sums with `finProdFinEquiv` and
-`Fintype.sum_prod_type`, so the block structure is visible directly.
+An `ActStack` is an *ε-indicator* for a family of points `p : Fin n → (Fin d → ℝ)` when its output
+coordinate `i` approximates the *domination indicator* of `p i` — the function that is `1` exactly
+when the input `x` dominates `p i` coordinatewise (`p i ≤ x` in the Pi order) and `0` otherwise —
+uniformly to accuracy `ε`.  The threshold gadget realizes this indicator *exactly* (accuracy `0`).
 
-* `dominationStack` — the two-layer threshold stack.
+The middle layer of the gadget carries `n * d` neurons, one per pair `(i, r)` of point index and
+coordinate.  To avoid reasoning through the flattening `Fin (n * d)`, both layers are described by
+*curried* weight/bias data on `Fin n × Fin d`, flattened to `Fin (n * d)` only at the layer's type
+boundary via `finProdFinEquiv`.  The `_apply` proofs then reindex the middle sums with
+`finProdFinEquiv` and `Fintype.sum_prod_type`, so the block structure is visible directly.
+
+* `IsEpsIndicator` — a monotone stack approximating the domination indicators of `p` to accuracy ε.
+* `dominationStack` — the two-layer threshold stack (built with `heaviside` at each layer).
 * `dominationStack_depth` — its depth is `2`.
-* `dominationStack_isMonotone` — its weights are non-negative.
+* `dominationStack_isMonotone` — its weights are non-negative and its activations monotone.
 * `dominationStack_apply` — its output coordinate `i` is `if p i ≤ x then 1 else 0`.
+* `dominationStack_isEpsIndicator` — the gadget is an *exact* (`ε = 0`) indicator for `p`.
 -/
 
 namespace UniversalApproximation.Monotone
 
 open scoped BigOperators
+
+open Classical in
+/-- An activation stack `S : ActStack d n` is an *ε-indicator* for the points
+`p : Fin n → (Fin d → ℝ)` when, for every input `x`, its output coordinate `i` approximates the
+domination indicator of `p i` — `1` if `p i ≤ x` coordinatewise, else `0` — to within `ε`. -/
+def IsEpsIndicator {d n : ℕ} (S : ActStack d n) (p : Fin n → (Fin d → ℝ)) (ε : ℝ) : Prop :=
+  ∀ x i, |S.toFun x i - (if p i ≤ x then 1 else 0)| ≤ ε
 
 /-- Layer 1 of the domination gadget: `Layer d (n * d)`. The neuron flattened from the pair
 `(i, r)` copies coordinate `r` of the input (weight row `eᵣ`) and subtracts `(p i) r` (as bias),
@@ -50,19 +62,20 @@ noncomputable def dominationLayer2 (d : ℕ) {n : ℕ} :
   W := fun i q => if (finProdFinEquiv.symm q).1 = i then 1 else 0
   c := fun _ => -(d : ℝ)
 
-/-- The two-layer domination gadget for the points `p`. Its output coordinate `i` is the
-domination indicator of `p i`. -/
-noncomputable def dominationStack {d n : ℕ} (p : Fin n → (Fin d → ℝ)) : ThreshStack d n :=
-  .cons (dominationLayer1 p) (.cons (dominationLayer2 d) (.nil n))
+/-- The two-layer domination gadget for the points `p`, built on the generalized activation stack
+with `heaviside` at every layer. Its output coordinate `i` is the domination indicator of `p i`. -/
+noncomputable def dominationStack {d n : ℕ} (p : Fin n → (Fin d → ℝ)) : ActStack d n :=
+  .cons (dominationLayer1 p) heaviside (.cons (dominationLayer2 d) heaviside (.nil n))
 
-/-- The domination gadget is a depth-`2` threshold stack. -/
+/-- The domination gadget is a depth-`2` activation stack. -/
 theorem dominationStack_depth {d n : ℕ} (p : Fin n → (Fin d → ℝ)) :
     (dominationStack p).depth = 2 := rfl
 
-/-- The domination gadget has non-negative weights, hence is a monotone threshold stack. -/
+/-- The domination gadget has non-negative weights and monotone (`heaviside`) activations, hence
+is a monotone stack. -/
 theorem dominationStack_isMonotone {d n : ℕ} (p : Fin n → (Fin d → ℝ)) :
     (dominationStack p).IsMonotone := by
-  refine ⟨?_, ?_, trivial⟩
+  refine ⟨⟨heaviside_monotone, ?_⟩, ⟨heaviside_monotone, ?_⟩, trivial⟩
   · intro q k
     unfold dominationLayer1
     dsimp only
@@ -133,5 +146,13 @@ theorem dominationStack_apply {d n : ℕ} (p : Fin n → (Fin d → ℝ))
   · intro h
     unfold heaviside
     rw [if_pos (by linarith)]
+
+/-- The domination gadget is an *exact* ε-indicator for `p`: each output coordinate equals the
+domination indicator on the nose, so the ε bound holds with `ε = 0`. Immediate from
+`dominationStack_apply`, since `|a - a| = 0 ≤ 0`. -/
+theorem dominationStack_isEpsIndicator {d n : ℕ} (p : Fin n → (Fin d → ℝ)) :
+    IsEpsIndicator (dominationStack p) p 0 := by
+  intro x i
+  rw [dominationStack_apply, sub_self, abs_zero]
 
 end UniversalApproximation.Monotone

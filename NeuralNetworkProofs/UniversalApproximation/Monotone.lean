@@ -5,10 +5,14 @@ Authors: Davor Runje
 -/
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Basic
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Domination
+import NeuralNetworkProofs.UniversalApproximation.Monotone.Indicator
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Grid
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Interpolation
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Approximation
+import NeuralNetworkProofs.UniversalApproximation.Monotone.Saturating
+import NeuralNetworkProofs.UniversalApproximation.Monotone.Equivalence
+import NeuralNetworkProofs.UniversalApproximation.Monotone.SaturatingInterp
+import NeuralNetworkProofs.UniversalApproximation.Monotone.NonPositive
 
 /-!
 # Universal Approximation for Monotone Neural Networks — root module
@@ -23,21 +27,45 @@ The result states that every monotone continuous function on the unit cube
 depth-4 monotone neural network; and that the data-interpolation analogue holds
 with exact equality on finitely many points.
 
+**Phase 1 (feat/monotone-saturating-uat):** the model is now activation-generic
+(`ActStack`, with `heaviside` as the canonical instance); M-R's interpolation proof
+is re-derived through the shared `IsEpsIndicator` engine (historical note: the
+original standalone threshold construction ships in PR #16).
+
 This module re-exports all six component modules:
 
 * `Basic` — general reusable lemmas (`sum_le_one_card_le_iff`, `dist_le_of_coord`,
   `sort_key_linear_extension`).
 * `Defs` — `MonoNet`, `MonoNet.toFun`, `MonoNet.depth`, `MonoNet.IsMonotone`;
-  uses `heaviside` as the activation function.
-* `Domination` — the domination-indicator gadget used in the construction.
+  activation-generic via `ActStack`; `heaviside` is the canonical instance.
+* `Indicator` — `IsEpsIndicator` gadget abstraction and the threshold instance
+  (`ε = 0`); replaces the retired `Domination` module.
 * `Grid` — the grid construction and its properties.
-* `Interpolation` — headline theorem `monotone_interpolation`.
+* `Interpolation` — headline theorem `monotone_interpolation`; proof routed through
+  the shared ε-indicator engine.
 * `Approximation` — headline theorem `monotone_approximation`.
+
+**Sartor et al. (arXiv:2505.02537) saturating-activation results** build on the same
+activation-generic core:
+
+* `Saturating` — Definition 3.3 (`RightSaturating`/`LeftSaturating`), point reflection
+  `reflect` (Prop 3.8), the quantitative half-space (Lemma 3.6) and intersection (Lemma 3.7)
+  limits, and `approx_interior_value`.
+* `Equivalence` — the weight-sign ↔ saturation-side two-layer equivalence (`prop_3_10_two_layer`,
+  Prop 3.10).
+* `SaturatingInterp` — headline theorem `saturating_interpolation` (Theorem 3.5, the faithful
+  ε-approximate form; three alternating one-sided-saturating activations), built on a
+  γ-normalized read-out engine and the depth-3 core `sat_preadout_approx`.
+* `NonPositive` — headline theorem `nonpos_weight_universal` (Proposition 3.11, `𝒮⁺` case): an
+  all-non-positive-weight, single-activation network is universal, via the Prop 3.10 reduction to
+  Theorem 3.5.
 
 ## Headlines
 
 ```
 UniversalApproximation.Monotone.monotone_interpolation
 UniversalApproximation.Monotone.monotone_approximation
+UniversalApproximation.Monotone.saturating_interpolation
+UniversalApproximation.Monotone.nonpos_weight_universal
 ```
 -/

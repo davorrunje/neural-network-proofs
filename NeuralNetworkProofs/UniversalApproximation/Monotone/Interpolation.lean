@@ -5,7 +5,8 @@ Authors: Davor Runje
 -/
 import Mathlib
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Domination
+import NeuralNetworkProofs.UniversalApproximation.Monotone.Indicator
+import NeuralNetworkProofs.UniversalApproximation.Monotone.Basic
 
 /-!
 # Monotone interpolation (Theorem 1)
@@ -14,9 +15,22 @@ This file proves that any monotone, injective finite dataset can be interpolated
 depth-`4` monotone threshold network (Mikulincer–Reichman, arXiv:2207.05275, Result 1, paper
 layers 3–4 plus the essential reindexing).
 
+The construction is a depth-`4` `MonoNet`: an ε-indicator gadget for the reindexed points (paper
+layers 1–2, supplied by `Indicator.dominationStack`), a reverse-prefix-sum level-set layer
+(`revPrefixLayer`, layer 3, built with `heaviside`), and a telescoping non-negative linear read-out
+(layer 4).  The interpolation identity is obtained by *routing the domination step through the
+shared ε-indicator infrastructure* (`IsEpsIndicator`, `dominationStack_apply`): the gadget supplies
+the exact (`ε = 0`) domination indicators consumed by the level-set layer.
+
+* `readout_error_bound` — the *sound* general engine step: for any pre-read-out level-set vector
+  approximating the prefix indicator `𝟙(i ≤ j)` to accuracy `η`, the telescoping read-out
+  reproduces the reindexed target `y' j` to accuracy `(∑ i, |readW i|) · η`.  (The gadget's `ε` does
+  *not* propagate through the discontinuous `heaviside` level-set layer 3, so the engine is stated
+  at the pre-read-out boundary, where the error is genuinely linear; see the note below.)
 * `monotone_interpolation` — the headline: given points `x` and targets `y` with `y` monotone
   along the coordinatewise order and `x` injective, there is a monotone `MonoNet` of depth `4`
-  agreeing with `y` on every `x i`.
+  agreeing with `y` on every `x i`.  Derived through the exact (`ε = 0`) engine instance, so the
+  level-set vector is `𝟙(i ≤ j)` on the nose (`η = 0`) and the read-out is exact.
 -/
 
 namespace UniversalApproximation.Monotone
@@ -80,10 +94,13 @@ private theorem revPrefixLayer_nonneg (n : ℕ) (i r : Fin n) : 0 ≤ (revPrefix
   unfold revPrefixLayer; dsimp only; split_ifs <;> norm_num
 
 /-- The depth-`3` threshold stack: the two-layer domination gadget for the reindexed points
-followed by the reverse-prefix-sum layer. -/
-noncomputable def stack₃ (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ThreshStack d n :=
-  .cons (dominationLayer1 (x ∘ reindex x y))
-    (.cons (dominationLayer2 d) (.cons (revPrefixLayer n) (.nil n)))
+followed by the reverse-prefix-sum layer, all activations `heaviside`.  Sharing the gadget from
+`Indicator.dominationStack` is what routes the domination step through the ε-indicator
+infrastructure. -/
+noncomputable def stack₃ (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ActStack d n :=
+  .cons (dominationLayer1 (x ∘ reindex x y)) heaviside
+    (.cons (dominationLayer2 d) heaviside
+      (.cons (revPrefixLayer n) heaviside (.nil n)))
 
 /-- The reindexed targets `y' i = y (π i)` along the reindexing permutation `π = reindex x y`. -/
 noncomputable def reTarget (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (i : Fin n) : ℝ :=
@@ -136,7 +153,8 @@ private theorem readW_nonneg (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
   simp only [Fin.le_def]; omega
 
 /-- The output of `stack₃` equals the reverse-prefix-sum layer applied to the domination
-output for the reindexed points. -/
+gadget output for the reindexed points.  This is what makes the shared `dominationStack` (and its
+`dominationStack_apply` indicator identity) available to the level-set layer. -/
 private theorem stack₃_toFun (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (z : Fin d → ℝ) :
     (stack₃ x y).toFun z =
       (revPrefixLayer n).toFun heaviside ((dominationStack (x ∘ reindex x y)).toFun z) := by
@@ -144,8 +162,10 @@ private theorem stack₃_toFun (x : Fin n → (Fin d → ℝ)) (y : Fin n → �
 
 open Classical in
 /-- Lemma 5 (reverse prefix sum): at the reindexed input `x' j`, the depth-`3` stack outputs the
-prefix indicator `𝟙(i ≤ j)`.  This uses the linear-extension property of the reindexing: no point
-`r > j` is dominated by `x' j`. -/
+prefix indicator `𝟙(i ≤ j)`.  This routes the exact (`ε = 0`) domination indicators of the shared
+gadget (`dominationStack_apply`, the concrete face of `dominationStack_isEpsIndicator … 0`) through
+the level-set layer, using the linear-extension property of the reindexing: no point `r > j` is
+dominated by `x' j`. -/
 private theorem revPrefix_apply (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
     (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x) (i j : Fin n) :
     (stack₃ x y).toFun (x (reindex x y j)) i = if i ≤ j then 1 else 0 := by
@@ -197,21 +217,22 @@ private theorem revPrefix_apply (x : Fin n → (Fin d → ℝ)) (y : Fin n → �
     rw [Finset.sum_eq_zero (fun r _ => hzero r)]
     rw [if_neg hij, heaviside, if_neg (by norm_num)]
 
-/-- The interpolation network reproduces the reindexed target at every reindexed point:
-`N.toFun (x' j) = y' j`.  Combines Lemma 5, the forward-difference read-out, and the telescoping
-identity `Finset.sum_range_sub`. -/
-private theorem interpNet_toFun_reindex (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
-    (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x) (j : Fin n) :
-    (interpNet x y).toFun (x (reindex x y j)) = y (reindex x y j) := by
-  unfold interpNet MonoNet.toFun
-  simp only
-  -- rewrite the stack output via Lemma 5 and the read-out weights via forward differences
-  have hstep : (∑ i, readW x y i * (stack₃ x y).toFun (x (reindex x y j)) i)
+/-- The telescoping read-out identity on the *exact* prefix indicator: with the forward-difference
+weights and base bias, `∑ i, readW i · 𝟙(i ≤ j) + readBias = y' j`.  This is the sound engine core
+— it takes the *pre-read-out level-set vector* (the input to the non-negative read-out) as the
+exact indicator `𝟙(i ≤ j)` and telescopes.  The gadget's ε is *not* threaded here: layer 3 is a
+discontinuous `heaviside` level-set layer, so an ε-approximate domination indicator need not yield
+the exact `𝟙(i ≤ j)`; the engine is therefore stated at this boundary (see `readout_error_bound`
+for the linear error propagation from this boundary through the read-out). -/
+private theorem readout_telescope (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (j : Fin n) :
+    (∑ i, readW x y i * (if i ≤ j then (1 : ℝ) else 0)) + readBias x y = reTarget x y j := by
+  -- rewrite the read-out weights via forward differences
+  have hstep : (∑ i, readW x y i * (if i ≤ j then (1 : ℝ) else 0))
       = ∑ i : Fin n, (potential x y ((i : ℕ) + 1) - potential x y (i : ℕ))
           * (if (i : ℕ) ≤ (j : ℕ) then (1 : ℝ) else 0) := by
     apply Finset.sum_congr rfl
     intro i _
-    rw [revPrefix_apply x y hmono hinj i j]
+    unfold readW
     rfl
   rw [hstep]
   -- move to a sum over `Finset.range n`
@@ -238,19 +259,65 @@ private theorem interpNet_toFun_reindex (x : Fin n → (Fin d → ℝ)) (y : Fin
     rw [Finset.mem_range, Nat.lt_succ_iff, not_le] at hk
     rw [if_neg (by omega), mul_zero]
 
+/-- **General engine step (sound `η`-boundary).**  For *any* pre-read-out level-set vector
+`v : Fin n → ℝ` that approximates the exact prefix indicator `𝟙(i ≤ j)` to accuracy `η`, the
+telescoping non-negative read-out reproduces the reindexed target `y' j` to accuracy
+`(∑ i, |readW i|) · η`.  This is the engine boundary at which error propagates *soundly*: it is the
+input to the linear read-out.  It is deliberately *not* stated on the gadget's domination output —
+layer 3 (`revPrefixLayer`) is a discontinuous `heaviside` level-set layer, so an ε-approximate
+domination indicator can flip the level set and need not keep `v` within `O(ε)` of `𝟙(i ≤ j)`; the
+error control across all layers is a Phase-2 co-design with the saturating construction.  The exact
+interpolation is the `η = 0` instance (`v = 𝟙(i ≤ j)`, from `revPrefix_apply`). -/
+theorem readout_error_bound (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (j : Fin n)
+    {v : Fin n → ℝ} {η : ℝ} (hv : ∀ i, |v i - (if i ≤ j then (1 : ℝ) else 0)| ≤ η) :
+    |((∑ i, readW x y i * v i) + readBias x y) - reTarget x y j|
+      ≤ (∑ i, |readW x y i|) * η := by
+  -- rewrite the target via the exact telescoping identity, then bound the linear read-out error
+  rw [← readout_telescope x y j]
+  have hdiff : ((∑ i, readW x y i * v i) + readBias x y)
+      - ((∑ i, readW x y i * (if i ≤ j then (1 : ℝ) else 0)) + readBias x y)
+      = ∑ i, readW x y i * (v i - (if i ≤ j then (1 : ℝ) else 0)) := by
+    rw [add_sub_add_right_eq_sub, ← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl (fun i _ => by rw [mul_sub])
+  rw [hdiff, Finset.sum_mul]
+  refine le_trans (Finset.abs_sum_le_sum_abs _ _) (Finset.sum_le_sum (fun i _ => ?_))
+  rw [abs_mul]
+  exact mul_le_mul_of_nonneg_left (hv i) (abs_nonneg _)
+
+/-- The interpolation network reproduces the reindexed target at every reindexed point:
+`N.toFun (x' j) = y' j`.  This is the exact (`η = 0`) instance of `readout_error_bound`: the shared
+gadget makes the pre-read-out level-set vector the exact prefix indicator `𝟙(i ≤ j)`
+(`revPrefix_apply`), so the read-out error is `≤ 0` and the identity holds on the nose. -/
+private theorem interpNet_toFun_reindex (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
+    (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x) (j : Fin n) :
+    (interpNet x y).toFun (x (reindex x y j)) = y (reindex x y j) := by
+  -- the pre-read-out level-set vector is the exact prefix indicator
+  have hv : ∀ i, |(stack₃ x y).toFun (x (reindex x y j)) i - (if i ≤ j then (1 : ℝ) else 0)| ≤ 0 :=
+    fun i => by rw [revPrefix_apply x y hmono hinj i j, sub_self, abs_zero]
+  -- feed it to the engine at `η = 0`
+  have hbound := readout_error_bound x y j (v := (stack₃ x y).toFun (x (reindex x y j)))
+    (η := 0) hv
+  rw [mul_zero] at hbound
+  have heq : (interpNet x y).toFun (x (reindex x y j)) = reTarget x y j := by
+    have := abs_nonpos_iff.1 hbound
+    unfold interpNet MonoNet.toFun
+    simp only
+    linarith [sub_eq_zero.1 this]
+  rw [heq]; rfl
+
 /-- The interpolation network has depth `4`. -/
 theorem interpNet_depth (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) :
     (interpNet x y).depth = 4 := rfl
 
-/-- The interpolation network is monotone: hidden weights and read-out weights are non-negative.
-The two domination layers reuse `dominationStack_isMonotone`; the reverse-prefix layer and the
-read-out are checked directly. -/
+/-- The interpolation network is monotone: hidden weights and read-out weights are non-negative
+and every layer activation (`heaviside`) is monotone.  The two domination layers reuse
+`dominationStack_isMonotone`; the reverse-prefix layer and the read-out are checked directly. -/
 private theorem interpNet_isMonotone (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) :
     (interpNet x y).IsMonotone := by
   refine ⟨?_, readW_nonneg x y⟩
   -- the first two layers ARE the domination gadget for `x'`, so reuse its monotonicity
   have hdom := dominationStack_isMonotone (x ∘ reindex x y)
-  exact ⟨hdom.1, hdom.2.1, revPrefixLayer_nonneg n, trivial⟩
+  exact ⟨hdom.1, hdom.2.1, ⟨heaviside_monotone, revPrefixLayer_nonneg n⟩, trivial⟩
 
 end Construction
 
@@ -262,7 +329,12 @@ variable {d n : ℕ}
 monotone along the coordinatewise order of the points (`x i ≤ x j → y i ≤ y j`) and whose points
 are distinct (`x` injective) can be interpolated *exactly* by a monotone threshold network of
 depth `4`: there is a monotone `MonoNet d` of depth `4` whose denotation equals `y i` at every
-`x i`.  This is Mikulincer–Reichman (arXiv:2207.05275) Result 1. -/
+`x i`.  This is Mikulincer–Reichman (arXiv:2207.05275) Result 1.
+
+The proof now routes the domination step through the shared ε-indicator infrastructure: the
+depth-`2` `dominationStack` gadget supplies the exact (`ε = 0`) domination indicators
+(`dominationStack_apply`), and the exact interpolation is the `η = 0` instance of the sound
+pre-read-out engine step `readout_error_bound`. -/
 theorem monotone_interpolation (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
     (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x) :
     ∃ N : MonoNet d, N.IsMonotone ∧ N.depth = 4 ∧ ∀ i, N.toFun (x i) = y i := by

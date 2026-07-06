@@ -76,6 +76,13 @@ of the next — that is expected. Incremental builds (a few changed modules) do 
   byte-count tools over-report — measure codepoints (`python3 -c "print(len(line))"`).
 - **No `sorry`/`admit`.** A research-grade blocker is reported honestly (and, in agent workflows, as
   `NEEDS_CONTEXT`), never hidden as `sorry` or worked around by weakening a theorem statement.
+- **Prefer minimal, precise imports over blanket `import Mathlib`.** This is the preferred way for
+  every file, not just `ForMathlib/`. Whole-library `import Mathlib` makes `lake build` much slower
+  and worsens the concurrent-build EMFILE issue above; import only the specific Mathlib modules a
+  file needs (e.g. `import Mathlib.Topology.ContinuousMap.Compact`). `#min_imports` and
+  `lake exe shake` suggest candidates, but both under-report open-scoped notation, instances, and
+  tactics — always confirm with a clean build. Existing files that still carry `import Mathlib`
+  (e.g. `Leshno/ClassM.lean`) should be trimmed opportunistically when touched.
 - **`ForMathlib/` is upstream-facing.** Keep those files self-contained (Mathlib-only deps where
   possible) and carry an `Intended Mathlib home:` header.
 - Commits are SSH-signed (`git commit -S`).
