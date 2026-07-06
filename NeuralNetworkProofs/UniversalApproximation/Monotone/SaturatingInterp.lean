@@ -384,7 +384,7 @@ theorem sat_preadout_approx {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y : Fin
     ∃ (S : ActStack d n) (base γ₃ : ℝ), 0 < γ₃ ∧ S.IsMonotone ∧ S.depth = 3 ∧
       S.activations = [σ₁, σ₂, σ₃] ∧
       ∀ j i : Fin n, |S.toFun (x (satReindex x y j)) i
-        - (base + γ₃ * (if i ≤ j then (1 : ℝ) else 0))| ≤ η := by
+        - (base + γ₃ * (if i ≤ j then (1 : ℝ) else 0))| ≤ γ₃ * η := by
   classical
   -- Reindexed points.
   set p : Fin n → (Fin d → ℝ) := fun r => x (satReindex x y r) with hp
@@ -420,15 +420,17 @@ theorem sat_preadout_approx {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y : Fin
   obtain ⟨b₃, hcont₃, hb₃gt⟩ := exists_continuousAt_gt_of_monotone hm₃ hb₃ex
   set γ₃ : ℝ := σ₃ b₃ - c₃ with hγ₃
   have hγ₃pos : 0 < γ₃ := by rw [hγ₃]; linarith
+  -- The scaled target accuracy `γ₃ · η > 0` (fixed before the η-dependent gains).
+  have hγ₃η : 0 < γ₃ * η := mul_pos hγ₃pos hη
   -- L3 outside margin.
   set m₃ : ℝ := -γ₂ / 2 with hm₃def
   have hm₃pos : 0 < m₃ := by rw [hm₃def]; linarith
   -- BACKWARD GAIN CHAIN.
-  -- L3 interior radius (accuracy `η` at `b₃`).
-  obtain ⟨δ₃, hδ₃pos, hδ₃⟩ := approx_interior_value hcont₃ hη
-  -- L3 outside threshold `lam₃` (accuracy `η`, margin `m₃`, bias `b₃`).
+  -- L3 interior radius (accuracy `γ₃ · η` at `b₃`).
+  obtain ⟨δ₃, hδ₃pos, hδ₃⟩ := approx_interior_value hcont₃ hγ₃η
+  -- L3 outside threshold `lam₃` (accuracy `γ₃ · η`, margin `m₃`, bias `b₃`).
   obtain ⟨lam₃, hlam₃pos, hL3out⟩ := leftSaturating_scaled_approx_bias
-    (b := b₃) hL₃ hη hm₃pos
+    (b := b₃) hL₃ hγ₃η hm₃pos
   -- L2 accuracy `ε₂`: small enough for the L3 outside sum and interior drift.
   set ε₂ : ℝ := min (m₃ / (n + 1)) (δ₃ / (lam₃ * (n + 1))) with hε₂def
   have hnp : (0 : ℝ) < n + 1 := by positivity
@@ -686,5 +688,96 @@ theorem sat_preadout_approx {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y : Fin
       have hVi := hL3out lam₃ (le_refl lam₃) (T i) hT_le
       rw [abs_le] at hVi ⊢
       exact ⟨by linarith [hVi.1], by linarith [hVi.2]⟩
+
+/-- **Sartor Theorem 3.5 (monotone saturating-activation interpolation, ε-approximate).**
+Any finite dataset `(x i, y i)` with targets monotone along the coordinatewise order (`x i ≤ x j →
+y i ≤ y j`) and distinct points (`x` injective) can be ε-approximated by a monotone MLP of depth 4
+whose three hidden activations are the given monotone, one-sided-saturating, non-constant maps
+`σ₁∈𝒮⁻, σ₂∈𝒮⁺, σ₃∈𝒮⁻` (non-negative weights): for every `ε>0` there is a monotone `MonoNet d` of
+depth 4 with `stack.activations = [σ₁,σ₂,σ₃]` and `|N.toFun (x i) − y i| ≤ ε` for all `i`.
+
+The paper (arXiv:2505.02537) states Thm 3.5 with exact `g(xᵢ)=f(xᵢ)`; that is the `λ→∞` idealization
+(Def 3.3 saturation is a limit, not attained — e.g. `tanh`), so the faithful finite-net statement is
+this ε-approximate one. The `non-constant` hypotheses (`∃ a b, σ a < σ b`) make explicit the
+non-degeneracy the paper's construction implicitly requires (it divides by `γ₃ = σ₃ b₃ − σ₃(−∞)` and
+separates `σ₁`'s two sides). Case 2 (`𝒮⁺,𝒮⁻,𝒮⁺`) is the `reflect`-dual (Prop 3.8). -/
+theorem saturating_interpolation {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
+    (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x)
+    (σ₁ σ₂ σ₃ : ℝ → ℝ) (hm₁ : Monotone σ₁) (hm₂ : Monotone σ₂) (hm₃ : Monotone σ₃)
+    (hs₁ : LeftSaturating σ₁) (hs₂ : RightSaturating σ₂) (hs₃ : LeftSaturating σ₃)
+    (hnc₁ : ∃ a b, σ₁ a < σ₁ b) (hnc₂ : ∃ a b, σ₂ a < σ₂ b) (hnc₃ : ∃ a b, σ₃ a < σ₃ b)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ N : MonoNet d, N.IsMonotone ∧ N.depth = 4 ∧ N.stack.activations = [σ₁, σ₂, σ₃] ∧
+      ∀ i, |N.toFun (x i) - y i| ≤ ε := by
+  classical
+  -- Total absolute weight `W₀` (γ₃-free) and derived accuracy `η₀`.
+  set W₀ : ℝ :=
+    ∑ i : Fin n, |satPotential x y ((i : ℕ) + 1) - satPotential x y (i : ℕ)| with hW₀
+  have hW₀nonneg : 0 ≤ W₀ := Finset.sum_nonneg (fun i _ => abs_nonneg _)
+  have hW₀1pos : 0 < W₀ + 1 := by linarith
+  set η₀ : ℝ := ε / (W₀ + 1) with hη₀
+  have hη₀pos : 0 < η₀ := div_pos hε hW₀1pos
+  -- The depth-3 pre-read-out approximation at accuracy `γ₃ · η₀`.
+  obtain ⟨S, base, γ₃, hγ₃, hSmono, hSdepth, hSact, hbound⟩ :=
+    sat_preadout_approx x y hmono hinj σ₁ σ₂ σ₃ hm₁ hm₂ hm₃ hs₁ hs₂ hs₃ hnc₁ hnc₂ hnc₃
+      (η := η₀) hη₀pos
+  -- Assemble the depth-4 monotone net.
+  refine ⟨⟨n, S, satReadW x y γ₃,
+    satReadBias x y - base * (∑ i, satReadW x y γ₃ i)⟩, ?_, ?_, ?_, ?_⟩
+  · exact ⟨hSmono, fun i => satReadW_nonneg x y hγ₃ i⟩
+  · simp only [MonoNet.depth, hSdepth]
+  · exact hSact
+  · -- The ε bound.
+    intro k
+    set j : Fin n := (satReindex x y).symm k with hj
+    have hxk : x (satReindex x y j) = x k := by rw [hj, Equiv.apply_symm_apply]
+    have hyk : satReTarget x y j = y k := by
+      unfold satReTarget; rw [hj, Equiv.apply_symm_apply]
+    -- Pre-read-out residual vector.
+    set v : Fin n → ℝ := fun i => S.toFun (x k) i - base with hv
+    have hvbound : ∀ i, |v i - γ₃ * (if i ≤ j then (1 : ℝ) else 0)| ≤ γ₃ * η₀ := by
+      intro i
+      have h := hbound j i
+      rw [hxk] at h
+      have hrw : v i - γ₃ * (if i ≤ j then (1 : ℝ) else 0)
+          = S.toFun (x k) i - (base + γ₃ * (if i ≤ j then (1 : ℝ) else 0)) := by
+        rw [hv]; ring
+      rw [hrw]; exact h
+    -- Read-out error bound from the engine.
+    have herr := satReadout_error_bound x y (γ := γ₃) hγ₃.ne' j (v := v)
+      (η := γ₃ * η₀) hvbound
+    -- Identify the LHS of `herr` with `N.toFun (x k) - y k`.
+    have hlhs : ((∑ i, satReadW x y γ₃ i * v i) + satReadBias x y)
+        = (∑ i, satReadW x y γ₃ i * S.toFun (x k) i)
+          + (satReadBias x y - base * (∑ i, satReadW x y γ₃ i)) := by
+      have hexp : ∀ i, satReadW x y γ₃ i * v i
+          = satReadW x y γ₃ i * S.toFun (x k) i - base * satReadW x y γ₃ i := by
+        intro i; rw [hv]; ring
+      rw [Finset.sum_congr rfl (fun i _ => hexp i), Finset.sum_sub_distrib,
+        ← Finset.mul_sum]
+      ring
+    -- Rewrite `herr` to be about `N.toFun (x k) - y k`.
+    rw [hlhs, hyk] at herr
+    have hNtoFun : ((∑ i, satReadW x y γ₃ i * S.toFun (x k) i)
+        + (satReadBias x y - base * (∑ i, satReadW x y γ₃ i)))
+        = (⟨n, S, satReadW x y γ₃,
+            satReadBias x y - base * (∑ i, satReadW x y γ₃ i)⟩ : MonoNet d).toFun (x k) := by
+      rfl
+    rw [hNtoFun] at herr
+    -- Simplify the RHS `(∑ |satReadW γ₃ i|) * (γ₃ * η₀) = W₀ * η₀`.
+    have hsumabs : (∑ i, |satReadW x y γ₃ i|) = W₀ / γ₃ := by
+      rw [hW₀, Finset.sum_div]
+      refine Finset.sum_congr rfl (fun i _ => ?_)
+      rw [satReadW, abs_div, abs_of_pos hγ₃]
+    have hrhs : (∑ i, |satReadW x y γ₃ i|) * (γ₃ * η₀) = W₀ * η₀ := by
+      rw [hsumabs, div_mul_eq_mul_div, mul_comm γ₃ η₀, ← mul_assoc,
+        mul_div_assoc, div_self hγ₃.ne', mul_one]
+    rw [hrhs] at herr
+    -- Chain `W₀ * η₀ ≤ ε`.
+    have hfin : W₀ * η₀ ≤ ε := by
+      have hηeq : η₀ = ε / (W₀ + 1) := hη₀
+      rw [hηeq, ← mul_div_assoc, div_le_iff₀ hW₀1pos]
+      nlinarith [hW₀nonneg, hε.le]
+    exact le_trans herr hfin
 
 end UniversalApproximation.Monotone
