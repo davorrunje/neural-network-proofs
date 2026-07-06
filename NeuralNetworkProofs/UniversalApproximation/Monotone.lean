@@ -17,22 +17,27 @@ import NeuralNetworkProofs.UniversalApproximation.Monotone.NonPositive
 /-!
 # Universal Approximation for Monotone Neural Networks — root module
 
-This is the root module of a Lean 4 + Mathlib formalization of **Result 1** of
+This is the root module of a Lean 4 + Mathlib formalization of two universal-approximation
+developments for **monotone** neural networks, sharing one activation-generic core (`ActStack`):
 
-> D. Mikulincer and R. Reichman, "The Size of the Weights Matter",
-> arXiv:2207.05275 (2022).
+> D. Mikulincer and R. Reichman, "The Size of the Weights Matter", arXiv:2207.05275 (2022).
+> D. Sartor et al., "Advancing Constrained Monotonic Neural Networks: Achieving Universal
+> Approximation Beyond Bounded Activations", arXiv:2505.02537 (2025).
 
-The result states that every monotone continuous function on the unit cube
-`[0,1]^d ⊆ ℝ^d` can be uniformly approximated, to any precision `ε > 0`, by a
-depth-4 monotone neural network; and that the data-interpolation analogue holds
-with exact equality on finitely many points.
+**Mikulincer–Reichman (Result 1):** every monotone continuous function on the unit cube
+`[0,1]^d ⊆ ℝ^d` is uniformly approximated to any precision `ε > 0` by a depth-4 monotone threshold
+network, with exact interpolation on finitely many points. The model is activation-generic
+(`ActStack`, with `heaviside` as the canonical instance); M-R's interpolation proof is routed
+through the shared `IsEpsIndicator` engine (the original standalone threshold construction ships in
+PR #16).
 
-**Phase 1 (feat/monotone-saturating-uat):** the model is now activation-generic
-(`ActStack`, with `heaviside` as the canonical instance); M-R's interpolation proof
-is re-derived through the shared `IsEpsIndicator` engine (historical note: the
-original standalone threshold construction ships in PR #16).
+**Sartor et al. (all three results):** for monotone, one-sided-saturating, non-constant activations,
+depth-4 monotone networks are universal — with alternating-saturation non-negative weights (Thm 3.5,
+`saturating_interpolation`) or, equivalently, non-positive weights and a single activation (Prop
+3.11, `nonpos_weight_universal`), tied together by the weight-sign ↔ saturation-side reflection
+(Props 3.8/3.10).
 
-This module re-exports all six component modules:
+This module re-exports the component modules:
 
 * `Basic` — general reusable lemmas (`sum_le_one_card_le_iff`, `dist_le_of_coord`,
   `sort_key_linear_extension`).
