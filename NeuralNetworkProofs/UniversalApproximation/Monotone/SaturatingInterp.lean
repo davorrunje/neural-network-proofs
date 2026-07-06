@@ -219,4 +219,64 @@ theorem satLayer1_above (σ : ℝ → ℝ) {L : ℝ}
   have hσ : σ z ≤ σ (lam * (t - mgn)) := hmono harg'
   linarith
 
+/-- Layer 2 of the saturating net: intersection block layer `Layer (n * d) n`. Neuron `i` sums
+the `d` coordinate values of block `i` (weight `lam` on the block whose curried point index is
+`i`), plus a bias `bsh`. Same block structure as `dominationLayer2`, with gain `lam` and a free
+bias. -/
+noncomputable def satLayer2 (d : ℕ) {n : ℕ} (lam bsh : ℝ) : NeuralNetwork.Layer (n * d) n where
+  W := fun i q => if (finProdFinEquiv.symm q).1 = i then lam else 0
+  c := fun _ => bsh
+
+/-- Per-neuron value of layer 2 at neuron `i`: `σ (lam · ∑_c u (finProdFinEquiv (i,c)) + bsh)`.
+Mirror `dominationStack_apply`'s layer-2 block-sum step. -/
+theorem satLayer2_apply {n : ℕ} (lam bsh : ℝ) (σ : ℝ → ℝ) (u : Fin (n * d) → ℝ) (i : Fin n) :
+    (satLayer2 d lam bsh).toFun σ u i
+      = σ (lam * (∑ c : Fin d, u (finProdFinEquiv (i, c))) + bsh) := by
+  unfold NeuralNetwork.Layer.toFun satLayer2
+  congr 1
+  have hsum : (Matrix.mulVec (fun i q => if (finProdFinEquiv.symm q).1 = i then lam else 0) u i)
+      = lam * ∑ c : Fin d, u (finProdFinEquiv (i, c)) := by
+    rw [Matrix.mulVec]
+    simp only [dotProduct]
+    rw [← finProdFinEquiv.sum_comp, Fintype.sum_prod_type]
+    rw [Finset.sum_eq_single i]
+    · -- on-block: each `i`-block term rewrites to `lam * u (finProdFinEquiv (i, c))`
+      rw [show ∑ c : Fin d,
+              (if (finProdFinEquiv.symm (finProdFinEquiv (i, c))).1 = i then lam else 0)
+                * u (finProdFinEquiv (i, c))
+            = ∑ c : Fin d, lam * u (finProdFinEquiv (i, c)) from
+          Finset.sum_congr rfl (fun c _ => by rw [Equiv.symm_apply_apply, if_pos rfl])]
+      rw [← Finset.mul_sum]
+    · intro j _ hj
+      apply Finset.sum_eq_zero
+      intro c _
+      rw [Equiv.symm_apply_apply, if_neg hj, zero_mul]
+    · intro h; exact absurd (Finset.mem_univ _) h
+  simp only [hsum]
+
+/-- Layer 3 of the saturating net: strict-lower-prefix layer `Layer n n`. Neuron `i` sums the
+values of all neurons `r < i` (weight `lam`, all `≥ 0`), plus a bias `bsh`. Like `revPrefixLayer`
+but summing the strict lower prefix `r < i` instead of `i ≤ r`. -/
+noncomputable def satLayer3 (n : ℕ) (lam bsh : ℝ) : NeuralNetwork.Layer n n where
+  W := fun i r => if r < i then lam else 0
+  c := fun _ => bsh
+
+/-- Per-neuron value of layer 3 at neuron `i`:
+`σ (lam · ∑_r (if r < i then v r else 0) + bsh)`. -/
+theorem satLayer3_apply (lam bsh : ℝ) (σ : ℝ → ℝ) (v : Fin n → ℝ) (i : Fin n) :
+    (satLayer3 n lam bsh).toFun σ v i
+      = σ (lam * (∑ r : Fin n, (if r < i then v r else 0)) + bsh) := by
+  unfold NeuralNetwork.Layer.toFun satLayer3
+  congr 1
+  have hsum : (Matrix.mulVec (fun i r => if r < i then lam else 0) v i)
+      = lam * ∑ r : Fin n, (if r < i then v r else 0) := by
+    rw [Matrix.mulVec]
+    simp only [dotProduct]
+    -- rewrite each term: `(if r < i then lam else 0) * v r = lam * (if r < i then v r else 0)`
+    rw [show ∑ r : Fin n, (if r < i then lam else 0) * v r
+          = ∑ r : Fin n, lam * (if r < i then v r else 0) from
+        Finset.sum_congr rfl (fun r _ => by split_ifs <;> ring)]
+    rw [← Finset.mul_sum]
+  simp only [hsum]
+
 end UniversalApproximation.Monotone
