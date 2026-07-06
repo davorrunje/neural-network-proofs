@@ -306,4 +306,28 @@ theorem rightSaturating_intersection_vanishes {σ : ℝ → ℝ}
   obtain ⟨j, hj, hjm⟩ := hout
   exact hΛ lam hlam _ (sum_ge_of_single s h hj hjm hnonneg)
 
+/-!
+## Approximate interior value (rigorous interior for the Lemma 3.7 chaining)
+
+Lemma 3.7's interior claim `hᵢ ≈ 0 ⇒ σ (λ·∑ hᵢ + b) ≈ σ b` is valid only when the pre-activation
+stays near the bias `b`. Since `σ` here is merely monotone (possibly discontinuous), the interior
+argument needs `σ` continuous at `b`; then a standard ε-δ bound controls the interior value. In the
+depth-4 assembly `b` is chosen at a continuity point of `σ` (monotone ⇒ continuity points dense), so
+no extra global hypothesis on `σ` is imposed.
+-/
+
+/-- Continuity of `σ` at `b`, in the ε-δ form the interior argument consumes: within radius `δ` of
+`b`, the activation stays within `ε` of its interior value `σ b`. -/
+theorem approx_interior_value {σ : ℝ → ℝ} {b : ℝ} (hcont : ContinuousAt σ b)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ δ : ℝ, 0 < δ ∧ ∀ t : ℝ, |t - b| ≤ δ → |σ t - σ b| ≤ ε := by
+  rw [Metric.continuousAt_iff] at hcont
+  obtain ⟨δ, hδpos, hδ⟩ := hcont ε hε
+  refine ⟨δ / 2, half_pos hδpos, fun t ht => ?_⟩
+  have hlt : |t - b| < δ := lt_of_le_of_lt ht (half_lt_self hδpos)
+  have hdist_in : dist t b < δ := by rw [Real.dist_eq]; exact hlt
+  have hdist_out := hδ hdist_in
+  rw [Real.dist_eq] at hdist_out
+  exact le_of_lt hdist_out
+
 end UniversalApproximation.Monotone
