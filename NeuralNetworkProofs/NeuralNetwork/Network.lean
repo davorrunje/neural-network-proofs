@@ -3,7 +3,8 @@ Copyright (c) 2026 Davor Runje. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
-import Mathlib
+import Mathlib.Topology.Algebra.Ring.Real
+import Mathlib.Topology.Instances.Matrix
 
 /-!
 # General feedforward neural networks
