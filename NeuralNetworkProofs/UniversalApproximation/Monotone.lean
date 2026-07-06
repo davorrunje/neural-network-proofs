@@ -12,6 +12,7 @@ import NeuralNetworkProofs.UniversalApproximation.Monotone.Approximation
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Saturating
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Equivalence
 import NeuralNetworkProofs.UniversalApproximation.Monotone.SaturatingInterp
+import NeuralNetworkProofs.UniversalApproximation.Monotone.NonPositive
 
 /-!
 # Universal Approximation for Monotone Neural Networks — root module
@@ -55,6 +56,9 @@ activation-generic core:
 * `SaturatingInterp` — headline theorem `saturating_interpolation` (Theorem 3.5, the faithful
   ε-approximate form; three alternating one-sided-saturating activations), built on a
   γ-normalized read-out engine and the depth-3 core `sat_preadout_approx`.
+* `NonPositive` — headline theorem `nonpos_weight_universal` (Proposition 3.11, `𝒮⁺` case): an
+  all-non-positive-weight, single-activation network is universal, via the Prop 3.10 reduction to
+  Theorem 3.5.
 
 ## Headlines
 
@@ -62,5 +66,6 @@ activation-generic core:
 UniversalApproximation.Monotone.monotone_interpolation
 UniversalApproximation.Monotone.monotone_approximation
 UniversalApproximation.Monotone.saturating_interpolation
+UniversalApproximation.Monotone.nonpos_weight_universal
 ```
 -/

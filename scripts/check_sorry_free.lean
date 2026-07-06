@@ -6,3 +6,4 @@ open UniversalApproximation.Cybenko UniversalApproximation.Leshno UniversalAppro
 #print axioms monotone_interpolation
 #print axioms monotone_approximation
 #print axioms saturating_interpolation
+#print axioms nonpos_weight_universal
