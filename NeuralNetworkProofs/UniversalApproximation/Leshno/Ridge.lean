@@ -3,7 +3,13 @@ Copyright (c) 2026 Davor Runje. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
-import Mathlib
+import Mathlib.Topology.ContinuousMap.StoneWeierstrass
+import Mathlib.Analysis.InnerProductSpace.EuclideanDist
+import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.LinearAlgebra.Pi
+import Mathlib.Algebra.MvPolynomial.Basic
+import Mathlib.RingTheory.MvPolynomial.Homogeneous
+import Mathlib.Algebra.MvPolynomial.Degrees
 import NeuralNetworkProofs.UniversalApproximation.Leshno.Family
 import NeuralNetworkProofs.ForMathlib.RidgePowersSpan
 

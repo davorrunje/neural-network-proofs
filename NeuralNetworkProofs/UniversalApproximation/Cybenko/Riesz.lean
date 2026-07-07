@@ -3,7 +3,19 @@ Copyright (c) 2026 Davor Runje. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
-import Mathlib
+import Mathlib.Algebra.Order.Module.PositiveLinearMap
+import Mathlib.Analysis.CStarAlgebra.ContinuousMap
+import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
+import Mathlib.MeasureTheory.Integral.RieszMarkovKakutani.Real
+import Mathlib.MeasureTheory.Measure.Decomposition.Hahn
+import Mathlib.MeasureTheory.Measure.Sub
+import Mathlib.MeasureTheory.VectorMeasure.Basic
+import Mathlib.MeasureTheory.VectorMeasure.Decomposition.Jordan
+import Mathlib.MeasureTheory.VectorMeasure.Decomposition.JordanSub
+import Mathlib.Topology.ContinuousMap.Compact
+import Mathlib.Topology.ContinuousMap.CompactlySupported
+import Mathlib.Topology.ContinuousMap.ContinuousSqrt
+import Mathlib.Topology.ContinuousMap.StarOrdered
 import NeuralNetworkProofs.UniversalApproximation.Cybenko.Activation
 import NeuralNetworkProofs.ForMathlib.RieszKantorovich
 

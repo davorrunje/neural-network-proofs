@@ -1,9 +1,39 @@
-# lean-playground
+# Neural Network Proofs
 
-A playground for learning Lean 4, with [Mathlib](https://github.com/leanprover-community/mathlib4)
-available. Everything runs inside a VS Code dev container, so the only thing you
-need on your host machine is Docker (and VS Code with the Dev Containers
-extension).
+`NeuralNetworkProofs` is a Lean 4 + [Mathlib](https://github.com/leanprover-community/mathlib4)
+formalization of **universal approximation theorems (UATs) for neural networks**, all `sorry`-free
+(see [Formalized results](#formalized-results-neuralnetworkproofs) below).
+
+The project is developed in a self-contained VS Code **dev container**: the only thing you need on
+your host machine is Docker (and VS Code with the Dev Containers extension) — the Lean toolchain,
+Mathlib cache, and Claude Code CLI are all provisioned automatically.
+
+## Formalized results: `NeuralNetworkProofs`
+
+`NeuralNetworkProofs` formalizes universal approximation theorems for neural networks, all
+`sorry`-free. Three developments are complete:
+
+- **Cybenko (1989)** — a single-hidden-layer network with a continuous sigmoidal activation is dense
+  in `C(K, ℝ)`.
+  Headline: `UniversalApproximation.Cybenko.universal_approximation`.
+- **Leshno–Lin–Pinkus–Schocken (1993)** — an `M`-class activation densely approximates iff it is not
+  (a.e.) a polynomial.
+  Headline: `UniversalApproximation.Leshno.leshno_dense_iff`.
+- **Monotone networks** — universal approximation under monotonicity constraints, on a shared
+  activation-generic core:
+  - *Mikulincer–Reichman (2022):* a depth-4 monotone threshold network exactly interpolates, and
+    uniformly approximates, any monotone function.
+    Headlines: `…Monotone.monotone_interpolation`, `…Monotone.monotone_approximation`.
+  - *Sartor et al. (2025):* monotone networks with **one-sided-saturating** activations — a finite
+    limit on just *one* side (Def 3.3), which crucially admits **unbounded** activations such as
+    ReLU (the paper's *"beyond bounded activations"*: saturating on one side is enough, boundedness
+    is not required). Results: Theorem 3.5 (`…Monotone.saturating_interpolation`), the
+    point-reflection / weight-sign equivalence (Props 3.8 & 3.10), and non-positive-weight
+    universality (Prop 3.11, `…Monotone.nonpos_weight_universal`).
+
+**Correctness gate.** Every headline is machine-checked to depend only on the axioms
+`[propext, Classical.choice, Quot.sound]` — no `sorry`/`sorryAx`, no extra axioms (see
+[Working in the project](#working-in-the-project)).
 
 ## Getting started
 
@@ -47,36 +77,50 @@ relying on it already being present.
 ## What's inside
 
 - **`.devcontainer/`** — dev container definition and setup scripts
-  (`on-create.sh` installs elan and uv; `post-create.sh` runs
-  `lake exe cache get` and `lake build`; `setup-git-signing.sh` configures SSH
-  commit signing — see below). The Node.js, GitHub CLI (`gh`), and Claude Code
-  CLI come from dev container features.
+  (`on-create.sh` installs elan and uv; `post-create.sh` runs `lake exe cache get`
+  and `lake build`). The Node.js, GitHub CLI (`gh`), and Claude Code CLI come from
+  dev container features.
 - **`.mcp.json`** — registers the `lean-lsp-mcp` MCP server (run via `uvx`).
 - **`lean-toolchain`** — pins the Lean version (matched to the committed
   Mathlib revision).
 - **`lakefile.toml`** / **`lake-manifest.json`** — the Lake package definition
   and its pinned dependency revisions.
-- A sample `.lean` source file with a small Mathlib-backed proof.
-
-## Git commit signing
-
-Commits made inside the container are SSH-signed using the key from your host's
-SSH agent. The Dev Containers extension forwards your host agent into the
-container automatically, so a hardware/Secure-Enclave-backed agent such as
-[Secretive](https://github.com/maxgoedjen/secretive) works without exposing any
-private key to the container.
-
-The catch is that the `~/.gitconfig` copied from your host points
-`user.signingkey` at a host path (e.g. `/Users/<you>/.ssh/...`) that does not
-exist in the container. `setup-git-signing.sh` (run as `postStartCommand`) fixes
-this: it writes a public-key file derived from the forwarded agent — matching
-`~/.ssh/allowed_signers` when present — and repoints `user.signingkey` at it. If
-no agent is forwarded, it leaves your config untouched and commits are simply
-unsigned.
+- **`NeuralNetworkProofs/`** — the formalization library (the *Formalized results* above).
+  `NeuralNetworkProofs.lean` is the root module and re-exports every development, so a plain
+  `lake build` verifies all headlines. Mathlib-upstream candidates live under
+  `NeuralNetworkProofs/ForMathlib/`.
+- **`scripts/check_sorry_free.lean`** — the correctness gate (see below).
+- **`CLAUDE.md`** — contributor guide (layout, conventions, build/verify workflow).
 
 ## Working in the project
 
-- Build everything: `lake build`
+- Build everything (verifies all headlines): `lake build`
+- **Sorry-free check** — the real correctness gate (a `sorry` is only a *warning*, so a green build
+  alone does not prove the development is admit-free):
+  ```bash
+  lake env lean scripts/check_sorry_free.lean
+  ```
+  Each headline should report exactly `[propext, Classical.choice, Quot.sound]`; any `sorryAx` means
+  an admitted proof has been (re)introduced. CI runs this gate and fails on `sorryAx`.
 - Refresh the Mathlib cache after changing the Mathlib revision:
   `lake exe cache get`
 - Update dependencies: `lake update` (then re-run `lake exe cache get`).
+
+## Contributing
+
+Contributions are welcome. A few conventions keep the development consistent and machine-verifiable:
+
+- **No `sorry`/`admit`.** These are machine-checked proofs; a genuine research blocker is reported
+  honestly (open an issue), never hidden behind `sorry` or worked around by weakening a theorem
+  statement.
+- **Keep every headline axiom-clean.** Before opening a PR, run the sorry-free gate above and
+  confirm each headline reports exactly `[propext, Classical.choice, Quot.sound]`. CI runs this gate
+  and fails on `sorryAx`.
+- **Prefer minimal, precise imports** over blanket `import Mathlib` — it makes `lake build` much
+  slower. Import only the specific Mathlib modules a file needs.
+- **Line length ≤ 100 codepoints**; docstrings on public declarations.
+- **`ForMathlib/` is upstream-facing** — keep those files self-contained (Mathlib-only dependencies
+  where possible), each with an `Intended Mathlib home:` header.
+
+Make sure `lake build` is green and the sorry-free gate passes before submitting a PR. `CLAUDE.md`
+is the full contributor guide (module layout, namespaces, conventions, build workflow).

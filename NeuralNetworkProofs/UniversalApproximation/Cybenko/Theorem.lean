@@ -3,7 +3,11 @@ Copyright (c) 2026 Davor Runje. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
-import Mathlib
+import Mathlib.Analysis.Convex.Basic
+import Mathlib.Analysis.LocallyConvex.Separation
+import Mathlib.Topology.Algebra.Module.Basic
+import Mathlib.Topology.Closure
+import Mathlib.Topology.MetricSpace.Pseudo.Defs
 import NeuralNetworkProofs.UniversalApproximation.Cybenko.Activation
 import NeuralNetworkProofs.UniversalApproximation.Cybenko.Discriminatory
 import NeuralNetworkProofs.UniversalApproximation.Cybenko.Family
