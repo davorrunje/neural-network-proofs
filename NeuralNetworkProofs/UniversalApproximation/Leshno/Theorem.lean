@@ -3,7 +3,6 @@ Copyright (c) 2026 Davor Runje. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
-import Mathlib
 import NeuralNetworkProofs.UniversalApproximation.Leshno.ClassM
 import NeuralNetworkProofs.UniversalApproximation.Leshno.Family
 import NeuralNetworkProofs.UniversalApproximation.Leshno.SmoothEngine
