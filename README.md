@@ -77,10 +77,9 @@ relying on it already being present.
 ## What's inside
 
 - **`.devcontainer/`** — dev container definition and setup scripts
-  (`on-create.sh` installs elan and uv; `post-create.sh` runs
-  `lake exe cache get` and `lake build`; `setup-git-signing.sh` configures SSH
-  commit signing — see below). The Node.js, GitHub CLI (`gh`), and Claude Code
-  CLI come from dev container features.
+  (`on-create.sh` installs elan and uv; `post-create.sh` runs `lake exe cache get`
+  and `lake build`). The Node.js, GitHub CLI (`gh`), and Claude Code CLI come from
+  dev container features.
 - **`.mcp.json`** — registers the `lean-lsp-mcp` MCP server (run via `uvx`).
 - **`lean-toolchain`** — pins the Lean version (matched to the committed
   Mathlib revision).
@@ -92,22 +91,6 @@ relying on it already being present.
   `NeuralNetworkProofs/ForMathlib/`.
 - **`scripts/check_sorry_free.lean`** — the correctness gate (see below).
 - **`CLAUDE.md`** — contributor guide (layout, conventions, build/verify workflow).
-
-## Git commit signing
-
-Commits made inside the container are SSH-signed using the key from your host's
-SSH agent. The Dev Containers extension forwards your host agent into the
-container automatically, so a hardware/Secure-Enclave-backed agent such as
-[Secretive](https://github.com/maxgoedjen/secretive) works without exposing any
-private key to the container.
-
-The catch is that the `~/.gitconfig` copied from your host points
-`user.signingkey` at a host path (e.g. `/Users/<you>/.ssh/...`) that does not
-exist in the container. `setup-git-signing.sh` (run as `postStartCommand`) fixes
-this: it writes a public-key file derived from the forwarded agent — matching
-`~/.ssh/allowed_signers` when present — and repoints `user.signingkey` at it. If
-no agent is forwarded, it leaves your config untouched and commits are simply
-unsigned.
 
 ## Working in the project
 
@@ -123,5 +106,21 @@ unsigned.
   `lake exe cache get`
 - Update dependencies: `lake update` (then re-run `lake exe cache get`).
 
-See `CLAUDE.md` for the module layout, coding conventions (line length, minimal imports, no `sorry`)
-and the full build/verify workflow.
+## Contributing
+
+Contributions are welcome. A few conventions keep the development consistent and machine-verifiable:
+
+- **No `sorry`/`admit`.** These are machine-checked proofs; a genuine research blocker is reported
+  honestly (open an issue), never hidden behind `sorry` or worked around by weakening a theorem
+  statement.
+- **Keep every headline axiom-clean.** Before opening a PR, run the sorry-free gate above and
+  confirm each headline reports exactly `[propext, Classical.choice, Quot.sound]`. CI runs this gate
+  and fails on `sorryAx`.
+- **Prefer minimal, precise imports** over blanket `import Mathlib` — it makes `lake build` much
+  slower. Import only the specific Mathlib modules a file needs.
+- **Line length ≤ 100 codepoints**; docstrings on public declarations.
+- **`ForMathlib/` is upstream-facing** — keep those files self-contained (Mathlib-only dependencies
+  where possible), each with an `Intended Mathlib home:` header.
+
+Make sure `lake build` is green and the sorry-free gate passes before submitting a PR. `CLAUDE.md`
+is the full contributor guide (module layout, namespaces, conventions, build workflow).
