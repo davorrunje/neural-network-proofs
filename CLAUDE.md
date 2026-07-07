@@ -85,7 +85,6 @@ of the next — that is expected. Incremental builds (a few changed modules) do 
   (e.g. `Leshno/ClassM.lean`) should be trimmed opportunistically when touched.
 - **`ForMathlib/` is upstream-facing.** Keep those files self-contained (Mathlib-only deps where
   possible) and carry an `Intended Mathlib home:` header.
-- Commits are SSH-signed (`git commit -S`).
 
 ## Design docs
 

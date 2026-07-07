@@ -18,6 +18,5 @@
     "source=${localEnv:HOME}/.claude-devcontainer/lean-playground,target=/home/vscode/.claude,type=bind,consistency=cached"
   ],
   "onCreateCommand": "bash .devcontainer/on-create.sh",
-  "postCreateCommand": "bash .devcontainer/post-create.sh",
-  "postStartCommand": "bash .devcontainer/setup-git-signing.sh"
+  "postCreateCommand": "bash .devcontainer/post-create.sh"
 }
