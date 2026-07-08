@@ -34,7 +34,7 @@ The Lean module-path prefix (`NeuralNetworkProofs`) is independent of the math n
 ## Build and verify
 
 ```bash
-lake build                 # build the default target (covers both headlines)
+lake build                 # build the default target (covers all headlines)
 ```
 
 **Sorry-free check** — the real correctness gate (a `sorry` is only a *warning*, so a green build
@@ -50,8 +50,8 @@ A clean headline reports exactly `[propext, Classical.choice, Quot.sound]`. If a
 > **`#print axioms` reads the compiled `.olean`, not the source.** After moving/renaming files or
 > changing a proof, rebuild (`lake build`) before trusting `#print axioms` / `lean_verify` — a stale
 > olean reports the *old* axioms. The default target must transitively include a theorem for
-> `lake build` to check it; the root `NeuralNetworkProofs.lean` re-exports both UAT roots for exactly
-> this reason.
+> `lake build` to check it; the root `NeuralNetworkProofs.lean` re-exports the three UAT roots for
+> exactly this reason.
 
 ### Build gotcha: serialize after large file moves
 
