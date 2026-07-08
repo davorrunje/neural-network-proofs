@@ -14,11 +14,17 @@ Re-exports the formalized developments so the default `lake build` builds and ve
 headlines:
 
 * `UniversalApproximation.Cybenko.universal_approximation` — Cybenko (1989).
+* `UniversalApproximation.Cybenko.universal_approximation_eps` — Cybenko (1989), ε-approximate
+  form.
 * `UniversalApproximation.Leshno.leshno_dense_iff` — Leshno–Lin–Pinkus–Schocken (1993).
 * `UniversalApproximation.Monotone.monotone_interpolation` — Mikulincer–Reichman (2022),
   interpolation form (Result 1).
 * `UniversalApproximation.Monotone.monotone_approximation` — Mikulincer–Reichman (2022),
   approximation form (Result 1).
+* `UniversalApproximation.Monotone.saturating_interpolation` — Sartor et al. (2025), Theorem 3.5
+  (ε-approximate; monotone one-sided-saturating activations).
+* `UniversalApproximation.Monotone.nonpos_weight_universal` — Sartor et al. (2025),
+  Proposition 3.11.
 
 General neural-network infrastructure lives under `NeuralNetwork` (`NeuralNetwork.Layer`,
 `NeuralNetwork.Network`); Mathlib-upstream candidates under `NeuralNetworkProofs.ForMathlib`. -/

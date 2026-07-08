@@ -30,14 +30,13 @@ jobs:
           fi
           echo "All headline theorems are sorry-free."
 
-      - name: ForMathlib minimal-imports gate
+      - name: Minimal-imports gate (no whole-library `import Mathlib`)
         run: |
           set -euo pipefail
-          # ForMathlib files are upstream-facing: they must use minimal specific Mathlib imports,
-          # never the whole-library `import Mathlib`. (The build already ensures imports suffice;
-          # this guards that they stay minimal.)
-          if grep -rn '^import Mathlib$' NeuralNetworkProofs/ForMathlib/; then
-            echo "::error::A ForMathlib file uses 'import Mathlib'; replace with minimal imports."
+          # Every source file must use minimal, specific Mathlib imports, never the whole-library
+          # `import Mathlib` (it makes `lake build` much slower). Guards the whole tree.
+          if grep -rn '^import Mathlib$' NeuralNetworkProofs/; then
+            echo "::error::A file uses whole-library 'import Mathlib'; use minimal imports."
             exit 1
           fi
-          echo "ForMathlib files use minimal imports (no whole-library 'import Mathlib')."
+          echo "All files use minimal imports (no whole-library 'import Mathlib')."
