@@ -14,9 +14,8 @@
       ]
     }
   },
-  "initializeCommand": "mkdir -p ${localEnv:HOME}/.claude-devcontainer/lean-playground",
   "mounts": [
-    "source=${localEnv:HOME}/.claude-devcontainer/lean-playground,target=/home/vscode/.claude,type=bind,consistency=cached"
+    "source=neural-network-proofs-claude-config,target=/home/vscode/.claude,type=volume"
   ],
   "onCreateCommand": "bash .devcontainer/on-create.sh",
   "postCreateCommand": "bash .devcontainer/post-create.sh"
