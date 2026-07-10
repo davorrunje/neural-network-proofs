@@ -1,0 +1,96 @@
+\chapter{Leshno--Lin--Pinkus--Schocken (1993): the polynomial dichotomy}
+
+\begin{definition}[Class $M$]\label{def:classM}
+  \lean{UniversalApproximation.Leshno.ClassM}\leanok
+  $\sigma$ is in class $M$ when it is locally bounded and the closure of its set of
+  discontinuities is Lebesgue-null.
+\end{definition}
+
+\begin{definition}[A.e.\ polynomial]\label{def:isaepoly}
+  \lean{UniversalApproximation.Leshno.IsAEPolynomial}\leanok
+  $\sigma$ is \emph{a.e.\ a polynomial} when $\sigma=p$ almost everywhere for some polynomial $p$.
+\end{definition}
+
+\begin{theorem}[Smooth mollification]\label{thm:contdiff-mollify}
+  \lean{UniversalApproximation.Leshno.contDiff_mollify}\leanok
+  \uses{def:classM}
+  Convolving an $M$-class $\sigma$ with a smooth compactly-supported bump yields a $C^\infty$
+  function.
+\end{theorem}
+\begin{proof}\leanok
+  Differentiation passes under the convolution integral because the bump is smooth with compact
+  support and $\sigma$ is locally bounded and a.e.\ continuous.
+\end{proof}
+
+\begin{theorem}[Non-polynomial mollification exists]\label{thm:exists-nonpoly-mollify}
+  \lean{UniversalApproximation.Leshno.exists_nonpoly_mollify}\leanok
+  \uses{def:classM, def:isaepoly, thm:contdiff-mollify}
+  If an $M$-class $\sigma$ is not a.e.\ a polynomial, some smooth compactly-supported bump makes
+  the mollification $C^\infty$ and still not a.e.\ a polynomial.
+\end{theorem}
+\begin{proof}\leanok
+  If every mollification were a polynomial, a limiting argument would force $\sigma$ itself to be
+  a.e.\ a polynomial, contradicting the hypothesis; hence a non-polynomial mollification exists.
+\end{proof}
+
+\begin{theorem}[Univariate density]\label{thm:univariate-density}
+  \lean{UniversalApproximation.Leshno.univariate_density}\leanok
+  \uses{def:classM, def:isaepoly, thm:contdiff-mollify, thm:exists-nonpoly-mollify}
+  A non-a.e.-polynomial $M$-class $\sigma$ is dense on compact intervals.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{thm:contdiff-mollify, thm:exists-nonpoly-mollify}
+  Pass to a smooth non-polynomial mollification. Its derivatives at a suitable point produce every
+  monomial in the span of scaled/translated activations, and a non-polynomial smooth function has
+  a nonvanishing derivative of every order somewhere; density on intervals follows.
+\end{proof}
+
+\begin{theorem}[Ridge density]\label{thm:ridge-density}
+  \lean{UniversalApproximation.Leshno.ridge_density}\leanok
+  \uses{thm:univariate-density}
+  If $\sigma$ is univariate-dense, then ridge functions $x\mapsto g(\ip{w}{x})$ are dense in
+  $\Ck$ on compact $K$.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{thm:univariate-density}
+  The closure of the ridge span is a subalgebra separating points and containing constants;
+  univariate density lets each one-dimensional profile be matched, so Stone--Weierstrass gives
+  density in $\Ck$.
+\end{proof}
+
+\begin{theorem}[Forward: non-polynomial $\Rightarrow$ dense]\label{thm:leshno-dense}
+  \lean{UniversalApproximation.Leshno.leshno_dense}\leanok
+  \uses{def:classM, def:isaepoly, thm:univariate-density, thm:ridge-density}
+  A non-a.e.-polynomial $M$-class $\sigma$ densely approximates.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{thm:univariate-density, thm:ridge-density}
+  Combine univariate density (\cref{thm:univariate-density}) with ridge density
+  (\cref{thm:ridge-density}) to reach every continuous target on a compact set.
+\end{proof}
+
+\begin{theorem}[Converse: a.e.\ polynomial $\Rightarrow$ not dense]\label{thm:aepoly-not-dense}
+  \lean{UniversalApproximation.Leshno.aePolynomial_not_dense}\leanok
+  \uses{def:isaepoly}
+  If $\sigma$ is a.e.\ a polynomial, the network family spans only polynomials of bounded degree
+  and is not dense.
+\end{theorem}
+\begin{proof}\leanok
+  A degree-$k$ polynomial activation makes every ridge unit a degree-$\le k$ polynomial, so the
+  span lies in a finite-dimensional space, which cannot be dense in $\Ck$.
+\end{proof}
+
+\begin{theorem}[Leshno dichotomy]\label{thm:leshno-iff}
+  \lean{UniversalApproximation.Leshno.leshno_dense_iff}\leanok
+  \uses{def:classM, def:isaepoly, thm:leshno-dense, thm:aepoly-not-dense}
+  An $M$-class $\sigma$ densely approximates iff it is not a.e.\ a polynomial.
+\end{theorem}
+\begin{verbatim}
+theorem leshno_dense_iff {σ : ℝ → ℝ} (hσ : ClassM σ) :
+    DenselyApproximates σ ↔ ¬ IsAEPolynomial σ
+\end{verbatim}
+\begin{proof}\leanok
+  \uses{thm:leshno-dense, thm:aepoly-not-dense}
+  Forward is the contrapositive of \cref{thm:aepoly-not-dense}; backward is
+  \cref{thm:leshno-dense}.
+\end{proof}

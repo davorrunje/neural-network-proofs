@@ -14,5 +14,14 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.32.0-rc1"
 
+[[require]]
+name = "doc-gen4"
+git = "https://github.com/leanprover/doc-gen4"
+rev = "v4.32.0-rc1"
+
+[[require]]
+name = "checkdecls"
+git = "https://github.com/PatrickMassot/checkdecls"
+
 [[lean_lib]]
 name = "NeuralNetworkProofs"
