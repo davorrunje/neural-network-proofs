@@ -1,0 +1,12 @@
+{
+  "id": "no-gpg",
+  "version": "1.0.0",
+  "name": "Remove gpg (prevents VS Code GPG-agent forwarding crash)",
+  "description": "Uninstalls gnupg/gpg from the image after the other features have built. With no `gpg` binary present, VS Code skips forwarding the host gpg-agent and copying its keyring into the container on connect — a copy that otherwise crashes (\"Aborted (core dumped)\", exit 134) on hosts whose GnuPG keyring is empty or keybox-only. This project does not sign commits; apt still verifies packages via the separate `gpgv`. Ordered via installsAfter because the node/github-cli features need gpg at build time (gpg --recv-keys).",
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils",
+    "ghcr.io/devcontainers/features/node",
+    "ghcr.io/devcontainers/features/github-cli",
+    "ghcr.io/anthropics/devcontainer-features/claude-code"
+  ]
+}
