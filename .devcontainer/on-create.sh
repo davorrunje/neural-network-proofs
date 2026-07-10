@@ -8,6 +8,14 @@ if ! command -v curl >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
   sudo apt-get install -y --no-install-recommends curl git
 fi
 
+# This project does not sign commits. Turn signing off explicitly so git never
+# tries to invoke gpg. (gpg itself is removed from the image at build time by
+# the local ./features/no-gpg feature, which is what stops VS Code from
+# forwarding the host gpg-agent and crashing on connect; this is the git-level
+# backstop.)
+git config --global commit.gpgsign false
+git config --global tag.gpgsign false
+
 # Install elan (Lean's toolchain manager) if not already present.
 # --default-toolchain none: the project's lean-toolchain file decides the
 # Lean version, so we do not install a default here.
