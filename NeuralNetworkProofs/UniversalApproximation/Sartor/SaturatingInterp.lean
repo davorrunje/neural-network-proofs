@@ -7,7 +7,7 @@ import Mathlib.Tactic
 import Mathlib.Topology.Algebra.Module.Cardinality
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Basic
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Saturating
+import NeuralNetworkProofs.UniversalApproximation.Sartor.Saturating
 
 /-!
 # γ-normalized read-out engine + reindex scaffold (Sartor Theorem 3.5)
@@ -26,14 +26,16 @@ The assembly (Phase 2) imports this file and applies the engine with the saturat
 from `Saturating.lean`.
 -/
 
-namespace UniversalApproximation.Monotone
+namespace UniversalApproximation.Sartor
 
+open UniversalApproximation.Monotone
 open scoped BigOperators
 
 variable {d n : ℕ}
 
 /-- The list of per-layer activations of a stack (for stating which activations a net uses). -/
-def ActStack.activations : {a b : ℕ} → ActStack a b → List (ℝ → ℝ)
+def _root_.UniversalApproximation.Monotone.ActStack.activations :
+    {a b : ℕ} → ActStack a b → List (ℝ → ℝ)
   | _, _, .nil _ => []
   | _, _, .cons _ σ rest => σ :: rest.activations
 
@@ -781,4 +783,4 @@ theorem saturating_interpolation {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y 
       nlinarith [hW₀nonneg, hε.le]
     exact le_trans herr hfin
 
-end UniversalApproximation.Monotone
+end UniversalApproximation.Sartor

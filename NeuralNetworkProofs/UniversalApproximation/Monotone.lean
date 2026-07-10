@@ -9,10 +9,6 @@ import NeuralNetworkProofs.UniversalApproximation.Monotone.Indicator
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Grid
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Interpolation
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Approximation
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Saturating
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Equivalence
-import NeuralNetworkProofs.UniversalApproximation.Monotone.SaturatingInterp
-import NeuralNetworkProofs.UniversalApproximation.Monotone.NonPositive
 
 /-!
 # Universal Approximation for Monotone Neural Networks — root module

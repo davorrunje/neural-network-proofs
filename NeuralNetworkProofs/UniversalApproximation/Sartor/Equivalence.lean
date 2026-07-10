@@ -6,7 +6,7 @@ Authors: Davor Runje
 import Mathlib.Tactic
 import NeuralNetworkProofs.NeuralNetwork.Network
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Saturating
+import NeuralNetworkProofs.UniversalApproximation.Sartor.Saturating
 
 /-!
 # Weight-sign ↔ saturation-side equivalence (Proposition 3.10)
@@ -39,8 +39,9 @@ Proposition 3.10, stated at the `Layer.toFun` denotation level for downstream re
 * `prop_3_10_two_layer` — the two-layer composite equivalence (Proposition 3.10).
 -/
 
-namespace UniversalApproximation.Monotone
+namespace UniversalApproximation.Sartor
 
+open UniversalApproximation.Monotone
 open NeuralNetwork
 
 /-- The sign-flip of a layer: negate both the weight matrix and the bias, `(W, c) ↦ (−W, −c)`.
@@ -111,4 +112,4 @@ theorem prop_3_10_two_layer {a b c : ℕ} (L₁ : Layer a b) (M : Layer b c) (σ
       = ({ W := -M.W, c := M.c } : Layer b c).toFun (reflect σ) (L₁.toFun σ x) := by
   rw [reflect_negLayer_toFun L₁ σ x, negWeights_toFun M (reflect σ) (L₁.toFun σ x)]
 
-end UniversalApproximation.Monotone
+end UniversalApproximation.Sartor
