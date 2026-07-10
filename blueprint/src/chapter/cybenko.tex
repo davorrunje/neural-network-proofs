@@ -1,0 +1,81 @@
+\chapter{Cybenko (1989): sigmoidal density}
+
+\begin{definition}[Sigmoidal activation]\label{def:sigmoidal}
+  \lean{UniversalApproximation.Cybenko.Sigmoidal}\leanok
+  A function $\sigma\colon\RR\to\RR$ is \emph{sigmoidal} when it is continuous with
+  $\sigma(t)\to 0$ as $t\to-\infty$ and $\sigma(t)\to 1$ as $t\to+\infty$.
+\end{definition}
+
+\begin{definition}[Discriminatory]\label{def:discriminatory}
+  \lean{UniversalApproximation.Cybenko.Discriminatory}\leanok
+  $\sigma$ is \emph{discriminatory} for a compact $K$ when the only signed measure $\mu$ on $K$
+  that annihilates every affine pre-composition $x\mapsto\sigma(\ip{w}{x}+b)$ is $\mu=0$.
+\end{definition}
+
+\begin{theorem}[Hahn--Banach density criterion]\label{thm:dense-functional}
+  \lean{UniversalApproximation.Cybenko.dense_iff_forall_functional_eq_zero}\leanok
+  A subspace $V\subseteq\Ck$ is dense iff every continuous linear functional vanishing on $V$ is
+  the zero functional.
+\end{theorem}
+\begin{proof}\leanok
+  Standard Hahn--Banach separation: a proper closed subspace admits a nonzero functional
+  vanishing on it, and conversely a dense subspace forces any vanishing functional to be zero.
+\end{proof}
+
+\begin{theorem}[Riesz representation]\label{thm:riesz-repr}
+  \lean{UniversalApproximation.Cybenko.riesz_repr}\leanok
+  Every continuous linear functional $L$ on $\Ck$ is represented by a signed regular Borel
+  measure $\mu$, with $L=0$ iff $\mu=0$.
+\end{theorem}
+\begin{proof}\leanok
+  Assemble the Riesz--Kantorovich positive/negative decomposition of $L$ with the positive
+  Riesz--Markov--Kakutani theorem to obtain the representing signed measure.
+\end{proof}
+
+\begin{theorem}[Sigmoidal $\Rightarrow$ discriminatory]\label{thm:sigmoidal-discriminatory}
+  \lean{UniversalApproximation.Cybenko.sigmoidal_discriminatory}\leanok
+  \uses{def:sigmoidal, def:discriminatory}
+  Every continuous sigmoidal $\sigma$ is discriminatory.
+\end{theorem}
+\begin{proof}\leanok
+  For a signed measure $\mu$ annihilating all $x\mapsto\sigma(\ip{w}{x}+b)$, scaling the argument
+  drives $\sigma$ pointwise to the indicator of a half-space; dominated convergence transfers the
+  annihilation to indicators of all half-spaces $\{x:\ip{w}{x}+b>0\}$. A signed measure
+  annihilating every half-space indicator vanishes, so $\mu=0$.
+\end{proof}
+
+\begin{theorem}[Cybenko UAT]\label{thm:cybenko-uat}
+  \lean{UniversalApproximation.Cybenko.universal_approximation}\leanok
+  \uses{def:sigmoidal, thm:dense-functional, thm:riesz-repr, thm:sigmoidal-discriminatory}
+  The single-hidden-layer family with a continuous sigmoidal activation is dense in $\Ck$.
+\end{theorem}
+\begin{verbatim}
+theorem universal_approximation (σ : ℝ → ℝ) (hσ : Sigmoidal σ)
+    {K : Set (EuclideanSpace ℝ (Fin n))} (hK : IsCompact K) :
+    (S σ hσ.continuous (K := K)).topologicalClosure = ⊤
+\end{verbatim}
+\begin{proof}\leanok
+  \uses{thm:dense-functional, thm:riesz-repr, thm:sigmoidal-discriminatory}
+  By \cref{thm:dense-functional}, density reduces to: every continuous functional $L$ vanishing on
+  the family is zero. By \cref{thm:riesz-repr}, represent $L$ by a signed measure $\mu$ with $L=0$
+  iff $\mu=0$. Each generator $x\mapsto\sigma(\ip{w}{x}+b)$ lies in the family, so $\mu$
+  annihilates every affine pre-composition of $\sigma$. By \cref{thm:sigmoidal-discriminatory},
+  $\mu=0$, hence $L=0$, proving density.
+\end{proof}
+
+\begin{corollary}[$\varepsilon$-form]\label{thm:cybenko-eps}
+  \lean{UniversalApproximation.Cybenko.universal_approximation_eps}\leanok
+  \uses{thm:cybenko-uat}
+  Every $f\in\Ck$ is approximated to any $\varepsilon>0$ in sup-norm by an element of the family.
+\end{corollary}
+\begin{verbatim}
+theorem universal_approximation_eps (σ : ℝ → ℝ) (hσ : Sigmoidal σ)
+    {K : Set (EuclideanSpace ℝ (Fin n))} (hK : IsCompact K) [CompactSpace ↥K]
+    (f : C(↥K, ℝ)) {ε : ℝ} (hε : 0 < ε) :
+    ∃ g ∈ S σ hσ.continuous (K := K), ‖f - g‖ < ε
+\end{verbatim}
+\begin{proof}\leanok
+  \uses{thm:cybenko-uat}
+  Unfold the topological-closure statement of \cref{thm:cybenko-uat} into its sup-norm
+  $\varepsilon$-form; the $\mathtt{CompactSpace}$ instance makes the norm on $C(K,\RR)$ available.
+\end{proof}
