@@ -1,5 +1,10 @@
 # Closing the Last Leshno Leaf — Implementation Plan
 
+> **Repo rename note (2026-07-10):** This document predates the rename
+> `lean-playground` → `neural-network-proofs` (Lake package `lean_playground` →
+> `neural_network_proofs`, lib `LeanPlayground` → `NeuralNetworkProofs`). The old
+> names below are kept as a historic record; use the current names for live work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the single remaining `sorry` in the development —

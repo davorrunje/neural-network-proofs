@@ -2,6 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Repo rename note (2026-07-10):** This document predates the rename
+> `lean-playground` → `neural-network-proofs` (Lake package `lean_playground` →
+> `neural_network_proofs`, lib `LeanPlayground` → `NeuralNetworkProofs`). The old
+> names below are kept as a historic record; use the current names for live work.
+
 **Goal:** Make `ForMathlib/TestFunctionDegreeBound.lean` Leshno-free and upstream-ready by restating its
 lemmas over `convolution`/`LocallyIntegrable`/an inline polynomial predicate, renaming it to
 `ConvolutionDegreeBound`, and adapting the sole consumer in-place.

@@ -91,6 +91,6 @@
    "inputRev": "v4.32.0-rc1",
    "inherited": true,
    "configFile": "lakefile.toml"}],
- "name": "lean_playground",
+ "name": "neural_network_proofs",
  "lakeDir": ".lake",
  "fixedToolchain": false}

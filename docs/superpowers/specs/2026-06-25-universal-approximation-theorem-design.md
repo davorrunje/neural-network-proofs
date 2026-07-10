@@ -6,6 +6,11 @@
 Theorem (Cybenko, general n-dimensional form), with the two deep analytic lemmas
 admitted behind named declarations and a documented roadmap to discharge them.
 
+> **Repo rename note (2026-07-10):** This document predates the rename
+> `lean-playground` → `neural-network-proofs` (Lake package `lean_playground` →
+> `neural_network_proofs`, lib `LeanPlayground` → `NeuralNetworkProofs`). The old
+> names below are kept as a historic record; use the current names for live work.
+
 ## Context
 
 `lean-playground` is a learning project (Lean 4 + Mathlib `v4.32.0-rc1`). After a

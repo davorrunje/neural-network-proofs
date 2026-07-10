@@ -2,6 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Repo rename note (2026-07-10):** This document predates the rename
+> `lean-playground` → `neural-network-proofs` (Lake package `lean_playground` →
+> `neural_network_proofs`, lib `LeanPlayground` → `NeuralNetworkProofs`). The old
+> names below are kept as a historic record; use the current names for live work.
+
 **Goal:** Formalize the Riesz–Kantorovich positive decomposition of an order-bounded functional on a real vector lattice (sorry-free, upstream-ready), then use it to close `riesz_repr` so the whole UAT is sorry-free.
 
 **Architecture:** Part 1 (tasks 1–6) builds the decomposition bottom-up in a dependency-free `Contrib/RieszKantorovich.lean`; Part 2 (tasks 7–8) instantiates it at `C(↥K,ℝ)` and assembles a signed measure via positive `RealRMK`.

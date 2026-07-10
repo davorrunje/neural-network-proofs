@@ -1,5 +1,10 @@
 # Riesz–Kantorovich (Mathlib-bound) + completing the UAT — Design Spec
 
+> **Repo rename note (2026-07-10):** This document predates the rename
+> `lean-playground` → `neural-network-proofs` (Lake package `lean_playground` →
+> `neural_network_proofs`, lib `LeanPlayground` → `NeuralNetworkProofs`). The old
+> names below are kept as a historic record; use the current names for live work.
+
 **Date:** 2026-06-26
 **Status:** Approved (design) — pending spec review
 **Goal:** (Part 1) Formalize the Riesz–Kantorovich decomposition for order-bounded linear functionals on a real vector lattice — a fully `sorry`-free, general, Mathlib-upstream-ready result. (Part 2) Use it to discharge the last admitted lemma `UniversalApproximation.riesz_repr`, making the entire UAT development `sorry`-free.

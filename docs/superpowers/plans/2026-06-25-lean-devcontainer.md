@@ -2,6 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Repo rename note (2026-07-10):** This document predates the rename
+> `lean-playground` → `neural-network-proofs` (Lake package `lean_playground` →
+> `neural_network_proofs`, lib `LeanPlayground` → `NeuralNetworkProofs`). The old
+> names below are kept as a historic record; use the current names for live work.
+
 **Goal:** Provide a VS Code dev container that gives a working Lean 4 + Mathlib environment with editor support, plus Claude Code and the `lean-lsp-mcp` server for proof assistance, requiring nothing installed on the host except Docker.
 
 **Architecture:** A stock `mcr.microsoft.com/devcontainers/base:ubuntu` image is referenced directly from `devcontainer.json`. Dev container features add Node.js and the Claude Code CLI. An `onCreateCommand` script installs `elan` (Lean's toolchain manager) and `uv` (for `uvx`); a `postCreateCommand` script downloads the prebuilt Mathlib cache and builds the project. A committed `.mcp.json` registers `lean-lsp-mcp` so Claude can query Lean goal states and search Mathlib. The repo root is a real Lake project whose Lean version is pinned to match the committed Mathlib revision. The version-pinned project files are generated once during implementation by running the canonical Mathlib scaffolding commands inside a throwaway Docker container, then committed.

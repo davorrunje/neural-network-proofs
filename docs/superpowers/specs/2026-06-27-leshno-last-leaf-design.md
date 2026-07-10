@@ -1,5 +1,10 @@
 # Closing the last Leshno leaf: `tendstoUniformly_riemannSum_aeContinuous`
 
+> **Repo rename note (2026-07-10):** This document predates the rename
+> `lean-playground` → `neural-network-proofs` (Lake package `lean_playground` →
+> `neural_network_proofs`, lib `LeanPlayground` → `NeuralNetworkProofs`). The old
+> names below are kept as a historic record; use the current names for live work.
+
 **Date:** 2026-06-27
 **Status:** Approved (design); proceeding to plan + implementation.
 
