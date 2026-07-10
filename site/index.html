@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Neural Network Universal Approximation — formalized in Lean</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <h1>Neural Network Universal Approximation</h1>
+  <p class="sub">Universal approximation theorems, formalized in Lean 4 + Mathlib.</p>
+  <span class="badge">All results are sorry-free and axiom-clean
+    (propext, Classical.choice, Quot.sound)</span>
+
+  <nav class="nav">
+    <a href="./blueprint/index.html">Blueprint (statements &amp; proofs)</a>
+    <a href="./blueprint/dep_graph.html">Dependency graph</a>
+    <a href="./docs/index.html">API documentation</a>
+    <a href="https://github.com/davorrunje/neural-network-proofs">Source repository</a>
+  </nav>
+
+  <div class="cards">
+    <div class="card">
+      <h3>Cybenko (1989)</h3>
+      <p>A single-hidden-layer network with a continuous sigmoidal activation is dense in
+        <em>C(K, ℝ)</em>.</p>
+      <p><a href="https://doi.org/10.1007/BF02551274">Original paper</a></p>
+    </div>
+    <div class="card">
+      <h3>Leshno–Lin–Pinkus–Schocken (1993)</h3>
+      <p>An <em>M</em>-class activation densely approximates iff it is not (almost everywhere) a
+        polynomial.</p>
+      <p><a href="https://doi.org/10.1016/S0893-6080(05)80131-5">Original paper</a></p>
+    </div>
+    <div class="card">
+      <h3>Monotone networks (Mikulincer–Reichman 2022; Sartor et al. 2025)</h3>
+      <p>Depth-4 monotone networks are universal for monotone functions — with threshold gates and,
+        beyond bounded activations, with monotone one-sided-saturating activations.</p>
+      <p><a href="https://arxiv.org/abs/2207.05275">Mikulincer–Reichman</a> ·
+        <a href="https://arxiv.org/abs/2505.02537">Sartor et al.</a></p>
+    </div>
+  </div>
+
+  <footer>
+    Built with <a href="https://github.com/PatrickMassot/leanblueprint">leanblueprint</a> and
+    <a href="https://github.com/leanprover/doc-gen4">doc-gen4</a>.
+  </footer>
+</body>
+</html>
