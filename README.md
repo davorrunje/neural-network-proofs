@@ -62,17 +62,21 @@ No API key or host credentials are stored in the repo; authentication happens
 through the interactive login.
 
 Claude Code state persists across container rebuilds: the container's entire
-`~/.claude` directory is bind-mounted to `~/.claude-devcontainer/lean-playground`
-on your host (see the `mounts` entry in `.devcontainer/devcontainer.json`). This
-covers session history, memory, **login/auth, and installed plugins**, so you do
-not re-authenticate or reinstall plugins after a rebuild. Note that this means
-your Claude credentials live in that host folder — it is on your host disk, never
-in the repo.
+`~/.claude` directory lives on a container-private Docker **named volume**
+(`neural-network-proofs-claude-config`, see the `mounts` entry in
+`.devcontainer/devcontainer.json`). This covers session history, memory,
+**login/auth, and installed plugins**, so you do not re-authenticate or reinstall
+plugins after a rebuild. The volume is isolated from your host filesystem; reset
+it with `docker volume ls | grep neural-network-proofs-claude-config` then
+`docker volume rm <name>`.
 
-The [`superpowers`](https://github.com/obra/superpowers) plugin is declared in
-`.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`), so a fresh
-container is prompted to install it from the official marketplace rather than
-relying on it already being present.
+The [`superpowers`](https://github.com/obra/superpowers) plugin (its
+`brainstorming` skill and more) is declared in `.claude/settings.json` and
+**auto-installed on build**: `post-create.sh` runs
+`.devcontainer/provision-claude-plugins.sh`, which installs everything listed in
+`.devcontainer/claude-plugins.txt` from the `superpowers-dev` marketplace. This
+is best-effort — if the `claude` CLI is not logged in or offline, the build still
+succeeds and you can rerun the script by hand.
 
 ## What's inside
 
