@@ -1,0 +1,12 @@
+# Claude Code plugins provisioned for this repo.
+#
+# One plugin per line:  <marketplace-source>  <plugin@marketplace>
+# - marketplace-source: URL / GitHub repo / path passed to
+#   `claude plugin marketplace add`
+# - plugin@marketplace:  id passed to `claude plugin install ... --scope user`
+#
+# Consumed by `.devcontainer/provision-claude-plugins.sh`, which runs in the
+# devcontainer (via post-create) and can also be run by hand. `#` and blank
+# lines are ignored.
+
+https://github.com/obra/superpowers.git superpowers@superpowers-dev
