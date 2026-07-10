@@ -48,7 +48,8 @@ while IFS= read -r line || [ -n "${line}" ]; do
     fi
 
     # install plugin if not already installed (match the full id so a same-named
-    # plugin from a different marketplace does not mask this one)
+    # plugin from a different marketplace does not mask this one; assumes
+    # `claude plugin list` prints the marketplace-qualified id)
     if printf '%s' "${installed}" | grep -qiF "${plugin}"; then
         echo ">>> ${plugin} already installed; skipping"
     else

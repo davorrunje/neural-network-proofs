@@ -66,8 +66,10 @@ Claude Code state persists across container rebuilds: the container's entire
 (`neural-network-proofs-claude-config`, see the `mounts` entry in
 `.devcontainer/devcontainer.json`). This covers session history, memory,
 **login/auth, and installed plugins**, so you do not re-authenticate or reinstall
-plugins after a rebuild. The volume is isolated from your host filesystem; reset
-it with `docker volume ls | grep neural-network-proofs-claude-config` then
+plugins after a rebuild. The volume is isolated from your host filesystem. To
+reset it, run these on your host (not the container terminal) with the dev
+container stopped — Docker will not remove a volume that is still in use:
+`docker volume ls | grep neural-network-proofs-claude-config`, then
 `docker volume rm <name>`.
 
 The [`superpowers`](https://github.com/obra/superpowers) plugin (its

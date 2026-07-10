@@ -115,7 +115,7 @@ subsequent writes are already as `vscode`). This runs **before** A3.
 Switching `~/.claude` from the existing `lean-playground` bind mount to a fresh
 named volume means the first rebuild starts with an empty `~/.claude`: users
 re-authenticate the `claude` CLI once, and provisioning reinstalls the plugins.
-A stale volume can be reset with `docker volume rm <project>_neural-network-proofs-claude-config`
+A stale volume can be reset with `docker volume rm neural-network-proofs-claude-config`
 (find the exact name via `docker volume ls | grep neural-network-proofs-claude-config`).
 
 ## Testing
