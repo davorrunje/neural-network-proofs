@@ -11,7 +11,7 @@ Mathlib cache, and Claude Code CLI are all provisioned automatically.
 ## Formalized results: `NeuralNetworkProofs`
 
 `NeuralNetworkProofs` formalizes universal approximation theorems for neural networks, all
-`sorry`-free. Three developments are complete:
+`sorry`-free. Four developments are complete:
 
 - **Cybenko (1989)** — a single-hidden-layer network with a continuous sigmoidal activation is dense
   in `C(K, ℝ)`.
@@ -30,6 +30,12 @@ Mathlib cache, and Claude Code CLI are all provisioned automatically.
     is not required). Results: Theorem 3.5 (`…Monotone.saturating_interpolation`), the
     point-reflection / weight-sign equivalence (Props 3.8 & 3.10), and non-positive-weight
     universality (Prop 3.11, `…Monotone.nonpos_weight_universal`).
+- **Runje et al. (2026)** — universal approximation for **partially monotone** networks: a
+  non-monotone feature block is embedded by an unconstrained single-hidden-layer network (Leshno
+  UAP), clamped into `[0,1]`, concatenated with the monotone block, and fed to a monotone network
+  (the Mikulincer–Reichman / Sartor line above). Soundness
+  (`…Runje.PartMonoNet.monotone_snd`, monotone in the monotone block) and the uniform-approximation
+  headline (`…Runje.partial_monotone_approximation`).
 
 **Correctness gate.** Every headline is machine-checked to depend only on the axioms
 `[propext, Classical.choice, Quot.sound]` — no `sorry`/`sorryAx`, no extra axioms (see

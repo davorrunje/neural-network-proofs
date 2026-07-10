@@ -6,6 +6,7 @@ Authors: Davor Runje
 import NeuralNetworkProofs.UniversalApproximation.Cybenko
 import NeuralNetworkProofs.UniversalApproximation.Leshno
 import NeuralNetworkProofs.UniversalApproximation.Monotone
+import NeuralNetworkProofs.UniversalApproximation.Runje
 import NeuralNetworkProofs.NeuralNetwork.Network
 
 /-! # NeuralNetworkProofs — universal approximation theorems
@@ -25,6 +26,9 @@ headlines:
   (ε-approximate; monotone one-sided-saturating activations).
 * `UniversalApproximation.Monotone.nonpos_weight_universal` — Sartor et al. (2025),
   Proposition 3.11.
+* `UniversalApproximation.Runje.partial_monotone_approximation` — Runje et al., partial-monotone
+  universal approximation.
+* `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al., soundness.
 
 General neural-network infrastructure lives under `NeuralNetwork` (`NeuralNetwork.Layer`,
 `NeuralNetwork.Network`); Mathlib-upstream candidates under `NeuralNetworkProofs.ForMathlib`. -/
