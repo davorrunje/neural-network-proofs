@@ -87,11 +87,18 @@ Each step is a no-op if already satisfied; the whole script is safe to re-run.
 
 ## Devcontainer + Codespaces wiring
 
-- `.devcontainer/on-create.sh` → `bash scripts/setup-dev.sh --no-build` (fast: toolchain +
-  graphviz + venv + Mathlib cache; defers the long build so container creation stays quick).
-- `.devcontainer/post-create.sh` → `lake build` plus the existing `~/.claude` ownership fix
-  (devcontainer-specific; stays out of the portable script).
-- GitHub Codespaces builds the same `devcontainer.json`, so it is covered with no extra work.
+The devcontainer already installs elan/uv, disables commit signing, and provisions Claude plugins
+(PRs #24/#25). This change routes the toolchain install through the portable script without
+disturbing that:
+
+- `.devcontainer/on-create.sh` keeps its git-signing-off config (`commit.gpgsign=false`,
+  `tag.gpgsign=false`; paired with the `./features/no-gpg` feature) and delegates the toolchain
+  install to `bash scripts/setup-dev.sh --no-build --no-cache` (toolchain + graphviz + venv; the
+  long, network-heavy steps are deferred).
+- `.devcontainer/post-create.sh` is unchanged — it runs `lake exe cache get` + `lake build`, the
+  `~/.claude` named-volume ownership fix, and the Claude-plugin provisioning.
+- `.devcontainer/devcontainer.json` is unchanged (features + named volume already present). GitHub
+  Codespaces builds the same file, so it is covered with no extra work.
 
 ## Flags & UX
 

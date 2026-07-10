@@ -30,9 +30,10 @@ it for native Windows. `on-create.sh` in the devcontainer delegates to the bash 
   `setup-dev.ps1`. WSL is the tested Windows route; the `.ps1` is best-effort and unverified here.
 - **Do NOT change any `.lean` file, theorem, or `lean-toolchain`.** This PR touches only
   `scripts/`, `.devcontainer/`, `.gitignore`, and the three docs.
-- **Devcontainer semantics:** `on-create.sh` installs (delegates, `--no-build --no-cache`);
-  `post-create.sh` keeps the Mathlib cache + build + the `~/.claude` chown. `devcontainer.json` is
-  unchanged.
+- **Devcontainer semantics (post-#24/#25):** `on-create.sh` keeps its git-signing-off config and
+  delegates the toolchain install to `setup-dev.sh --no-build --no-cache`; `post-create.sh` is
+  unchanged (cache + build + `~/.claude` named-volume chown + Claude-plugin provisioning);
+  `devcontainer.json` is unchanged (features + named volume already present).
 - **Line length ≤ 100 codepoints** for every committed file. Measure codepoints:
   `python3 -c "print(len(line))"`.
 - **Commits are UNSIGNED** (`commit.gpgsign=false`); use `git commit --no-gpg-sign` (no `-S`).
@@ -360,76 +361,84 @@ git commit --no-gpg-sign -m "feat(dev): portable setup-dev.sh bootstrap (toolcha
 
 ### Task 2: Devcontainer delegates to the bootstrap
 
+> **Post-merge note (PRs #24/#25):** `on-create.sh` now also runs
+> `git config --global commit.gpgsign false` / `tag.gpgsign false` (paired with the
+> `./features/no-gpg` feature) — this MUST be preserved. `post-create.sh` now runs cache + build +
+> a `~/.claude` named-volume chown + `provision-claude-plugins.sh` — leave it **entirely
+> unchanged**. `devcontainer.json` is unchanged.
+
 **Files:**
-- Modify: `.devcontainer/on-create.sh` (replace body with a delegation to `setup-dev.sh`)
-- Modify: `.devcontainer/post-create.sh` (add a one-line comment; behavior unchanged)
+- Modify: `.devcontainer/on-create.sh` (keep the git-signing-off config; delegate the rest to
+  `setup-dev.sh`). `post-create.sh` and `devcontainer.json` are NOT modified.
 
 **Interfaces:**
-- Consumes: `scripts/setup-dev.sh` from Task 1. `devcontainer.json` is unchanged (its
-  `onCreateCommand`/`postCreateCommand` already invoke these two scripts).
+- Consumes: `scripts/setup-dev.sh` from Task 1. `devcontainer.json`'s `onCreateCommand` already
+  invokes `on-create.sh`.
 
 - [ ] **Step 1: Replace `.devcontainer/on-create.sh`**
 
-Overwrite the file with:
+Overwrite the file with (note: the git-signing-off block is preserved verbatim from the current
+file; only the elan/uv/system/profile logic is replaced by the delegation):
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Delegate the full toolchain install to the portable bootstrap so the
-# devcontainer, Codespaces, and a host machine all set up identically
-# (scripts/setup-dev.sh). Skip the Mathlib cache + project build here;
-# post-create.sh runs those, preserving the onCreate (install) /
-# postCreate (build) split.
+# This project does not sign commits. Turn signing off explicitly so git never
+# tries to invoke gpg. (gpg itself is removed from the image at build time by
+# the local ./features/no-gpg feature, which is what stops VS Code from
+# forwarding the host gpg-agent and crashing on connect; this is the git-level
+# backstop.)
+git config --global commit.gpgsign false
+git config --global tag.gpgsign false
+
+# Install the full dev toolchain via the portable bootstrap so the devcontainer,
+# Codespaces, and a host machine set up identically (scripts/setup-dev.sh).
+# Skip the Mathlib cache + build here; post-create.sh runs those, preserving the
+# onCreate (install) / postCreate (cache + build + plugins) split.
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 bash "$REPO_ROOT/scripts/setup-dev.sh" --no-build --no-cache
 ```
 
-- [ ] **Step 2: Add a clarifying comment to `.devcontainer/post-create.sh`**
-
-Leave the existing commands intact; just insert this comment line immediately after the
-`. "$HOME/.elan/env"` line:
-```bash
-# Tools were installed by on-create.sh -> scripts/setup-dev.sh. Here we only
-# fetch the Mathlib cache and build (the slow, network-heavy steps).
-```
-
-- [ ] **Step 3: Syntax-check both scripts**
+- [ ] **Step 2: Syntax-check (and confirm post-create.sh is untouched)**
 
 Run:
 ```bash
 cd /workspaces/lean-playground
-bash -n .devcontainer/on-create.sh && bash -n .devcontainer/post-create.sh && echo "syntax OK"
+bash -n .devcontainer/on-create.sh && echo "on-create syntax OK"
+git diff --name-only | grep -q 'post-create.sh' && echo "ERROR: post-create.sh changed" \
+  || echo "post-create.sh untouched ✓"
 ```
-Expected: `syntax OK`.
+Expected: `on-create syntax OK` and `post-create.sh untouched ✓`.
 
-- [ ] **Step 4: Run `on-create.sh` (idempotent) and confirm it succeeds**
+- [ ] **Step 3: Run `on-create.sh` (idempotent) and confirm it succeeds**
 
 Run:
 ```bash
 bash .devcontainer/on-create.sh
 echo "exit=$?"
+git config --global --get commit.gpgsign
 export PATH="$HOME/.local/bin:$PATH"
 command -v leanblueprint && command -v dot && echo "toolchain present"
 ```
-Expected: `exit=0`; `toolchain present`. (Everything is already installed, so this exercises the
-idempotent no-op paths and the delegation.)
+Expected: `exit=0`; `commit.gpgsign` prints `false`; `toolchain present`. (Everything is already
+installed, so this exercises the idempotent no-op paths and the delegation.)
 
-- [ ] **Step 5: Line-length check**
+- [ ] **Step 4: Line-length check**
 
 Run:
 ```bash
 python3 - <<'PY'
-for f in [".devcontainer/on-create.sh",".devcontainer/post-create.sh"]:
-    bad=[(i,len(l.rstrip("\n"))) for i,l in enumerate(open(f),1) if len(l.rstrip("\n"))>100]
-    print(f, bad or "≤100 ✓")
+f=".devcontainer/on-create.sh"
+bad=[(i,len(l.rstrip("\n"))) for i,l in enumerate(open(f),1) if len(l.rstrip("\n"))>100]
+print(f, bad or "≤100 ✓")
 PY
 ```
-Expected: both `≤100 ✓`.
+Expected: `≤100 ✓`.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add .devcontainer/on-create.sh .devcontainer/post-create.sh
+git add .devcontainer/on-create.sh
 git commit --no-gpg-sign -m "chore(devcontainer): delegate toolchain install to setup-dev.sh"
 ```
 
@@ -670,7 +679,32 @@ environment (container or host), preview the blueprint locally, and the conventi
 contributor guide.
 ```
 
-- [ ] **Step 4: Add a setup pointer to `CLAUDE.md`**
+- [ ] **Step 4: Reconcile the `README.md` intro to acknowledge the host path**
+
+The intro currently says the dev container is the only path. Replace the second intro paragraph
+(the "The project is developed in a self-contained VS Code **dev container**: the only thing you
+need on your host machine is Docker …" paragraph, lines ~7–9) with:
+```markdown
+The fastest path is a self-contained VS Code **dev container** or a **GitHub Codespace** — you
+need only Docker and the Dev Containers extension (the Lean toolchain, Mathlib cache, and Claude
+Code CLI are provisioned automatically). You can also set up a local machine directly with
+`scripts/setup-dev.sh`; see [CONTRIBUTING.md](CONTRIBUTING.md).
+```
+
+- [ ] **Step 5: Update the "What's inside" `.devcontainer/` bullet in `README.md`**
+
+Replace the `.devcontainer/` bullet under "What's inside" (the one describing
+"`on-create.sh` installs elan and uv; `post-create.sh` runs `lake exe cache get` and
+`lake build`") with:
+```markdown
+- **`.devcontainer/`** — dev container definition and setup scripts. `on-create.sh` delegates the
+  toolchain install to `scripts/setup-dev.sh` (elan, uv, graphviz, the blueprint preview
+  toolchain); `post-create.sh` runs `lake exe cache get`, `lake build`, and the Claude-plugin
+  provisioning. The Node.js, GitHub CLI (`gh`), and Claude Code CLI come from dev container
+  features.
+```
+
+- [ ] **Step 6: Add a setup pointer to `CLAUDE.md`**
 
 In `CLAUDE.md`, immediately below the `## Build and verify` heading (before the first code fence),
 insert this paragraph:
@@ -681,7 +715,7 @@ then `leanblueprint serve`.
 
 ```
 
-- [ ] **Step 5: Verify links, freshness, and command/flag accuracy**
+- [ ] **Step 7: Verify links, freshness, and command/flag accuracy**
 
 Run:
 ```bash
@@ -689,15 +723,15 @@ cd /workspaces/lean-playground
 test -f CONTRIBUTING.md && echo "CONTRIBUTING.md exists"
 grep -q "CONTRIBUTING.md" README.md && echo "README links CONTRIBUTING"
 grep -q "sample Lean file" README.md && echo "STALE STEP STILL PRESENT" || echo "stale step removed"
+grep -q "setup-dev.sh" README.md && echo "README mentions host script"
 grep -q "scripts/setup-dev.sh" CLAUDE.md && echo "CLAUDE has setup pointer"
-# flags mentioned in docs must exist in the script
-for flag in -- --pdf --no-build --no-cache; do :; done
+# a doc flag must exist in the script
 grep -qE '\-\-pdf' CONTRIBUTING.md && grep -qE '\-\-pdf' scripts/setup-dev.sh && echo "flags match"
 ```
 Expected: `CONTRIBUTING.md exists`, `README links CONTRIBUTING`, `stale step removed`,
-`CLAUDE has setup pointer`, `flags match`.
+`README mentions host script`, `CLAUDE has setup pointer`, `flags match`.
 
-- [ ] **Step 6: Line-length check on all touched docs**
+- [ ] **Step 8: Line-length check on all touched docs**
 
 Run:
 ```bash
@@ -709,7 +743,7 @@ PY
 ```
 Expected: all three `≤100 ✓`.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add CONTRIBUTING.md README.md CLAUDE.md
