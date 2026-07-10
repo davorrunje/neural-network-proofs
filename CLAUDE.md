@@ -33,6 +33,10 @@ The Lean module-path prefix (`NeuralNetworkProofs`) is independent of the math n
 
 ## Build and verify
 
+To set up a dev environment (container or host) plus the blueprint preview toolchain, run
+`scripts/setup-dev.sh` — see `CONTRIBUTING.md`. Preview the blueprint with `leanblueprint web`
+then `leanblueprint serve`.
+
 ```bash
 lake build                 # build the default target (covers all headlines)
 ```

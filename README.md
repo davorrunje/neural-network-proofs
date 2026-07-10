@@ -4,9 +4,10 @@
 formalization of **universal approximation theorems (UATs) for neural networks**, all `sorry`-free
 (see [Formalized results](#formalized-results-neuralnetworkproofs) below).
 
-The project is developed in a self-contained VS Code **dev container**: the only thing you need on
-your host machine is Docker (and VS Code with the Dev Containers extension) — the Lean toolchain,
-Mathlib cache, and Claude Code CLI are all provisioned automatically.
+The fastest path is a self-contained VS Code **dev container** or a **GitHub Codespace** — you
+need only Docker and the Dev Containers extension (the Lean toolchain, Mathlib cache, and Claude
+Code CLI are provisioned automatically). You can also set up a local machine directly with
+`scripts/setup-dev.sh`; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Formalized results: `NeuralNetworkProofs`
 
@@ -37,14 +38,17 @@ Mathlib cache, and Claude Code CLI are all provisioned automatically.
 
 ## Getting started
 
-1. Open this folder in VS Code.
-2. When prompted, choose **Reopen in Container** (or run the
-   *Dev Containers: Reopen in Container* command).
-3. Wait for the first build to finish. On the first run the container installs
-   the Lean toolchain (`elan`) and downloads the prebuilt Mathlib cache (a few
-   hundred MB). This is slow once and fast on every subsequent start.
-4. Open the sample Lean file. The Lean infoview should appear and report no
-   errors, confirming the worked example type-checks.
+The fastest path is a ready-made container; you can also set up a local machine. Full instructions
+are in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+- **Dev Container / Codespaces:** open the repo in VS Code and **Reopen in Container**, or create a
+  GitHub Codespace. Setup runs automatically (Lean toolchain, `uv`, `graphviz`, blueprint tooling,
+  Mathlib cache, first build).
+- **Local host:** clone, then run `scripts/setup-dev.sh` (Linux/macOS/WSL) or
+  `scripts\setup-dev.ps1` (native Windows).
+
+When the build finishes, open any file under `NeuralNetworkProofs/`; the Lean infoview should load
+and report no errors.
 
 ## Using Claude for proofs
 
@@ -82,10 +86,11 @@ succeeds and you can rerun the script by hand.
 
 ## What's inside
 
-- **`.devcontainer/`** — dev container definition and setup scripts
-  (`on-create.sh` installs elan and uv; `post-create.sh` runs `lake exe cache get`
-  and `lake build`). The Node.js, GitHub CLI (`gh`), and Claude Code CLI come from
-  dev container features.
+- **`.devcontainer/`** — dev container definition and setup scripts. `on-create.sh` delegates the
+  toolchain install to `scripts/setup-dev.sh` (elan, uv, graphviz, the blueprint preview
+  toolchain); `post-create.sh` runs `lake exe cache get`, `lake build`, and the Claude-plugin
+  provisioning. The Node.js, GitHub CLI (`gh`), and Claude Code CLI come from dev container
+  features.
 - **`.mcp.json`** — registers the `lean-lsp-mcp` MCP server (run via `uvx`).
 - **`lean-toolchain`** — pins the Lean version (matched to the committed
   Mathlib revision).
@@ -114,19 +119,7 @@ succeeds and you can rerun the script by hand.
 
 ## Contributing
 
-Contributions are welcome. A few conventions keep the development consistent and machine-verifiable:
-
-- **No `sorry`/`admit`.** These are machine-checked proofs; a genuine research blocker is reported
-  honestly (open an issue), never hidden behind `sorry` or worked around by weakening a theorem
-  statement.
-- **Keep every headline axiom-clean.** Before opening a PR, run the sorry-free gate above and
-  confirm each headline reports exactly `[propext, Classical.choice, Quot.sound]`. CI runs this gate
-  and fails on `sorryAx`.
-- **Prefer minimal, precise imports** over blanket `import Mathlib` — it makes `lake build` much
-  slower. Import only the specific Mathlib modules a file needs.
-- **Line length ≤ 100 codepoints**; docstrings on public declarations.
-- **`ForMathlib/` is upstream-facing** — keep those files self-contained (Mathlib-only dependencies
-  where possible), each with an `Intended Mathlib home:` header.
-
-Make sure `lake build` is green and the sorry-free gate passes before submitting a PR. `CLAUDE.md`
-is the full contributor guide (module layout, namespaces, conventions, build workflow).
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up a development
+environment (container or host), preview the blueprint locally, and the conventions we follow (no
+`sorry`, axiom-clean headlines, minimal imports, ≤100-codepoint lines). `CLAUDE.md` is the full
+contributor guide.
