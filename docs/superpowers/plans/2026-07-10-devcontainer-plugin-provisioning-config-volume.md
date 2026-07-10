@@ -108,23 +108,23 @@ while IFS= read -r line || [ -n "${line}" ]; do
         continue
     fi
 
-    base="${plugin%@*}"      # plugin name without @marketplace
     market="${plugin#*@}"    # marketplace name
 
     # add marketplace if not already known (match by name or source)
     if ! printf '%s' "${markets}" | grep -qiF "${market}" \
         && ! printf '%s' "${markets}" | grep -qF "${src}"; then
         echo ">>> adding marketplace ${src}"
-        claude plugin marketplace add "${src}" >/dev/null 2>&1 \
+        claude plugin marketplace add "${src}" </dev/null >/dev/null 2>&1 \
             || warn "failed to add marketplace ${src} (continuing)"
     fi
 
-    # install plugin if not already installed
-    if printf '%s' "${installed}" | grep -qiF "${base}"; then
-        echo ">>> ${base} already installed; skipping"
+    # install plugin if not already installed (match the full id so a same-named
+    # plugin from a different marketplace does not mask this one)
+    if printf '%s' "${installed}" | grep -qiF "${plugin}"; then
+        echo ">>> ${plugin} already installed; skipping"
     else
         echo ">>> installing ${plugin}"
-        claude plugin install "${plugin}" --scope user >/dev/null 2>&1 \
+        claude plugin install "${plugin}" --scope user </dev/null >/dev/null 2>&1 \
             || warn "failed to install ${plugin} (continuing)"
     fi
 done < "${MANIFEST}"
