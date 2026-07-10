@@ -7,3 +7,6 @@
 # Per-user local Claude Code overrides (machine-specific; not shared).
 # The shared, committed config lives in .claude/settings.json.
 .claude/settings.local.json
+
+# Repo-local Python venv for the blueprint toolchain (created by scripts/setup-dev.sh)
+.venv/
