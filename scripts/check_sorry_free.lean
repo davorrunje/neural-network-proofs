@@ -1,5 +1,6 @@
 import NeuralNetworkProofs
 open UniversalApproximation.Cybenko UniversalApproximation.Leshno UniversalApproximation.Monotone
+open UniversalApproximation.Runje
 #print axioms universal_approximation
 #print axioms universal_approximation_eps
 #print axioms leshno_dense_iff
@@ -7,3 +8,5 @@ open UniversalApproximation.Cybenko UniversalApproximation.Leshno UniversalAppro
 #print axioms monotone_approximation
 #print axioms saturating_interpolation
 #print axioms nonpos_weight_universal
+#print axioms partial_monotone_approximation
+#print axioms PartMonoNet.monotone_snd
