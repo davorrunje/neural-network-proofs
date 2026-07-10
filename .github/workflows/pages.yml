@@ -37,15 +37,9 @@ jobs:
       - name: Faithfulness gate (lake exe checkdecls)
         run: lake exe checkdecls blueprint/lean_decls
 
-      - name: Cache doc-gen4 output
-        uses: actions/cache@v4
-        with:
-          path: .lake/build/doc
-          key: docs-${{ hashFiles('lake-manifest.json') }}
-
-      - name: Build API docs (doc-gen4)
-        run: lake build NeuralNetworkProofs:docs
-
+      # doc-gen4 API docs are deferred: building the full Mathlib closure is too
+      # heavy for a free runner and the output exceeds the GitHub Pages size
+      # limit. Track scoped (our-modules-only) API docs as a follow-up.
       - name: Assemble site
         run: |
           rm -rf _site && mkdir -p _site
@@ -56,8 +50,6 @@ jobs:
           if [ -f _site/blueprint/dep_graph_document.html ]; then
             cp _site/blueprint/dep_graph_document.html _site/blueprint/dep_graph.html
           fi
-          mkdir -p _site/docs
-          cp -r .lake/build/doc/. _site/docs/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
