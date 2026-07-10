@@ -1,5 +1,10 @@
 # Leshno UAT — filling the two remaining analytic leaves (D and A) — Design Spec
 
+> **Repo rename note (2026-07-10):** This document predates the rename
+> `lean-playground` → `neural-network-proofs` (Lake package `lean_playground` →
+> `neural_network_proofs`, lib `LeanPlayground` → `NeuralNetworkProofs`). The old
+> names below are kept as a historic record; use the current names for live work.
+
 **Date:** 2026-06-27
 **Status:** Approved (design) — pending spec review
 **Goal:** Discharge the two remaining documented `sorry` leaves of the Leshno M-class UAT scaffold —

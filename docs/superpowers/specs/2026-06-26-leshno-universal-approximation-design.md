@@ -1,5 +1,10 @@
 # Leshno Universal Approximation (M-class) — Design Spec
 
+> **Repo rename note (2026-07-10):** This document predates the rename
+> `lean-playground` → `neural-network-proofs` (Lake package `lean_playground` →
+> `neural_network_proofs`, lib `LeanPlayground` → `NeuralNetworkProofs`). The old
+> names below are kept as a historic record; use the current names for live work.
+
 **Date:** 2026-06-26
 **Status:** Approved (design) — pending spec review
 **Goal:** A compiling Lean 4 / Mathlib scaffold of the **Leshno–Lin–Pinkus–Schocken (1993)** universal approximation theorem in its full `M`-class generality: a single-hidden-layer network family with activation `σ ∈ M` is dense in `C(ℝⁿ)` (uniform on compacta) **iff** `σ` is not (a.e.) a polynomial. Built top-down with every deep analytic leaf as a documented `sorry`; all structural glue genuinely proved.

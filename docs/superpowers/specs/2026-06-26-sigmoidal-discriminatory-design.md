@@ -1,5 +1,10 @@
 # Closing `sigmoidal_discriminatory` — Design Spec
 
+> **Repo rename note (2026-07-10):** This document predates the rename
+> `lean-playground` → `neural-network-proofs` (Lake package `lean_playground` →
+> `neural_network_proofs`, lib `LeanPlayground` → `NeuralNetworkProofs`). The old
+> names below are kept as a historic record; use the current names for live work.
+
 **Date:** 2026-06-26
 **Status:** Approved (design) — pending spec review
 **Goal:** Fully discharge the admitted lemma `UniversalApproximation.sigmoidal_discriminatory` (continuous sigmoidal ⇒ discriminatory) with a complete, `sorry`-free Lean 4 / Mathlib proof, following Cybenko (1989) via the characteristic-function uniqueness theorem now available in Mathlib.
