@@ -3,7 +3,11 @@ Copyright (c) 2026 Davor Runje. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
-import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Mathlib.Topology.Algebra.Ring.Real
+import Mathlib.Topology.Algebra.Monoid
+import Mathlib.Topology.Constructions
+import Mathlib.Data.Fin.Tuple.Basic
 
 /-!
 # Joint monotone target for partial-monotone UAP (Runje et al.)
@@ -14,8 +18,6 @@ unit cube — the target approximated by the monotone network in the UAP proof.
 -/
 
 namespace UniversalApproximation.Runje
-
-open scoped BigOperators
 
 /-- The first `N`-coordinate block of a `Fin (N + dm)`-vector. -/
 def zpart {N dm : ℕ} (w : Fin (N + dm) → ℝ) : Fin N → ℝ := fun i => w (Fin.castAdd dm i)

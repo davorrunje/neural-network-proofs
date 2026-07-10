@@ -28,7 +28,7 @@ This is part of the Runje et al. monotone universal-approximation development.
 namespace UniversalApproximation.Runje
 
 open UniversalApproximation.Leshno
-open scoped BigOperators RealInnerProductSpace
+open scoped RealInnerProductSpace
 
 /-- A single Pi-side hidden unit `x ↦ σ (∑ c, w c * x c + b)`, a total function. -/
 def genFunPi (σ : ℝ → ℝ) {df : ℕ} (w : Fin df → ℝ) (b : ℝ) : (Fin df → ℝ) → ℝ :=

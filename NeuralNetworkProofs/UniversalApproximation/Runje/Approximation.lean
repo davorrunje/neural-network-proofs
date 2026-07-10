@@ -31,7 +31,6 @@ error, and partition-of-unity collapse) closes the bound.
 namespace UniversalApproximation.Runje
 
 open UniversalApproximation.Monotone UniversalApproximation.Leshno
-open scoped BigOperators
 
 /-- Appending two cube points gives a cube point of the concatenated dimension. -/
 private lemma append_mem_cube {N dm : ℕ} {z : Fin N → ℝ} {x : Fin dm → ℝ}
