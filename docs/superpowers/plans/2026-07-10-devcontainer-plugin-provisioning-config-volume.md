@@ -218,7 +218,7 @@ with:
 # the dir exists and is not yet writable. Without this the first `claude plugin …`
 # call below fails with "Permission denied".
 if [ -d "$HOME/.claude" ] && [ ! -w "$HOME/.claude" ]; then
-  sudo chown "$(id -u):$(id -g)" "$HOME/.claude"
+  sudo chown "$(id -u):$(id -g)" "$HOME/.claude" || true
 fi
 
 # Auto-install the Claude Code plugins this repo declares
