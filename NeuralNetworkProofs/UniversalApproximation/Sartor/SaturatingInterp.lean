@@ -33,52 +33,9 @@ open scoped BigOperators
 
 variable {d n : ℕ}
 
-/-- Self-contained reindexing permutation: sort indices by the lexicographic key
-`(y i, toLinearExtension (x i))`. Identical body to M-R's `reindex`, redefined here so this file
-depends only on public API. -/
-noncomputable def satReindex (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : Equiv.Perm (Fin n) :=
-  Tuple.sort (fun i => toLex (y i, toLinearExtension (x i)))
-
-/-- Along `satReindex`, `y` is nondecreasing. (via `Tuple.monotone_sort` + `Prod.Lex.le_iff`.) -/
-theorem satReindex_y_monotone (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) {a b : Fin n}
-    (hab : a ≤ b) : y (satReindex x y a) ≤ y (satReindex x y b) := by
-  have h := Tuple.monotone_sort (fun i => toLex (y i, toLinearExtension (x i))) hab
-  simp only [Function.comp_apply, Prod.Lex.le_iff, ofLex_toLex] at h
-  rcases h with h | h
-  · exact le_of_lt h
-  · exact le_of_eq h.1
-
-/-- `satReindex` linearly extends the coordinatewise order: comparability of the reindexed points
-forces the index order. Direct application of public `sort_key_linear_extension y x hmono hinj`
-(definitionally the same sort). -/
-theorem satReindex_linear_extension (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
-    (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x) {a b : Fin n}
-    (hx : x (satReindex x y a) ≤ x (satReindex x y b)) : a ≤ b :=
-  sort_key_linear_extension y x hmono hinj hx
-
-/-- Reindexed targets `y' i = y (satReindex i)`. -/
-noncomputable def satReTarget (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (i : Fin n) : ℝ :=
-  y (satReindex x y i)
-
-/-- Telescoping potential: `Y k = y' (k-1)` in range (Nat sub gives `Y 0 = y' 0`), else 0. -/
-noncomputable def satPotential (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ℕ → ℝ :=
-  fun k => if hk : k - 1 < n then satReTarget x y ⟨k - 1, hk⟩ else 0
-
-/-- On the sampled range, the potential reads the target at shift `k+1`. -/
-theorem satPotential_succ (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (k : Fin n) :
-    satPotential x y (k + 1) = satReTarget x y k := by
-  unfold satPotential
-  have hk' : (k : ℕ) + 1 - 1 < n := by simp only [Nat.add_sub_cancel]; exact k.2
-  rw [dif_pos hk']
-  congr 1
-
 /-- γ-normalized read-out weights: forward differences of the potential divided by `γ`. -/
 noncomputable def satReadW (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (γ : ℝ) : Fin n → ℝ :=
-  fun i => (satPotential x y ((i : ℕ) + 1) - satPotential x y (i : ℕ)) / γ
-
-/-- Read-out bias: the potential base `Y 0`. -/
-noncomputable def satReadBias (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ℝ :=
-  satPotential x y 0
+  fun i => (potential x y ((i : ℕ) + 1) - potential x y (i : ℕ)) / γ
 
 /-- The read-out weights are non-negative when `γ > 0`: the forward difference of the potential is
 `≥ 0` (targets nondecreasing along the reindex) and `γ > 0`. -/
@@ -86,11 +43,11 @@ theorem satReadW_nonneg (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) {γ 
     (i : Fin n) : 0 ≤ satReadW x y γ i := by
   unfold satReadW
   apply div_nonneg _ hγ.le
-  rw [sub_nonneg, satPotential_succ]
-  unfold satPotential satReTarget
+  rw [sub_nonneg, potential_succ]
+  unfold potential reTarget
   have hi' : (i : ℕ) - 1 < n := Nat.lt_of_le_of_lt (Nat.sub_le _ _) i.2
   rw [dif_pos hi']
-  apply satReindex_y_monotone
+  apply reindex_y_monotone
   simp only [Fin.le_def]; omega
 
 /-- Normalized telescoping identity on the scaled exact indicator `γ · 𝟙(i ≤ j)`: the `γ` cancels
@@ -98,12 +55,12 @@ the `/γ` in the weights, then the forward differences telescope to `y' j` (mirr
 `readout_telescope`, using `Finset.sum_range_sub`). -/
 theorem satReadout_telescope (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) {γ : ℝ} (hγ : γ ≠ 0)
     (j : Fin n) :
-    (∑ i, satReadW x y γ i * (γ * (if i ≤ j then (1 : ℝ) else 0))) + satReadBias x y
-      = satReTarget x y j := by
+    (∑ i, satReadW x y γ i * (γ * (if i ≤ j then (1 : ℝ) else 0))) + readBias x y
+      = reTarget x y j := by
   -- simplify each term: (Δpot i / γ) * (γ * c) = Δpot i * c
   have hstep : (∑ i, satReadW x y γ i * (γ * (if i ≤ j then (1 : ℝ) else 0)))
       = ∑ i : Fin n,
-          (satPotential x y ((i : ℕ) + 1) - satPotential x y (i : ℕ))
+          (potential x y ((i : ℕ) + 1) - potential x y (i : ℕ))
           * (if (i : ℕ) ≤ (j : ℕ) then (1 : ℝ) else 0) := by
     apply Finset.sum_congr rfl
     intro i _
@@ -114,7 +71,7 @@ theorem satReadout_telescope (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
   rw [hstep]
   -- move to a sum over `Finset.range n`
   rw [Fin.sum_univ_eq_sum_range
-      (fun k => (satPotential x y (k + 1) - satPotential x y k)
+      (fun k => (potential x y (k + 1) - potential x y k)
         * (if k ≤ (j : ℕ) then (1 : ℝ) else 0))
       n]
   -- restrict to `range (j + 1)`: terms with `k > j` vanish
@@ -123,16 +80,16 @@ theorem satReadout_telescope (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
   rw [← Finset.sum_subset hsub]
   · -- on `range (j + 1)` the indicator is `1`, then telescope forward differences
     have hind : ∀ k ∈ Finset.range ((j : ℕ) + 1),
-        (satPotential x y (k + 1) - satPotential x y k)
+        (potential x y (k + 1) - potential x y k)
         * (if k ≤ (j : ℕ) then (1 : ℝ) else 0)
-        = satPotential x y (k + 1) - satPotential x y k := by
+        = potential x y (k + 1) - potential x y k := by
       intro k hk
       rw [Finset.mem_range, Nat.lt_succ_iff] at hk
       rw [if_pos hk, mul_one]
-    rw [Finset.sum_congr rfl hind, Finset.sum_range_sub (satPotential x y) ((j : ℕ) + 1)]
+    rw [Finset.sum_congr rfl hind, Finset.sum_range_sub (potential x y) ((j : ℕ) + 1)]
     -- the bias supplies `Y 0`, and `Y (j+1) = y' j`
-    rw [satPotential_succ x y j]
-    unfold satReadBias satReTarget
+    rw [potential_succ x y j]
+    unfold readBias reTarget
     ring
   · intro k _ hk
     rw [Finset.mem_range, Nat.lt_succ_iff, not_le] at hk
@@ -146,12 +103,12 @@ and `abs_mul`. -/
 theorem satReadout_error_bound (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) {γ : ℝ} (hγ : γ ≠ 0)
     (j : Fin n) {v : Fin n → ℝ} {η : ℝ}
     (hv : ∀ i, |v i - γ * (if i ≤ j then (1 : ℝ) else 0)| ≤ η) :
-    |((∑ i, satReadW x y γ i * v i) + satReadBias x y) - satReTarget x y j|
+    |((∑ i, satReadW x y γ i * v i) + readBias x y) - reTarget x y j|
       ≤ (∑ i, |satReadW x y γ i|) * η := by
   rw [← satReadout_telescope x y hγ j]
-  have hdiff : ((∑ i, satReadW x y γ i * v i) + satReadBias x y)
+  have hdiff : ((∑ i, satReadW x y γ i * v i) + readBias x y)
       - ((∑ i, satReadW x y γ i * (γ * (if i ≤ j then (1 : ℝ) else 0)))
-          + satReadBias x y)
+          + readBias x y)
       = ∑ i, satReadW x y γ i * (v i - γ * (if i ≤ j then (1 : ℝ) else 0)) := by
     rw [add_sub_add_right_eq_sub, ← Finset.sum_sub_distrib]
     exact Finset.sum_congr rfl (fun i _ => by rw [mul_sub])
@@ -368,7 +325,7 @@ then `lam₁`), each from the quantitative saturation/continuity lemmas of `Satu
 /-- **Sartor Theorem 3.5 heart (depth-3 saturating pre-read-out approximation).**
 For monotone, one-sided-saturating, non-constant activations `σ₁∈𝒮⁻, σ₂∈𝒮⁺, σ₃∈𝒮⁻`, there is a
 3-layer monotone stack `S` (weights `≥ 0`, activations `[σ₁,σ₂,σ₃]`) and constants `base, γ₃` with
-`γ₃ > 0` such that, at every reindexed data point `p j = x (satReindex x y j)`, the pre-read-out
+`γ₃ > 0` such that, at every reindexed data point `p j = x (reindex x y j)`, the pre-read-out
 output `S.toFun (p j) i` is within `η` of the scaled level-set indicator
 `base + γ₃·𝟙(i ≤ j)`. Feeding this into the γ-normalized read-out engine
 (`satReadout_error_bound`) yields the interpolation of `y`. -/
@@ -380,11 +337,11 @@ theorem sat_preadout_approx {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y : Fin
     {η : ℝ} (hη : 0 < η) :
     ∃ (S : ActStack d n) (base γ₃ : ℝ), 0 < γ₃ ∧ S.IsMonotone ∧ S.depth = 3 ∧
       S.activations = [σ₁, σ₂, σ₃] ∧
-      ∀ j i : Fin n, |S.toFun (x (satReindex x y j)) i
+      ∀ j i : Fin n, |S.toFun (x (reindex x y j)) i
         - (base + γ₃ * (if i ≤ j then (1 : ℝ) else 0))| ≤ γ₃ * η := by
   classical
   -- Reindexed points.
-  set p : Fin n → (Fin d → ℝ) := fun r => x (satReindex x y r) with hp
+  set p : Fin n → (Fin d → ℝ) := fun r => x (reindex x y r) with hp
   -- Saturation limits.
   obtain ⟨c₁, hL₁⟩ := hs₁
   obtain ⟨c₂, hL₂⟩ := hs₂
@@ -624,7 +581,7 @@ theorem sat_preadout_approx {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y : Fin
             have hlt : r < j := lt_of_lt_of_le hr hij
             have hnle : ¬ (p j ≤ p r) := by
               intro hle
-              exact absurd (satReindex_linear_extension x y hmono hinj hle)
+              exact absurd (reindex_linear_extension x y hmono hinj hle)
                 (not_le.mpr hlt)
             have := hD_outside r hnle; rw [abs_le] at this
             exact ⟨by linarith [this.1], by linarith [this.2]⟩
@@ -679,7 +636,7 @@ theorem sat_preadout_approx {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y : Fin
           have hnexp : (γ₂ + ε₂) + ((n : ℝ) - 1) * ε₂ = γ₂ + (n : ℝ) * ε₂ := by ring
           have hfin : γ₂ + (n : ℝ) * ε₂ ≤ -m₃ := by
             rw [hm₃def]; linarith [hnε₂, hm₃def]
-          linarith [hexp, hnexp ▸ le_refl (γ₂ + (n : ℝ) * ε₂)]
+          linarith [hexp, hnexp]
         linarith [hrest, hsum, hDj]
       have hVi := hL3out lam₃ (le_refl lam₃) (T i) hT_le
       rw [abs_le] at hVi ⊢
@@ -709,7 +666,7 @@ theorem saturating_interpolation {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y 
   classical
   -- Total absolute weight `W₀` (γ₃-free) and derived accuracy `η₀`.
   set W₀ : ℝ :=
-    ∑ i : Fin n, |satPotential x y ((i : ℕ) + 1) - satPotential x y (i : ℕ)| with hW₀
+    ∑ i : Fin n, |potential x y ((i : ℕ) + 1) - potential x y (i : ℕ)| with hW₀
   have hW₀nonneg : 0 ≤ W₀ := Finset.sum_nonneg (fun i _ => abs_nonneg _)
   have hW₀1pos : 0 < W₀ + 1 := by linarith
   set η₀ : ℝ := ε / (W₀ + 1) with hη₀
@@ -720,16 +677,16 @@ theorem saturating_interpolation {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y 
       (η := η₀) hη₀pos
   -- Assemble the depth-4 monotone net.
   refine ⟨⟨n, S, satReadW x y γ₃,
-    satReadBias x y - base * (∑ i, satReadW x y γ₃ i)⟩, ?_, ?_, ?_, ?_⟩
+    readBias x y - base * (∑ i, satReadW x y γ₃ i)⟩, ?_, ?_, ?_, ?_⟩
   · exact ⟨hSmono, fun i => satReadW_nonneg x y hγ₃ i⟩
   · simp only [MonoNet.depth, hSdepth]
   · exact hSact
   · -- The ε bound.
     intro k
-    set j : Fin n := (satReindex x y).symm k with hj
-    have hxk : x (satReindex x y j) = x k := by rw [hj, Equiv.apply_symm_apply]
-    have hyk : satReTarget x y j = y k := by
-      unfold satReTarget; rw [hj, Equiv.apply_symm_apply]
+    set j : Fin n := (reindex x y).symm k with hj
+    have hxk : x (reindex x y j) = x k := by rw [hj, Equiv.apply_symm_apply]
+    have hyk : reTarget x y j = y k := by
+      unfold reTarget; rw [hj, Equiv.apply_symm_apply]
     -- Pre-read-out residual vector.
     set v : Fin n → ℝ := fun i => S.toFun (x k) i - base with hv
     have hvbound : ∀ i, |v i - γ₃ * (if i ≤ j then (1 : ℝ) else 0)| ≤ γ₃ * η₀ := by
@@ -744,9 +701,9 @@ theorem saturating_interpolation {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y 
     have herr := satReadout_error_bound x y (γ := γ₃) hγ₃.ne' j (v := v)
       (η := γ₃ * η₀) hvbound
     -- Identify the LHS of `herr` with `N.toFun (x k) - y k`.
-    have hlhs : ((∑ i, satReadW x y γ₃ i * v i) + satReadBias x y)
+    have hlhs : ((∑ i, satReadW x y γ₃ i * v i) + readBias x y)
         = (∑ i, satReadW x y γ₃ i * S.toFun (x k) i)
-          + (satReadBias x y - base * (∑ i, satReadW x y γ₃ i)) := by
+          + (readBias x y - base * (∑ i, satReadW x y γ₃ i)) := by
       have hexp : ∀ i, satReadW x y γ₃ i * v i
           = satReadW x y γ₃ i * S.toFun (x k) i - base * satReadW x y γ₃ i := by
         intro i; rw [hv]; ring
@@ -756,9 +713,9 @@ theorem saturating_interpolation {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y 
     -- Rewrite `herr` to be about `N.toFun (x k) - y k`.
     rw [hlhs, hyk] at herr
     have hNtoFun : ((∑ i, satReadW x y γ₃ i * S.toFun (x k) i)
-        + (satReadBias x y - base * (∑ i, satReadW x y γ₃ i)))
+        + (readBias x y - base * (∑ i, satReadW x y γ₃ i)))
         = (⟨n, S, satReadW x y γ₃,
-            satReadBias x y - base * (∑ i, satReadW x y γ₃ i)⟩ : MonoNet d).toFun (x k) := by
+            readBias x y - base * (∑ i, satReadW x y γ₃ i)⟩ : MonoNet d).toFun (x k) := by
       rfl
     rw [hNtoFun] at herr
     -- Simplify the RHS `(∑ |satReadW γ₃ i|) * (γ₃ * η₀) = W₀ * η₀`.

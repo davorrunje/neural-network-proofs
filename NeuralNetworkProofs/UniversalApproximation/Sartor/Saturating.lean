@@ -74,12 +74,14 @@ theorem reflect_leftSaturating {σ : ℝ → ℝ} (h : RightSaturating σ) :
     Filter.tendsto_neg_atTop_iff.mpr Filter.tendsto_id
   exact (hL.comp hneg).neg
 
-/-- Proposition 3.8 (biconditional): `reflect σ` is right-saturating iff `σ` is left-saturating. -/
+/-- Proposition 3.8 (biconditional): `reflect σ` is right-saturating iff `σ` is left-saturating.
+Paper-faithful (Sartor et al.) API lemma; not consumed internally. -/
 theorem reflect_rightSaturating_iff {σ : ℝ → ℝ} :
     RightSaturating (reflect σ) ↔ LeftSaturating σ :=
   ⟨fun h => reflect_reflect σ ▸ reflect_leftSaturating h, reflect_rightSaturating⟩
 
-/-- Proposition 3.8 (biconditional): `reflect σ` is left-saturating iff `σ` is right-saturating. -/
+/-- Proposition 3.8 (biconditional): `reflect σ` is left-saturating iff `σ` is right-saturating.
+Paper-faithful (Sartor et al.) API lemma; not consumed internally. -/
 theorem reflect_leftSaturating_iff {σ : ℝ → ℝ} :
     LeftSaturating (reflect σ) ↔ RightSaturating σ :=
   ⟨fun h => reflect_reflect σ ▸ reflect_rightSaturating h, reflect_leftSaturating⟩
@@ -111,7 +113,9 @@ theorem rightSaturating_eventually {σ : ℝ → ℝ} {L : ℝ}
 `L⁺`, any target accuracy `ε > 0`, and any positive margin `m`, there is a gain threshold
 `Λ > 0` such that for every gain `λ ≥ Λ` and every input `t ≥ m`, the scaled neuron `σ (λ · t)`
 lies within `ε` of `L⁺`. This is the quantitative form of the half-space limit: a large gain
-drives the activation to its saturation value off the margin. -/
+drives the activation to its saturation value off the margin.
+Paper-faithful (Sartor et al.) API lemma; not consumed internally (only its bias variant
+`rightSaturating_scaled_approx_bias` is). -/
 theorem rightSaturating_scaled_approx {σ : ℝ → ℝ} {L : ℝ}
     (hL : Filter.Tendsto σ Filter.atTop (nhds L)) {ε m : ℝ} (hε : 0 < ε) (hm : 0 < m) :
     ∃ Λ : ℝ, 0 < Λ ∧ ∀ lam : ℝ, Λ ≤ lam → ∀ t : ℝ, m ≤ t → |σ (lam * t) - L| ≤ ε := by
@@ -165,7 +169,8 @@ theorem leftSaturating_scaled_approx {σ : ℝ → ℝ} {L : ℝ}
 /-- Two-sided quantitative half-space limit (Lemma 3.6, combined). For an activation that is both
 right- and left-saturating, a single gain threshold `Λ > 0` drives the scaled neuron `σ (λ · t)`
 within `ε` of the right limit `L⁺` on `t ≥ m` and within `ε` of the left limit `L⁻` on `t ≤ -m`,
-for every gain `λ ≥ Λ`. This packages both half-lines under one threshold for downstream use. -/
+for every gain `λ ≥ Λ`. This packages both half-lines under one threshold for downstream use.
+Paper-faithful (Sartor et al.) API lemma; not consumed internally. -/
 theorem saturating_scaled_approx_two_sided {σ : ℝ → ℝ} {Lp Lm : ℝ}
     (hLp : Filter.Tendsto σ Filter.atTop (nhds Lp))
     (hLm : Filter.Tendsto σ Filter.atBot (nhds Lm)) {ε m : ℝ} (hε : 0 < ε) (hm : 0 < m) :
@@ -241,7 +246,8 @@ has `h j ≤ -m` — the saturating unit `σ (λ · ∑ᵢ hᵢ + b)` is within 
 
 This is the crux the interpolation read-out consumes: off the margin, the intersection unit
 vanishes to within `ε`. The gain threshold depends only on `ε`, `m`, and `b`, uniformly over
-all outside-`A` input configurations. -/
+all outside-`A` input configurations.
+Paper-faithful (Sartor et al.) API lemma; not consumed internally. -/
 theorem leftSaturating_intersection_vanishes {σ : ℝ → ℝ}
     (hL : Filter.Tendsto σ Filter.atBot (nhds 0)) {ι : Type*} (s : Finset ι) {ε m b : ℝ}
     (hε : 0 < ε) (hm : 0 < m) :
@@ -255,7 +261,8 @@ theorem leftSaturating_intersection_vanishes {σ : ℝ → ℝ}
 /-- Lemma 3.7 (ε-form), *inside `A`*: when all inputs vanish (`h i = 0` for `i ∈ s`, the exact
 inside-intersection condition), the saturating unit outputs the exact constant `σ b = γ`, with no
 dependence on the gain `λ`. This is the companion of `leftSaturating_intersection_vanishes`
-recording the interior value the read-out weights against. -/
+recording the interior value the read-out weights against.
+Paper-faithful (Sartor et al.) API lemma; not consumed internally. -/
 theorem intersection_inside_value {σ : ℝ → ℝ} {ι : Type*} (s : Finset ι) (h : ι → ℝ)
     (b lam : ℝ) (hzero : ∀ i ∈ s, h i = 0) :
     σ (lam * (∑ i ∈ s, h i) + b) = σ b := by
@@ -295,7 +302,8 @@ theorem sum_ge_of_single {ι : Type*} (s : Finset ι) (h : ι → ℝ) {m : ℝ}
 /-- Lemma 3.7 (ε-form, right-saturating / `𝒮⁺` side), *outside `A`*. Dual of
 `leftSaturating_intersection_vanishes`: for a right-saturating `σ` with `σ(+∞) = 0`, if every
 input `h i ≥ 0` and some `j ∈ s` has `h j ≥ m`, then a large gain drives the unit
-`σ (λ · ∑ᵢ hᵢ + b)` to within `ε` of `0`. -/
+`σ (λ · ∑ᵢ hᵢ + b)` to within `ε` of `0`.
+Paper-faithful (Sartor et al.) API lemma; not consumed internally. -/
 theorem rightSaturating_intersection_vanishes {σ : ℝ → ℝ}
     (hL : Filter.Tendsto σ Filter.atTop (nhds 0)) {ι : Type*} (s : Finset ι) {ε m b : ℝ}
     (hε : 0 < ε) (hm : 0 < m) :

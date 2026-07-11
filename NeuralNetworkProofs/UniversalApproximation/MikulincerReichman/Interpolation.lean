@@ -38,46 +38,6 @@ namespace UniversalApproximation.MikulincerReichman
 open UniversalApproximation.Monotone
 open scoped BigOperators
 
-section Reindex
-
-variable {d n : ℕ}
-
-/-- The sorting key: pair the target `y i` with the point `x i` viewed in a linear extension of
-the coordinatewise order.  Sorting by this lexicographic key yields an order that both makes `y`
-nondecreasing and refines the coordinatewise order on the points. -/
-private noncomputable def sortKey (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) :
-    Fin n → (ℝ ×ₗ LinearExtension (Fin d → ℝ)) :=
-  fun i => toLex (y i, toLinearExtension (x i))
-
-/-- The reindexing permutation: sort the indices by `sortKey`. -/
-private noncomputable def reindex (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) :
-    Equiv.Perm (Fin n) :=
-  Tuple.sort (sortKey x y)
-
-/-- Along the reindexing, the key is monotone. -/
-private theorem sortKey_comp_reindex_monotone (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) :
-    Monotone (sortKey x y ∘ reindex x y) :=
-  Tuple.monotone_sort (sortKey x y)
-
-/-- Along the reindexing, `y` is nondecreasing. -/
-private theorem reindex_y_monotone (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) {a b : Fin n}
-    (hab : a ≤ b) : y (reindex x y a) ≤ y (reindex x y b) := by
-  have h := sortKey_comp_reindex_monotone x y hab
-  simp only [Function.comp_apply, sortKey, Prod.Lex.le_iff, ofLex_toLex] at h
-  rcases h with h | h
-  · exact le_of_lt h
-  · exact le_of_eq h.1
-
-/-- The reindexing is a linear extension: comparability of the reindexed points forces the
-index order.  This is the general `sort_key_linear_extension` (from `Basic`) instantiated with
-the targets `y` and the points `x`. -/
-private theorem reindex_linear_extension (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
-    (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x) {a b : Fin n}
-    (hx : x (reindex x y a) ≤ x (reindex x y b)) : a ≤ b :=
-  sort_key_linear_extension y x hmono hinj hx
-
-end Reindex
-
 section Construction
 
 variable {d n : ℕ}
@@ -103,37 +63,11 @@ noncomputable def stack₃ (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) :
     (.cons (dominationLayer2 d) heaviside
       (.cons (revPrefixLayer n) heaviside (.nil n)))
 
-/-- The reindexed targets `y' i = y (π i)` along the reindexing permutation `π = reindex x y`. -/
-noncomputable def reTarget (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (i : Fin n) : ℝ :=
-  y (reindex x y i)
-
-/-- The telescoping potential: `Y k = y' (k − 1)` at index `k − 1` when it is in range, and `0`
-otherwise (`Nat` subtraction makes `Y 0 = y' 0`).  The read-out weight of neuron `i` is the
-forward difference `Y (i+1) − Y i`, and the read-out bias is `Y 0`.  With this shift the prefix
-sum over `i ≤ j` telescopes (via `Finset.sum_range_sub`) to `Y (j+1) − Y 0 = y' j − y' 0`, so
-adding the bias recovers `y' j` exactly. -/
-noncomputable def potential (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ℕ → ℝ :=
-  fun k => if hk : k - 1 < n then reTarget x y ⟨k - 1, hk⟩ else 0
-
-/-- On the range that the read-out actually samples, the potential reads the reindexed target
-`y' k` at shift `k + 1`. -/
-private theorem potential_succ (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (k : Fin n) :
-    potential x y (k + 1) = reTarget x y k := by
-  unfold potential
-  have hk' : (k : ℕ) + 1 - 1 < n := by simp only [Nat.add_sub_cancel]; exact k.2
-  rw [dif_pos hk']
-  congr 1
-
 /-- The read-out weights: forward differences `Y (i+1) − Y i` of the potential.  These are
 non-negative because the potential is nondecreasing (`y'` is nondecreasing along the
 reindexing). -/
 private noncomputable def readW (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : Fin n → ℝ :=
   fun i => potential x y ((i : ℕ) + 1) - potential x y (i : ℕ)
-
-/-- The read-out bias: the potential base `Y 0`, i.e. the smallest reindexed target `y' 0`
-(or `0` if the dataset is empty). -/
-private noncomputable def readBias (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ℝ :=
-  potential x y 0
 
 /-- The interpolation network: the depth-`3` stack with the forward-difference read-out. -/
 noncomputable def interpNet (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : MonoNet d :=
