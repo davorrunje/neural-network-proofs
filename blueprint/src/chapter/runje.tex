@@ -1,0 +1,102 @@
+\chapter{Partially monotone networks --- Runje et al.}
+
+\section{Embedding non-monotone features (Runje et al.\ 2026)}
+
+A \emph{partially monotone} target $f(u,x)$ is continuous and, for each fixed non-monotone block
+$u$, monotone in the monotone block $x$; its dependence on $u$ is otherwise arbitrary. The
+architecture embeds $u$ through an \emph{unconstrained} single-hidden-layer network, clamps the
+embedding into $[0,1]$, concatenates it with $x$, and feeds the result to a monotone network.
+
+\begin{definition}[Unconstrained embedding span]\label{def:genspanpi}
+  \lean{UniversalApproximation.Runje.genSpanPi}\leanok
+  $\mathrm{genSpanPi}\,\sigma\,d_f$ is the linear span, inside all functions
+  $(\mathrm{Fin}\,d_f\to\mathbb{R})\to\mathbb{R}$, of the ridge units
+  $x\mapsto\sigma\!\left(\sum_c w_c x_c + b\right)$ --- the Leshno single-hidden-layer family
+  written with the explicit dot product, so no inner-product instance on the $\Pi$-type is needed.
+\end{definition}
+
+\begin{definition}[Partial-monotone network]\label{def:partmononet}
+  \lean{UniversalApproximation.Runje.PartMonoNet}\leanok
+  \uses{def:mononet, def:genspanpi}
+  A \texttt{PartMonoNet} bundles an embedding width, an unconstrained embedding
+  $\mathrm{emb}\colon(\mathrm{Fin}\,d_f\to\mathbb{R})\to(\mathrm{Fin}\,N\to\mathbb{R})$, and a
+  monotone network $\mathrm{mono}\colon\texttt{MonoNet}\,(N+d_m)$. Its denotation is
+  $\mathrm{toFun}(u,x)=\mathrm{mono}\big(\mathrm{append}\,(\mathrm{clamp}_{[0,1]}\circ
+  \mathrm{emb}\,u)\;x\big)$, where $\mathrm{clamp}_{[0,1]}$ is a fixed bounded output activation on
+  the embedding.
+\end{definition}
+
+\section{Soundness and universal approximation}
+
+\begin{theorem}[Soundness: monotone in $x$]\label{thm:runje-sound}
+  \lean{UniversalApproximation.Runje.PartMonoNet.monotone_snd}\leanok
+  \uses{def:partmononet, def:mononet}
+  If the core \texttt{MonoNet} is monotone, then for every fixed $u$ the denotation
+  $x\mapsto\mathrm{toFun}(u,x)$ is monotone in the (coordinatewise) $\Pi$-order.
+\end{theorem}
+\begin{verbatim}
+theorem PartMonoNet.monotone_snd {df dm} (P : PartMonoNet df dm)
+    (h : P.mono.IsMonotone) (u : Fin df → ℝ) : Monotone (P.toFun u)
+\end{verbatim}
+\begin{proof}\leanok
+  \uses{def:partmononet}
+  The clamped embedding $\mathrm{clamp}_{[0,1]}\circ\mathrm{emb}\,u$ is a fixed vector, so
+  appending it and varying $x$ is monotone in the $\Pi$-order; compose with the monotone
+  denotation of \texttt{MonoNet}. No continuity of $\mathrm{emb}$ is required.
+\end{proof}
+
+\begin{lemma}[Leshno embedding bridge]\label{lem:leshno-bridge}
+  \lean{UniversalApproximation.Runje.leshno_bridge}\leanok
+  \uses{def:genspanpi, thm:leshno-dense}
+  If $\sigma$ densely approximates (Leshno), then for every compact $K\subseteq\mathrm{Fin}\,d_f\to
+  \mathbb{R}$ and every function continuous on $K$, there is a total $g\in\mathrm{genSpanPi}\,
+  \sigma\,d_f$ approximating it to any accuracy on $K$. Proved by transporting Leshno's density
+  across the $\mathrm{EuclideanSpace}\,\mathbb{R}\,(\mathrm{Fin}\,d_f)\cong(\mathrm{Fin}\,d_f\to
+  \mathbb{R})$ isometry (the Euclidean inner product equals the dot product).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{thm:leshno-dense}
+  Pull the target back through the isometry to a continuous function on the (compact) preimage,
+  apply Leshno density there to get a spanning element, and push the finite ridge combination back
+  to a total $\Pi$-side function; the per-generator identity is exactly the inner-product / dot
+  product equality.
+\end{proof}
+
+\begin{theorem}[Partial-monotone universal approximation]\label{thm:runje-uap}
+  \lean{UniversalApproximation.Runje.partial_monotone_approximation}\leanok
+  \uses{def:partmononet, def:genspanpi, lem:leshno-bridge, thm:mono-approx}
+  For any Leshno-admissible activation $\sigma$ (class $M$, not a.e.\ polynomial) and any jointly
+  continuous $f$ that is coordinatewise monotone in $x$ on the unit cubes, and any
+  $\varepsilon>0$, there is a \texttt{PartMonoNet} whose core is monotone, whose every embedding
+  coordinate lies in $\mathrm{genSpanPi}\,\sigma\,d_f$, and which approximates $f$ within
+  $\varepsilon$ uniformly on the cube.
+\end{theorem}
+\begin{verbatim}
+theorem partial_monotone_approximation {df dm : ℕ}
+    (σ : ℝ → ℝ) (hσ : ClassM σ) (hnp : ¬ IsAEPolynomial σ)
+    (f : (Fin df → ℝ) → (Fin dm → ℝ) → ℝ)
+    (hf : ContinuousOn (fun p => f p.1 p.2)
+            (Set.Icc (0 : Fin df → ℝ) 1 ×ˢ Set.Icc (0 : Fin dm → ℝ) 1))
+    (hmono : ∀ u ∈ Set.Icc (0 : Fin df → ℝ) 1,
+        ∀ ⦃x y⦄, x ∈ Set.Icc (0 : Fin dm → ℝ) 1 → y ∈ Set.Icc (0 : Fin dm → ℝ) 1 →
+          x ≤ y → f u x ≤ f u y)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ P : PartMonoNet df dm, P.mono.IsMonotone ∧
+      (∀ i, (fun u => P.emb u i) ∈ genSpanPi σ df) ∧
+      ∀ u ∈ Set.Icc (0 : Fin df → ℝ) 1, ∀ x ∈ Set.Icc (0 : Fin dm → ℝ) 1,
+        |P.toFun u x - f u x| ≤ ε
+\end{verbatim}
+\begin{proof}\leanok
+  \uses{lem:leshno-bridge, thm:mono-approx}
+  Fix $\varepsilon$. By uniform continuity of $f$ on the compact product, choose a fine tent
+  partition of unity $\{\psi_i\}$ over a grid of the $u$-cube with support radius small enough that
+  moving $u$ within a cell shifts $f$ by less than $\varepsilon/3$ (uniformly in $x$). With
+  $g_i(x)=f(u_i,x)+C$ shifted nonnegative, the target $F(z,x)=\big(\sum_i z_i\,g_i(x)\big)-C$ is
+  jointly continuous and coordinatewise monotone, so \cref{thm:mono-approx} gives a monotone
+  network within $\varepsilon/3$ of $F$ on the cube. Each $\psi_i$ is approximated within a chosen
+  $\eta$ by an unconstrained embedding coordinate via \cref{lem:leshno-bridge}, clamped into the
+  cube; since $F$ is Lipschitz in $z$ this contributes another $\varepsilon/3$, and the partition
+  collapse (the convex combination $\sum_i\psi_i(u)f(u_i,x)$) is within $\varepsilon/3$ of
+  $f(u,x)$. The triangle inequality over the three terms yields $\varepsilon$. Soundness
+  (\cref{thm:runje-sound}) makes the resulting network monotone in $x$.
+\end{proof}

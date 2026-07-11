@@ -24,9 +24,9 @@ its docstring for the full headline list:
   (ε-approximate; monotone one-sided-saturating activations).
 * `UniversalApproximation.Sartor.nonpos_weight_universal` — Sartor et al. (2025),
   Proposition 3.11.
-* `UniversalApproximation.Runje.partial_monotone_approximation` — Runje et al., partial-monotone
-  universal approximation.
-* `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al., soundness.
+* `UniversalApproximation.Runje.partial_monotone_approximation` — Runje et al. (2026),
+  partial-monotone universal approximation.
+* `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al. (2026), soundness.
 
 General neural-network infrastructure lives under `NeuralNetwork` (`NeuralNetwork.Layer`,
 `NeuralNetwork.Network`); Mathlib-upstream candidates under `NeuralNetworkProofs.ForMathlib`. -/
