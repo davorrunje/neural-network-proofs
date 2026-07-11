@@ -175,7 +175,7 @@ private theorem sigmoidal_step_integral_tendsto {σ : ℝ → ℝ} (hσ : Sigmoi
       · rw [hf2smul, integral_smul, integral_indicator_const (1 : ℝ) hH]; simp [Measure.real]
     · rw [hf1]; exact (integrable_const (1 : ℝ)).indicator hP
     · rw [hf2smul]; exact ((integrable_const (1 : ℝ)).indicator hH).smul (σ φ)
-  rw [← hint] at *
+  rw [← hint]
   exact key
 
 /-- The signed measure of a measurable set, expressed through the Jordan decomposition:
@@ -246,7 +246,7 @@ theorem signed_halfspace_eq_zero (hσ : Sigmoidal σ) {μ : SignedMeasure ↥K}
   obtain ⟨φ₁, φ₂, hne⟩ := hσ.exists_ne
   have e1 := key φ₁
   have e2 := key φ₂
-  have hdiff : (σ φ₁ - σ φ₂) * μ Hy = 0 := by ring_nf; linarith [e1, e2]
+  have hdiff : (σ φ₁ - σ φ₂) * μ Hy = 0 := by linear_combination e1 - e2
   have hHy : μ Hy = 0 := by
     rcases mul_eq_zero.mp hdiff with hz | hz
     · exact absurd (sub_eq_zero.mp hz) hne
