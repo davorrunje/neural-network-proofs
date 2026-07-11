@@ -105,9 +105,10 @@ theorem sort_key_linear_extension {n : ℕ} {β : Type*} [PartialOrder β]
 /-!
 ## Shared reindex / potential machinery
 
-The reindexing permutation and the telescoping-potential read-out scaffold are shared verbatim by
-the Mikulincer–Reichman (`Interpolation.lean`) and Sartor (`Sartor/SaturatingInterp.lean`)
-interpolation constructions.  Hoisting them here lets both files depend on a single copy.  The
+The reindexing permutation and the telescoping-potential read-out scaffold are shared (up to
+definitional equality) by the Mikulincer–Reichman (`Interpolation.lean`) and Sartor
+(`Sartor/SaturatingInterp.lean`) interpolation constructions.  Hoisting them here lets both files
+depend on a single copy.  The
 γ-normalized read-out weights of the Sartor construction (`satReadW`) stay local to that file, as
 does M-R's own `readW`; only the γ-independent scaffold lives here.
 -/
