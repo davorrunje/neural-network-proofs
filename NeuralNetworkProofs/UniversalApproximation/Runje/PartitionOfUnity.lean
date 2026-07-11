@@ -17,7 +17,8 @@ import Mathlib.Data.Fintype.Pi
 # Normalized tent partition of unity on the unit cube (Runje et al.)
 
 A tensor-product "tent" partition of unity on the unit cube `[0,1]^df`, used by the
-partial-monotone universal-approximation construction of Runje et al.
+partial-monotone construction — a secondary result of the Deep Constrained Monotonic Neural
+Networks development of Runje et al.
 
 The design is the **normalization trick**: build unnormalized tensor-product tents
 `tent m k u = ∏ c, hat1 m (k c) (u c)` from 1-D hats centred at the grid nodes `k/m`, then

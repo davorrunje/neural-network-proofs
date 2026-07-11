@@ -19,9 +19,14 @@ Lean 4 + Mathlib. Five developments are complete and `sorry`-free:
   (`UniversalApproximation.Sartor.saturating_interpolation`, ε-approximate) and Prop 3.11
   (`…nonpos_weight_universal`), tied together by the point-reflection / weight-sign–saturation
   equivalence (Props 3.8 & 3.10).
-- **Runje (2026): partially monotone networks** — a non-monotone feature block is embedded via an
-  unconstrained single-hidden-layer Leshno network, clamped, concatenated with the monotone block,
-  and fed to a monotone network. Soundness (`…Runje.PartMonoNet.monotone_snd`) and the UAP headline
+- **Runje et al. (forthcoming): Deep Constrained Monotonic Neural Networks** — extends
+  Runje–Shankaranarayana 2023; skip connections make deep constrained monotone networks trainable.
+  Formalized soundness (a residual stack of any depth is monotone,
+  `…Runje.ResNet.monotone_toFun`) and the deep-monotone UAP headline
+  (`…Runje.deep_monotone_approximation`). Includes partial monotonicity as a secondary result: a
+  non-monotone feature block is embedded via an unconstrained single-hidden-layer Leshno network,
+  clamped, concatenated with the monotone block, and fed to a monotone network — soundness
+  (`…Runje.PartMonoNet.monotone_snd`) and the UAP headline
   (`…Runje.partial_monotone_approximation`).
 
 ## Layout and namespaces
@@ -37,7 +42,7 @@ The Lean module-path prefix (`NeuralNetworkProofs`) is independent of the math n
 | `NeuralNetworkProofs/UniversalApproximation/Monotone/` + `Monotone.lean` | `UniversalApproximation.Monotone` | shared `ActStack` core (infrastructure, no headline) |
 | `NeuralNetworkProofs/UniversalApproximation/MikulincerReichman/` + `MikulincerReichman.lean` | `UniversalApproximation.MikulincerReichman` | the Mikulincer–Reichman development |
 | `NeuralNetworkProofs/UniversalApproximation/Sartor/` + `Sartor.lean` | `UniversalApproximation.Sartor` | the Sartor et al. development |
-| `NeuralNetworkProofs/UniversalApproximation/Runje/` + `Runje.lean` | `UniversalApproximation.Runje` | the Runje et al. partial-monotone development |
+| `NeuralNetworkProofs/UniversalApproximation/Runje/` + `Runje.lean` | `UniversalApproximation.Runje` | the Runje et al. deep constrained monotonic development (partial monotonicity secondary) |
 | `NeuralNetworkProofs/UniversalApproximation.lean` | `NeuralNetworkProofs.UniversalApproximation` | results aggregator (re-exports all UAT roots) |
 | `NeuralNetworkProofs.lean` | — | root: imports the `UniversalApproximation` aggregator so `lake build` verifies all headlines |
 

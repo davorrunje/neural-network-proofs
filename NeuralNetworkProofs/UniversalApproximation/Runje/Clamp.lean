@@ -8,9 +8,11 @@ import Mathlib.Topology.MetricSpace.Lipschitz
 /-!
 # Unit-interval clamp (Runje et al.)
 
-The fixed bounded output activation `clamp01` used by the partial-monotone architecture of
-Runje et al. It clamps a real into `[0,1]`; baked into `PartMonoNet.toFun` so the embedding
-value fed to the monotone network always lies in the unit cube.
+The fixed bounded output activation `clamp01`, used by the partial-monotone construction — a
+secondary result of the Deep Constrained Monotonic Neural Networks development of Runje et al. It
+clamps a real into `[0,1]`; baked into `PartMonoNet.toFun` (and its deep-core counterpart
+`DeepPartMonoNet.toFun`) so the embedding value fed to the monotone network always lies in the
+unit cube.
 -/
 
 namespace UniversalApproximation.Runje

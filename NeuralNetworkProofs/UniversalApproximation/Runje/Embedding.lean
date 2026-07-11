@@ -22,7 +22,8 @@ inner-product instance on the Pi type is required.
 product, `inner_eq_dot`). `exists_vector_embedding` packages the bridge for a whole finite family
 of continuous targets.
 
-This is part of the Runje et al. monotone universal-approximation development.
+This embedding drives the partial-monotone construction, a secondary result of the Deep
+Constrained Monotonic Neural Networks development of Runje et al.
 -/
 
 namespace UniversalApproximation.Runje

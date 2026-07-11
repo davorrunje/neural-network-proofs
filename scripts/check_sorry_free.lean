@@ -11,3 +11,8 @@ open UniversalApproximation.MikulincerReichman UniversalApproximation.Sartor
 #print axioms nonpos_weight_universal
 #print axioms partial_monotone_approximation
 #print axioms PartMonoNet.monotone_snd
+#print axioms rsDense_monotone
+#print axioms ResNet.monotone_toFun
+#print axioms deep_monotone_approximation
+#print axioms DeepPartMonoNet.monotone_snd
+#print axioms deep_partial_monotone_approximation

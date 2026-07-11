@@ -12,9 +12,11 @@ import Mathlib.Data.Fin.Tuple.Basic
 /-!
 # Joint monotone target for partial-monotone UAP (Runje et al.)
 
-`jointTarget g C w = (∑ i, (z-block of w) i * g i (x-block of w)) − C`. When each `g i` is
-nonnegative and monotone in `x`, this is jointly coordinatewise monotone and continuous on the
-unit cube — the target approximated by the monotone network in the UAP proof.
+Part of the partial-monotone construction, a secondary result of the Deep Constrained Monotonic
+Neural Networks development. `jointTarget g C w = (∑ i, (z-block of w) i * g i (x-block of w)) −
+C`. When each `g i` is nonnegative and monotone in `x`, this is jointly coordinatewise monotone
+and continuous on the unit cube — the target approximated by the monotone network in the UAP
+proof.
 -/
 
 namespace UniversalApproximation.Runje
