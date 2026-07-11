@@ -21,6 +21,14 @@ namespace UniversalApproximation.Runje
 
 open UniversalApproximation.Monotone
 
+/-- Appending a fixed left block, `x ↦ Fin.append z x` is monotone in the right block. -/
+theorem append_right_monotone {m n : ℕ} (z : Fin m → ℝ) :
+    Monotone (fun x : Fin n → ℝ => Fin.append z x) := by
+  intro x y hxy k
+  refine Fin.addCases (fun i => ?_) (fun j => ?_) k
+  · simp only [Fin.append_left]; exact le_rfl
+  · simpa only [Fin.append_right] using hxy j
+
 /-- A partial-monotone network: unconstrained embedding + monotone network over the
 concatenation of the clamped embedding with the monotone inputs. -/
 structure PartMonoNet (df dm : ℕ) where
@@ -39,12 +47,7 @@ noncomputable def PartMonoNet.toFun {df dm} (P : PartMonoNet df dm)
 /-- **Soundness.** A partial-monotone network with a monotone core is monotone in the
 monotone block `x`, for every fixed non-monotone input `u`. -/
 theorem PartMonoNet.monotone_snd {df dm} (P : PartMonoNet df dm)
-    (h : P.mono.IsMonotone) (u : Fin df → ℝ) : Monotone (P.toFun u) := by
-  intro x y hxy
-  refine P.mono.monotone_toFun h ?_
-  intro k
-  refine Fin.addCases (fun i => ?_) (fun j => ?_) k
-  · simp only [Fin.append_left]; exact le_rfl
-  · simpa only [Fin.append_right] using hxy j
+    (h : P.mono.IsMonotone) (u : Fin df → ℝ) : Monotone (P.toFun u) :=
+  (P.mono.monotone_toFun h).comp (append_right_monotone _)
 
 end UniversalApproximation.Runje

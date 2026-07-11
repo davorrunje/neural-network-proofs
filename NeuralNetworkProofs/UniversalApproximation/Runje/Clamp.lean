@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 import Mathlib.Topology.MetricSpace.Lipschitz
+import Mathlib.Topology.UnitInterval
 
 /-!
 # Unit-interval clamp (Runje et al.)
@@ -35,10 +36,8 @@ lemma clamp01_continuous : Continuous clamp01 := by
   unfold clamp01; fun_prop
 
 lemma abs_clamp01_sub_le (a b : ℝ) : |clamp01 a - clamp01 b| ≤ |a - b| := by
-  unfold clamp01
-  simp only [max_comm 0 (min 1 a), max_comm 0 (min 1 b)]
-  refine (abs_max_sub_max_le_abs _ _ 0).trans ?_
-  rw [min_comm 1 a, min_comm 1 b]
-  exact abs_inf_sub_inf_le_abs a b 1
+  -- `clamp01 = ↑(Set.projIcc 0 1 _)` definitionally, so this is `Set.abs_projIcc_sub_projIcc`.
+  simp only [clamp01]
+  exact Set.abs_projIcc_sub_projIcc (by norm_num)
 
 end UniversalApproximation.Runje
