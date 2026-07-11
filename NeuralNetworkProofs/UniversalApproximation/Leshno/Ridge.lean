@@ -94,35 +94,9 @@ unbundled) functions before re-bundling. -/
 def Tplain (σ : ℝ → ℝ) (K : Set (EuclideanSpace ℝ (Fin n))) :
     Submodule ℝ ((↥K) → ℝ) where
   carrier := {f | ApproxByGen σ K f}
-  add_mem' := by
-    intro a b ha hb ε hε
-    obtain ⟨ga, hga, hgaε⟩ := ha (ε / 2) (by linarith)
-    obtain ⟨gb, hgb, hgbε⟩ := hb (ε / 2) (by linarith)
-    refine ⟨ga + gb, Submodule.add_mem _ hga hgb, fun x => ?_⟩
-    have : a x + b x - (ga x + gb x) = (a x - ga x) + (b x - gb x) := by ring
-    change |(a + b) x - (ga + gb) x| < ε
-    simp only [Pi.add_apply]
-    calc |a x + b x - (ga x + gb x)|
-        = |(a x - ga x) + (b x - gb x)| := by rw [this]
-      _ ≤ |a x - ga x| + |b x - gb x| := abs_add_le _ _
-      _ < ε / 2 + ε / 2 := add_lt_add (hgaε x) (hgbε x)
-      _ = ε := by ring
-  zero_mem' := by
-    intro ε hε
-    exact ⟨0, Submodule.zero_mem _, fun x => by simp [hε]⟩
-  smul_mem' := by
-    intro c a ha ε hε
-    rcases eq_or_ne c 0 with hc | hc
-    · subst hc; exact ⟨0, Submodule.zero_mem _, fun x => by simp [hε]⟩
-    · obtain ⟨g, hg, hgε⟩ := ha (ε / |c|) (by positivity)
-      refine ⟨c • g, Submodule.smul_mem _ c hg, fun x => ?_⟩
-      change |(c • a) x - (c • g) x| < ε
-      simp only [Pi.smul_apply, smul_eq_mul]
-      have heq : |c * a x - c * g x| = |c| * |a x - g x| := by rw [← mul_sub, abs_mul]
-      rw [heq]
-      have hcpos : 0 < |c| := abs_pos.mpr hc
-      calc |c| * |a x - g x| < |c| * (ε / |c|) := mul_lt_mul_of_pos_left (hgε x) hcpos
-        _ = ε := by field_simp
+  add_mem' ha hb := ApproxByGen.add ha hb
+  zero_mem' := approxByGen_zero _ _
+  smul_mem' c _ ha := ApproxByGen.smul c ha
 
 /-- Bridge: a continuous `h` lies in `T σ K` iff its underlying function lies in `Tplain σ K`. -/
 theorem mem_T_iff_mem_Tplain {σ : ℝ → ℝ} {K : Set (EuclideanSpace ℝ (Fin n))} (h : C(↥K, ℝ)) :

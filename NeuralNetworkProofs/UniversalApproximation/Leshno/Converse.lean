@@ -5,6 +5,7 @@ Authors: Davor Runje
 -/
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.RingTheory.Polynomial.DegreeLT
+import Mathlib.Topology.ContinuousMap.Polynomial
 import NeuralNetworkProofs.UniversalApproximation.Leshno.ClassM
 import NeuralNetworkProofs.UniversalApproximation.Leshno.Family
 
@@ -34,10 +35,8 @@ theorem continuous_cvec : Continuous cvec := by unfold cvec; fun_prop
 abbrev II : Set ℝ := Set.Icc (0 : ℝ) 1
 
 /-- Restriction of a polynomial to a continuous function on `[0,1]`, as a linear map. -/
-noncomputable def restrictLM : Polynomial ℝ →ₗ[ℝ] C(↥II, ℝ) where
-  toFun p := ⟨fun t => p.eval (t : ℝ), by fun_prop⟩
-  map_add' p q := by ext t; simp
-  map_smul' c p := by ext t; simp
+noncomputable def restrictLM : Polynomial ℝ →ₗ[ℝ] C(↥II, ℝ) :=
+  (Polynomial.toContinuousMapOnAlgHom II).toLinearMap
 
 @[simp] theorem restrictLM_apply (p : Polynomial ℝ) (t : ↥II) :
     (restrictLM p) t = p.eval (t : ℝ) := rfl
@@ -70,7 +69,7 @@ theorem monomial_notMem_Pd (d : ℕ) : restrictLM (Polynomial.X ^ (d + 1)) ∉ P
     apply Set.Infinite.mono _ (Set.Icc_infinite (by norm_num : (0:ℝ) < 1))
     intro t ht
     have := congrFun (congrArg (fun f : C(↥II, ℝ) => (f : ↥II → ℝ)) hqeq) ⟨t, ht⟩
-    simpa [restrictLM] using this
+    simpa [restrictLM_apply] using this
   have : q = Polynomial.X ^ (d + 1) := Polynomial.eq_of_infinite_eval_eq _ _ hinf
   rw [this, Polynomial.degree_X_pow] at hq
   have hlt : (d : WithBot ℕ) < (d : WithBot ℕ) + 1 := by
