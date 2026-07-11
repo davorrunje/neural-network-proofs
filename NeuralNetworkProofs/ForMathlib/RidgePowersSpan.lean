@@ -5,10 +5,10 @@ Authors: Davor Runje
 -/
 
 import Mathlib.Algebra.MvPolynomial.Funext
-import Mathlib.Analysis.Normed.Field.Basic
 import Mathlib.Data.Nat.Choose.Multinomial
+import Mathlib.Data.Real.Basic
 import Mathlib.FieldTheory.Finite.Polynomial
-import Mathlib.RingTheory.MvPolynomial.IrreducibleQuadratic
+import Mathlib.RingTheory.MvPolynomial.Homogeneous
 
 /-! # Powers of linear functionals span the homogeneous polynomials
 
