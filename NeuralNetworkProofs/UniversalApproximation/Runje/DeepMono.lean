@@ -88,9 +88,8 @@ theorem MonoNet.toDeep_single_block {d} (N : MonoNet d) :
 /-- A monotone `MonoNet` embeds to a monotone `DeepMonoNet`: the single block has nonnegative
 gates and monotone skip/sublayer, and the read-out weights are unchanged. -/
 theorem MonoNet.toDeep_isMonotone {d} (N : MonoNet d) (h : N.IsMonotone) :
-    N.toDeep.IsMonotone := by
-  refine ⟨⟨⟨le_refl 0, zero_le_one, monotone_const, N.stack.monotone_toFun h.1⟩, trivial⟩, ?_⟩
-  · exact h.2
+    N.toDeep.IsMonotone :=
+  ⟨⟨⟨le_rfl, zero_le_one, monotone_const, N.stack.monotone_toFun h.1⟩, trivial⟩, h.2⟩
 
 end UniversalApproximation.Monotone
 

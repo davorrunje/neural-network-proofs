@@ -42,13 +42,8 @@ noncomputable def DeepPartMonoNet.toFun {df dm} (P : DeepPartMonoNet df dm)
 /-- **Soundness.** A deep-core partial-monotone network with a monotone core is monotone in the
 monotone block `x`, for every fixed non-monotone input `u`. -/
 theorem DeepPartMonoNet.monotone_snd {df dm} (P : DeepPartMonoNet df dm)
-    (h : P.mono.IsMonotone) (u : Fin df → ℝ) : Monotone (P.toFun u) := by
-  intro x y hxy
-  refine P.mono.monotone_toFun h ?_
-  intro k
-  refine Fin.addCases (fun i => ?_) (fun j => ?_) k
-  · simp only [Fin.append_left]; exact le_rfl
-  · simpa only [Fin.append_right] using hxy j
+    (h : P.mono.IsMonotone) (u : Fin df → ℝ) : Monotone (P.toFun u) :=
+  (P.mono.monotone_toFun h).comp (append_right_monotone _)
 
 /-- **Deep-core partial-monotone UAP (retains UAP).** Every jointly continuous `f` that is
 coordinatewise monotone in its second (monotone) block on the unit cube is uniformly

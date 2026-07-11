@@ -49,6 +49,10 @@ private lemma append_mem_cube {N dm : ℕ} {z : Fin N → ℝ} {x : Fin dm → �
     · simpa only [Pi.one_apply, Fin.append_left] using hz.2 i
     · simpa only [Pi.one_apply, Fin.append_right] using hx.2 j
 
+/-- Partial-monotone universal approximation (Runje et al.): the secondary result of the deep
+constrained monotonic networks development. Every jointly continuous `f`, coordinatewise
+monotone in its second (monotone) block on the unit cube, is uniformly approximated within `ε`
+by a `PartMonoNet`. -/
 theorem partial_monotone_approximation {df dm : ℕ}
     (σ : ℝ → ℝ) (hσ : ClassM σ) (hnp : ¬ IsAEPolynomial σ)
     (f : (Fin df → ℝ) → (Fin dm → ℝ) → ℝ)
@@ -62,23 +66,22 @@ theorem partial_monotone_approximation {df dm : ℕ}
       (∀ i, (fun u => P.emb u i) ∈ genSpanPi σ df) ∧
       ∀ u ∈ Set.Icc (0 : Fin df → ℝ) 1, ∀ x ∈ Set.Icc (0 : Fin dm → ℝ) 1,
         |P.toFun u x - f u x| ≤ ε := by
-  have hε3 : (0 : ℝ) < ε / 3 := by linarith
+  have hε3 : (0 : ℝ) < ε / 3 := by positivity
   -- the two cubes and their compact product
-  set cubeF := Set.Icc (0 : Fin df → ℝ) 1 with hcubeF
-  set cubeM := Set.Icc (0 : Fin dm → ℝ) 1 with hcubeM
+  set cubeF := Set.Icc (0 : Fin df → ℝ) 1
+  set cubeM := Set.Icc (0 : Fin dm → ℝ) 1
   have hKf : IsCompact cubeF := isCompact_Icc
   have hKfne : cubeF.Nonempty := Set.nonempty_Icc.mpr fun _ => zero_le_one
   have hKmne : cubeM.Nonempty := Set.nonempty_Icc.mpr fun _ => zero_le_one
-  set cubeP := cubeF ×ˢ cubeM with hcubeP
+  set cubeP := cubeF ×ˢ cubeM
   have hK : IsCompact cubeP := hKf.prod isCompact_Icc
   have hPne : cubeP.Nonempty := hKfne.prod hKmne
-  -- boundedness constant `C`
-  obtain ⟨p0, -, hp0max⟩ := hK.exists_isMaxOn hPne hf.abs
-  have hp0 : ∀ q ∈ cubeP, |f q.1 q.2| ≤ |f p0.1 p0.2| := isMaxOn_iff.mp hp0max
-  obtain ⟨M0, hM0nonneg, hbound⟩ :
-      ∃ M0 : ℝ, 0 ≤ M0 ∧ ∀ u ∈ cubeF, ∀ x ∈ cubeM, |f u x| ≤ M0 :=
-    ⟨|f p0.1 p0.2|, abs_nonneg _,
-      fun u hu x hx => hp0 (u, x) (Set.mem_prod.mpr ⟨hu, hx⟩)⟩
+  -- boundedness constant `M0`
+  obtain ⟨M0, hbound0⟩ := hK.exists_bound_of_continuousOn hf
+  simp only [Real.norm_eq_abs] at hbound0
+  have hM0nonneg : 0 ≤ M0 := (abs_nonneg _).trans (hbound0 _ hPne.choose_spec)
+  have hbound : ∀ u ∈ cubeF, ∀ x ∈ cubeM, |f u x| ≤ M0 :=
+    fun u hu x hx => hbound0 (u, x) (Set.mem_prod.mpr ⟨hu, hx⟩)
   set C := M0 + 1 with hCdef
   have hCpos : 0 < C := by rw [hCdef]; linarith
   -- joint uniform continuity
@@ -163,15 +166,8 @@ theorem partial_monotone_approximation {df dm : ℕ}
     refine ⟨fun i => ?_, fun i => ?_⟩
     · simp only [hz, Pi.zero_apply]; exact clamp01_nonneg _
     · simp only [hz, Pi.one_apply]; exact clamp01_le_one _
-  have hzΨ_mem : zΨ ∈ Set.Icc (0 : Fin embWidth → ℝ) 1 := by
-    rw [Set.mem_Icc]
-    refine ⟨fun i => ?_, fun i => ?_⟩
-    · simp only [hzΨ, Pi.zero_apply]; exact psi_nonneg m (eN.symm i) u
-    · simp only [hzΨ, Pi.one_apply]; exact psi_le_one hm (eN.symm i) hu
   have hazx : Fin.append z x ∈ Set.Icc (0 : Fin (embWidth + dm) → ℝ) 1 :=
     append_mem_cube hz_mem hx
-  have hazΨx : Fin.append zΨ x ∈ Set.Icc (0 : Fin (embWidth + dm) → ℝ) 1 :=
-    append_mem_cube hzΨ_mem hx
   have hsum1 : (∑ i, psi m (eN.symm i) u) = 1 :=
     (Equiv.sum_comp eN.symm fun k => psi m k u).trans (sum_psi_eq_one hm hu)
   have hgbound : ∀ i, |g i x| ≤ 2 * C := by
