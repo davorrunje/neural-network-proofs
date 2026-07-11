@@ -1,6 +1,60 @@
-\chapter{Partially monotone networks --- Runje et al.}
+\chapter{Deep constrained monotonic networks --- Runje et al.}
 
-\section{Embedding non-monotone features (Runje et al.\ 2026)}
+This chapter extends the Runje--Shankaranarayana (2023) constrained-monotonic architecture (their
+absolute-mode dense layer, split into convex and concave neuron blocks) with \emph{skip
+connections}: gated residual blocks that stack the constrained-monotone dense layer to arbitrary
+depth while staying trainable, and remain sound (monotone) and universal (retain the depth-4 UAP)
+at every depth. The result (forthcoming) is presented in three stages: the constrained monotone
+dense layer itself (\S\ref{sec:rs-dense}), the residual/deep-stack combinator and its soundness at
+any depth (\S\ref{sec:skip}), and the resulting universal approximation for deep monotone networks
+(\S\ref{sec:deep-uap}). The embedding of non-monotone features into a partially monotone network
+--- the original framing of this chapter --- is presented as a secondary application
+(\S\ref{sec:partial-mono}), extended to use the deep-residual core.
+
+\section{Constrained monotone dense layers}\label{sec:rs-dense}
+
+\begin{lemma}[R--S dense layer is monotone]\label{lem:rs-dense}
+  \lean{UniversalApproximation.Runje.rsDense_monotone}\leanok
+  \uses{def:mononet}
+  The Runje--Shankaranarayana absolute-mode dense layer --- nonnegative effective weights $|W|$,
+  a first block of \emph{convex} neurons through a monotone base activation $\rho$ (e.g.\ ELU,
+  softplus) and a second block of \emph{concave} neurons through its point reflection
+  $\mathrm{reflect}\,\rho$, appended --- is monotone.
+\end{lemma}
+
+\section{Skip connections and deep monotone networks}\label{sec:skip}
+
+\begin{definition}[Residual block]\label{def:residual}
+  \lean{UniversalApproximation.Runje.residual}\leanok
+  A residual block combines a skip connection with a sublayer through nonnegative scalar gates:
+  $x \mapsto g_\alpha\,\mathrm{skip}(x) + g_\beta\,F(x)$, with $g_\alpha,g_\beta \ge 0$.
+\end{definition}
+
+\begin{theorem}[Deep soundness: a residual stack of any depth is monotone]\label{thm:resnet-mono}
+  \lean{UniversalApproximation.Runje.ResNet.monotone_toFun}\leanok
+  \uses{def:residual}
+  A \texttt{ResNet} --- a composition of residual blocks, of any depth --- in which every block has
+  nonnegative gates and monotone skip/sublayer maps, is itself monotone.
+\end{theorem}
+
+\section{Deep monotone universal approximation}\label{sec:deep-uap}
+
+\begin{theorem}[Deep monotone UAP retains UAP]\label{thm:deep-mono-uap}
+  \lean{UniversalApproximation.Runje.deep_monotone_approximation}\leanok
+  \uses{thm:resnet-mono, thm:mono-approx}
+  Every continuous, coordinatewise-monotone $f$ on the unit cube is uniformly
+  $\varepsilon$-approximated by a monotone \texttt{DeepMonoNet} (a residual body of any depth plus a
+  nonnegative-weight affine read-out). The witness embeds the depth-4 \texttt{MonoNet} of
+  \cref{thm:mono-approx} as a single residual block, so no depth beyond 4 is needed to retain UAP.
+\end{theorem}
+
+\section{Partial monotonicity (secondary)}\label{sec:partial-mono}
+
+This section presents the chapter's original application: embedding non-monotone features into a
+partially monotone network, extended so the monotone core may be an arbitrary-depth deep-residual
+network (\cref{thm:deep-part-uap}) rather than only the shallow depth-4 core.
+
+\subsection{Embedding non-monotone features}
 
 A \emph{partially monotone} target $f(u,x)$ is continuous and, for each fixed non-monotone block
 $u$, monotone in the monotone block $x$; its dependence on $u$ is otherwise arbitrary. The
@@ -26,7 +80,7 @@ embedding into $[0,1]$, concatenates it with $x$, and feeds the result to a mono
   the embedding.
 \end{definition}
 
-\section{Soundness and universal approximation}
+\subsection{Soundness and universal approximation}
 
 \begin{theorem}[Soundness: monotone in $x$]\label{thm:runje-sound}
   \lean{UniversalApproximation.Runje.PartMonoNet.monotone_snd}\leanok
@@ -100,3 +154,16 @@ theorem partial_monotone_approximation {df dm : ℕ}
   $f(u,x)$. The triangle inequality over the three terms yields $\varepsilon$. Soundness
   (\cref{thm:runje-sound}) makes the resulting network monotone in $x$.
 \end{proof}
+
+\subsection{Deep-core variant}
+
+\begin{theorem}[Deep-core partial-monotone UAP]\label{thm:deep-part-uap}
+  \lean{UniversalApproximation.Runje.deep_partial_monotone_approximation}\leanok
+  \uses{thm:deep-mono-uap, def:partmononet}
+  Swapping the shallow \texttt{MonoNet} core of \texttt{PartMonoNet} for a deep-residual
+  \texttt{DeepMonoNet} of any depth (a \texttt{DeepPartMonoNet}) retains both soundness (monotone in
+  the monotone block $x$, for every fixed $u$) and partial-monotone UAP: the witness embeds the
+  shallow core of \cref{thm:runje-uap} via the single-block embedding of
+  \cref{thm:deep-mono-uap}, sharing the same embedding, so the denotation and the approximation
+  bound transfer verbatim.
+\end{theorem}
