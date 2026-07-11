@@ -9,14 +9,28 @@ import NeuralNetworkProofs.UniversalApproximation.Runje.PartitionOfUnity
 import NeuralNetworkProofs.UniversalApproximation.Runje.JointTarget
 import NeuralNetworkProofs.UniversalApproximation.Runje.Embedding
 import NeuralNetworkProofs.UniversalApproximation.Runje.Approximation
+import NeuralNetworkProofs.UniversalApproximation.Runje.RunjeShankaranarayana
+import NeuralNetworkProofs.UniversalApproximation.Runje.Residual
+import NeuralNetworkProofs.UniversalApproximation.Runje.DeepMono
+import NeuralNetworkProofs.UniversalApproximation.Runje.DeepPartMono
 
 /-!
-# Universal Approximation for Partially Monotone Networks — root module (Runje et al.)
+# Deep Constrained Monotonic Neural Networks — root module (Runje et al.)
 
-Formalization of partial-monotone universal approximation: a non-monotone feature block is
-embedded by an unconstrained single-hidden-layer network (Leshno UAP), clamped, concatenated
-with the monotone block, and fed to a monotone network (Mikulincer–Reichman / Sartor line).
+Runje et al., Deep Constrained Monotonic Neural Networks (forthcoming; extends
+Runje–Shankaranarayana 2023). Skip connections make deep constrained monotone networks trainable;
+formalized soundness (monotone at any depth) + UAP. Includes partial monotonicity as a secondary
+result.
 
-* `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — soundness (monotone in `x`).
-* `UniversalApproximation.Runje.partial_monotone_approximation` — the UAP headline.
+* `UniversalApproximation.Runje.rsDense_monotone` — R–S dense layer is monotone.
+* `UniversalApproximation.Runje.ResNet.monotone_toFun` — deep residual stack is monotone
+  (soundness).
+* `UniversalApproximation.Runje.deep_monotone_approximation` — deep monotone UAP (retains UAP).
+* `UniversalApproximation.Runje.DeepPartMonoNet.monotone_snd` — deep-core partial-monotone
+  soundness.
+* `UniversalApproximation.Runje.deep_partial_monotone_approximation` — deep-core partial UAP.
+* `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — shallow partial-monotone soundness
+  (secondary).
+* `UniversalApproximation.Runje.partial_monotone_approximation` — shallow partial-monotone UAP
+  (secondary).
 -/

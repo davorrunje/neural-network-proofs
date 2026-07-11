@@ -43,12 +43,16 @@ Rendered documentation is published at
   required). Results: Theorem 3.5 (`…Sartor.saturating_interpolation`), the point-reflection /
   weight-sign equivalence (Props 3.8 & 3.10), and non-positive-weight universality (Prop 3.11,
   `…Sartor.nonpos_weight_universal`).
-- **Runje et al. (2026)** — universal approximation for **partially monotone** networks: a
+- **Runje et al. (forthcoming)** — **Deep Constrained Monotonic Neural Networks**, extending
+  Runje–Shankaranarayana 2023: skip connections make deep constrained monotone networks trainable.
+  Formalized soundness — a residual stack of *any* depth is monotone
+  (`…Runje.ResNet.monotone_toFun`) — and the deep-monotone UAP headline
+  (`…Runje.deep_monotone_approximation`), which retains universality with no depth beyond the
+  shallow core (`…Runje.rsDense_monotone`). Includes partial monotonicity as a secondary result: a
   non-monotone feature block is embedded by an unconstrained single-hidden-layer network (Leshno
   UAP), clamped into `[0,1]`, concatenated with the monotone block, and fed to a monotone network
-  (the Mikulincer–Reichman / Sartor line above). Soundness
-  (`…Runje.PartMonoNet.monotone_snd`, monotone in the monotone block) and the uniform-approximation
-  headline (`…Runje.partial_monotone_approximation`).
+  (the Mikulincer–Reichman / Sartor line above) — soundness (`…Runje.PartMonoNet.monotone_snd`)
+  and the partial-monotone UAP (`…Runje.partial_monotone_approximation`).
 
 **Correctness gate.** Every headline is machine-checked to depend only on the axioms
 `[propext, Classical.choice, Quot.sound]` — no `sorry`/`sorryAx`, no extra axioms (see

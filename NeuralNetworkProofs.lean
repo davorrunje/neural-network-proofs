@@ -24,9 +24,20 @@ its docstring for the full headline list:
   (ε-approximate; monotone one-sided-saturating activations).
 * `UniversalApproximation.Sartor.nonpos_weight_universal` — Sartor et al. (2025),
   Proposition 3.11.
-* `UniversalApproximation.Runje.partial_monotone_approximation` — Runje et al. (2026),
-  partial-monotone universal approximation.
-* `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al. (2026), soundness.
+
+`UniversalApproximation.Runje` — Runje et al., Deep Constrained Monotonic Neural Networks
+(forthcoming; extends Runje–Shankaranarayana 2023). Skip connections make deep constrained
+monotone networks trainable; formalized soundness (monotone at any depth) + UAP. Includes partial
+monotonicity as a secondary result.
+
+* `UniversalApproximation.Runje.deep_monotone_approximation` — deep monotone UAP (retains UAP).
+* `UniversalApproximation.Runje.ResNet.monotone_toFun` — deep residual stack is monotone
+  (soundness).
+* `UniversalApproximation.Runje.rsDense_monotone` — R–S dense layer is monotone.
+* `UniversalApproximation.Runje.partial_monotone_approximation` — Runje et al. (forthcoming),
+  partial-monotone universal approximation (secondary).
+* `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al. (forthcoming), soundness
+  (secondary).
 
 General neural-network infrastructure lives under `NeuralNetwork` (`NeuralNetwork.Layer`,
 `NeuralNetwork.Network`); Mathlib-upstream candidates under `NeuralNetworkProofs.ForMathlib`. -/

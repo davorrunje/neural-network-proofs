@@ -22,9 +22,20 @@ Re-exports every UAT development so a single import brings in all results. Headl
 * `UniversalApproximation.MikulincerReichman.monotone_approximation` — M–R (2022), approximation.
 * `UniversalApproximation.Sartor.saturating_interpolation` — Sartor et al. (2025), Thm 3.5.
 * `UniversalApproximation.Sartor.nonpos_weight_universal` — Sartor et al. (2025), Prop 3.11.
-* `UniversalApproximation.Runje.partial_monotone_approximation` — Runje et al. (2026), partial-
-  monotone UAP.
-* `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al. (2026), soundness.
+
+`UniversalApproximation.Runje` — Runje et al., Deep Constrained Monotonic Neural Networks
+(forthcoming; extends Runje–Shankaranarayana 2023). Skip connections make deep constrained
+monotone networks trainable; formalized soundness (monotone at any depth) + UAP. Includes partial
+monotonicity as a secondary result.
+
+* `UniversalApproximation.Runje.deep_monotone_approximation` — deep monotone UAP (retains UAP).
+* `UniversalApproximation.Runje.ResNet.monotone_toFun` — deep residual stack is monotone
+  (soundness).
+* `UniversalApproximation.Runje.rsDense_monotone` — R–S dense layer is monotone.
+* `UniversalApproximation.Runje.partial_monotone_approximation` — Runje et al. (forthcoming),
+  partial-monotone UAP (secondary).
+* `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al. (forthcoming), soundness
+  (secondary).
 
 The shared `ActStack` core lives in `UniversalApproximation.Monotone`.
 -/

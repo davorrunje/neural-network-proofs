@@ -13,10 +13,12 @@ import NeuralNetworkProofs.UniversalApproximation.Runje.Embedding
 /-!
 # Partial-monotone universal approximation (Runje et al.)
 
-Every jointly continuous `f : (Fin df → ℝ) → (Fin dm → ℝ) → ℝ` that is coordinatewise
-monotone in its second (monotone) block on the unit cube is uniformly approximated by a
-`PartMonoNet`: an unconstrained single-hidden-layer Leshno embedding of the non-monotone block,
-clamped and concatenated with the monotone block, fed to a monotone network.
+A secondary result of the Deep Constrained Monotonic Neural Networks development (the
+deep-residual headlines live in `Residual.lean` / `DeepMono.lean`). Every jointly continuous
+`f : (Fin df → ℝ) → (Fin dm → ℝ) → ℝ` that is coordinatewise monotone in its second (monotone)
+block on the unit cube is uniformly approximated by a `PartMonoNet`: an unconstrained
+single-hidden-layer Leshno embedding of the non-monotone block, clamped and concatenated with the
+monotone block, fed to a monotone network.
 
 The proof follows Runje et al.: with a boundedness constant `C` and a joint uniform-continuity
 modulus `δ`, choose a grid of resolution `m` with `1/m < δ`, sample `f` at the grid nodes to
@@ -25,7 +27,8 @@ build the jointly-monotone target `jointTarget g C`, apply Mikulincer–Reichman
 `exists_vector_embedding`.  A three-term triangle inequality (monotone-network error, embedding
 error, and partition-of-unity collapse) closes the bound.
 
-* `partial_monotone_approximation` — the headline.
+* `partial_monotone_approximation` — the partial-monotone UAP (secondary); subsumed by the
+  deep-core `deep_partial_monotone_approximation` in `DeepPartMono.lean`.
 -/
 
 namespace UniversalApproximation.Runje

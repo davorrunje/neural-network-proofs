@@ -9,10 +9,12 @@ import NeuralNetworkProofs.UniversalApproximation.Runje.Clamp
 /-!
 # Partial-monotone networks (Runje et al.)
 
-A `PartMonoNet` embeds the non-monotone input block through an unconstrained map `emb`,
-clamps it into `[0,1]`, concatenates it with the monotone block, and feeds the result to a
-monotone network. Soundness: the denotation is monotone in the monotone block for every fixed
-non-monotone input. UAP is proved in `Approximation.lean`.
+The shallow partial-monotone construction — a secondary result of the Deep Constrained Monotonic
+Neural Networks development. A `PartMonoNet` embeds the non-monotone input block through an
+unconstrained map `emb`, clamps it into `[0,1]`, concatenates it with the monotone block, and
+feeds the result to a monotone network. Soundness: the denotation is monotone in the monotone
+block for every fixed non-monotone input. UAP is proved in `Approximation.lean`; the deep-residual
+generalization `DeepPartMonoNet` is in `DeepPartMono.lean`.
 -/
 
 namespace UniversalApproximation.Runje
