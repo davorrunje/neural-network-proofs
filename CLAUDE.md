@@ -5,18 +5,20 @@ Guidance for working in this repository.
 ## What this is
 
 `NeuralNetworkProofs` formalizes **universal approximation theorems (UATs) for neural networks** in
-Lean 4 + Mathlib. Four developments are complete and `sorry`-free:
+Lean 4 + Mathlib. Five developments are complete and `sorry`-free:
 
 - **Cybenko (1989)** — a single-hidden-layer network with a continuous sigmoidal activation is dense
   in `C(K, ℝ)`. Headline: `UniversalApproximation.Cybenko.universal_approximation`.
 - **Leshno–Lin–Pinkus–Schocken (1993)** — an `M`-class activation densely approximates iff it is not
   (a.e.) a polynomial. Headline: `UniversalApproximation.Leshno.leshno_dense_iff`.
-- **Monotone networks** — depth-4 monotone networks are universal for monotone functions.
-  Mikulincer–Reichman (2022): threshold nets interpolate and uniformly approximate
-  (`UniversalApproximation.Monotone.monotone_interpolation`, `…monotone_approximation`). Sartor et
-  al. (2025): monotone one-sided-saturating activations — `…saturating_interpolation` (Thm 3.5,
-  ε-approximate) and `…nonpos_weight_universal` (Prop 3.11), tied together by the point-reflection /
-  weight-sign–saturation equivalence (Props 3.8 & 3.10).
+- **Mikulincer–Reichman (2022)** — depth-4 monotone threshold networks interpolate and uniformly
+  approximate any monotone function
+  (`UniversalApproximation.MikulincerReichman.monotone_interpolation`, `…monotone_approximation`),
+  on the shared activation-generic core in `UniversalApproximation.Monotone`.
+- **Sartor et al. (2025)** — monotone one-sided-saturating activations — Theorem 3.5
+  (`UniversalApproximation.Sartor.saturating_interpolation`, ε-approximate) and Prop 3.11
+  (`…nonpos_weight_universal`), tied together by the point-reflection / weight-sign–saturation
+  equivalence (Props 3.8 & 3.10).
 - **Runje (2026): partially monotone networks** — a non-monotone feature block is embedded via an
   unconstrained single-hidden-layer Leshno network, clamped, concatenated with the monotone block,
   and fed to a monotone network. Soundness (`…Runje.PartMonoNet.monotone_snd`) and the UAP headline
@@ -32,9 +34,12 @@ The Lean module-path prefix (`NeuralNetworkProofs`) is independent of the math n
 | `NeuralNetworkProofs/NeuralNetwork/` | `NeuralNetwork` | general NN infrastructure (`NeuralNetwork.Layer`, `NeuralNetwork.Network`) |
 | `NeuralNetworkProofs/UniversalApproximation/Cybenko/` + `Cybenko.lean` | `UniversalApproximation.Cybenko` | the Cybenko development |
 | `NeuralNetworkProofs/UniversalApproximation/Leshno/` + `Leshno.lean` | `UniversalApproximation.Leshno` | the Leshno development |
-| `NeuralNetworkProofs/UniversalApproximation/Monotone/` + `Monotone.lean` | `UniversalApproximation.Monotone` | the monotone-network development (Mikulincer–Reichman + Sartor et al.) |
+| `NeuralNetworkProofs/UniversalApproximation/Monotone/` + `Monotone.lean` | `UniversalApproximation.Monotone` | shared `ActStack` core (infrastructure, no headline) |
+| `NeuralNetworkProofs/UniversalApproximation/MikulincerReichman/` + `MikulincerReichman.lean` | `UniversalApproximation.MikulincerReichman` | the Mikulincer–Reichman development |
+| `NeuralNetworkProofs/UniversalApproximation/Sartor/` + `Sartor.lean` | `UniversalApproximation.Sartor` | the Sartor et al. development |
 | `NeuralNetworkProofs/UniversalApproximation/Runje/` + `Runje.lean` | `UniversalApproximation.Runje` | the Runje et al. partial-monotone development |
-| `NeuralNetworkProofs.lean` | — | root: re-exports the four UAT roots so `lake build` verifies all headlines |
+| `NeuralNetworkProofs/UniversalApproximation.lean` | `NeuralNetworkProofs.UniversalApproximation` | results aggregator (re-exports all UAT roots) |
+| `NeuralNetworkProofs.lean` | — | root: imports the `UniversalApproximation` aggregator so `lake build` verifies all headlines |
 
 ## Build and verify
 
@@ -59,8 +64,8 @@ A clean headline reports exactly `[propext, Classical.choice, Quot.sound]`. If a
 > **`#print axioms` reads the compiled `.olean`, not the source.** After moving/renaming files or
 > changing a proof, rebuild (`lake build`) before trusting `#print axioms` / `lean_verify` — a stale
 > olean reports the *old* axioms. The default target must transitively include a theorem for
-> `lake build` to check it; the root `NeuralNetworkProofs.lean` re-exports the four UAT roots for
-> exactly this reason.
+> `lake build` to check it; the root `NeuralNetworkProofs.lean` imports the `UniversalApproximation`
+> aggregator, which re-exports all six UAT roots, for exactly this reason.
 
 ### Build gotcha: serialize after large file moves
 
