@@ -3,6 +3,17 @@ name: Deploy website
 on:
   push:
     branches: [main]
+    # Only rebuild/deploy when something the site depends on changes; skip pushes
+    # that touch only unrelated docs/infra. workflow_dispatch stays for manual runs.
+    paths:
+      - 'NeuralNetworkProofs/**'
+      - 'blueprint/**'
+      - 'site/**'
+      - 'lakefile.toml'
+      - 'lake-manifest.json'
+      - 'lean-toolchain'
+      - 'scripts/setup-dev.sh'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
