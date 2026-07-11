@@ -56,7 +56,7 @@ lemma hat1_eq_zero_of_far {m k : ℕ} (hm : 1 ≤ m) {t : ℝ}
   have h1 : (1 : ℝ) ≤ m * |t - k / m| := by
     have hid : (m : ℝ) * (1 / m) = 1 := by rw [mul_one_div, div_self hmpos.ne']
     calc (1 : ℝ) = m * (1 / m) := hid.symm
-      _ ≤ m * |t - k / m| := mul_le_mul_of_nonneg_left h hmpos.le
+      _ ≤ m * |t - k / m| := by gcongr
   unfold hat1
   exact max_eq_left (by linarith)
 
@@ -76,7 +76,7 @@ lemma hat1_pos_at_round {m : ℕ} (hm : 1 ≤ m) {t : ℝ} (ht : t ∈ Set.Icc (
   obtain ⟨ht0, ht1⟩ := ht
   have hmpos : (0 : ℝ) < m := by exact_mod_cast hm
   have hmt0 : (0 : ℝ) ≤ (m : ℝ) * t := mul_nonneg hmpos.le ht0
-  set n : ℕ := ⌊(m : ℝ) * t⌋₊ with hn
+  set n : ℕ := ⌊(m : ℝ) * t⌋₊
   have hn_le : (n : ℝ) ≤ (m : ℝ) * t := Nat.floor_le hmt0
   have hn_lt : (m : ℝ) * t < n + 1 := Nat.lt_floor_add_one _
   have hnm : n ≤ m := by
@@ -139,8 +139,7 @@ lemma sum_psi_eq_one {m : ℕ} (hm : 1 ≤ m) {u : Fin df → ℝ}
   have hpos := tentDenom_pos hm hu
   unfold psi
   rw [← Finset.sum_div]
-  have hnum : (∑ k, tent m k u) = tentDenom m u := rfl
-  rw [hnum, div_self hpos.ne']
+  rw [show (∑ k, tent m k u) = tentDenom m u from rfl, div_self hpos.ne']
 
 lemma psi_le_one {m : ℕ} (hm : 1 ≤ m) (k : Fin df → Fin (m + 1)) {u : Fin df → ℝ}
     (hu : u ∈ Set.Icc (0 : Fin df → ℝ) 1) : psi m k u ≤ 1 :=
