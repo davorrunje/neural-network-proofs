@@ -1,0 +1,71 @@
+\chapter{Monotone networks --- Mikulincer--Reichman}
+
+\section{The threshold-network model (Mikulincer--Reichman)}
+
+\begin{definition}[Heaviside gate]\label{def:heaviside}
+  \lean{UniversalApproximation.Monotone.heaviside}\leanok
+  $\mathrm{heaviside}(z)=1$ if $z\ge 0$ and $0$ otherwise.
+\end{definition}
+
+\begin{definition}[Activation stack]\label{def:actstack}
+  \lean{UniversalApproximation.Monotone.ActStack}\leanok
+  \uses{def:heaviside}
+  An \texttt{ActStack} is an inductively-built chain of affine layers, each followed by a
+  one-dimensional activation.
+\end{definition}
+
+\begin{definition}[Monotone network]\label{def:mononet}
+  \lean{UniversalApproximation.Monotone.MonoNet}\leanok
+  \uses{def:actstack}
+  A \texttt{MonoNet} is an activation stack together with an affine read-out (weights
+  \texttt{readW} and bias \texttt{readBias}).
+\end{definition}
+
+\begin{definition}[Domination gadget]\label{def:domination}
+  \lean{UniversalApproximation.MikulincerReichman.dominationStack}\leanok
+  \uses{def:actstack, def:heaviside}
+  A two-layer threshold gadget whose output is the indicator $\indicator(x\ge x_j)$ of
+  coordinatewise domination of a fixed point $x_j$.
+\end{definition}
+
+\begin{theorem}[Monotone interpolation, M--R Result 1]\label{thm:mono-interp}
+  \lean{UniversalApproximation.MikulincerReichman.monotone_interpolation}\leanok
+  \uses{def:mononet, def:heaviside, def:domination}
+  For injective points $x$ and targets $y$ monotone along the coordinatewise order, some monotone
+  depth-4 \texttt{MonoNet} agrees with $y$ on every $x_i$ exactly.
+\end{theorem}
+\begin{verbatim}
+theorem monotone_interpolation (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
+    (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x) :
+    ∃ N : MonoNet d, N.IsMonotone ∧ N.depth = 4 ∧ ∀ i, N.toFun (x i) = y i
+\end{verbatim}
+\begin{proof}\leanok
+  \uses{def:domination}
+  The hidden layers compute, for each index $j$, the domination indicator
+  $\indicator(x\ge x_j)$ via the two-layer gadget (\cref{def:domination}). Monotonicity of $y$
+  along the order lets the read-out take a non-negative combination of these indicators that
+  reproduces $y$ exactly on the injective points. The exact ($\varepsilon=0$) engine gives level
+  sets on the nose, so the read-out is exact and the whole net is monotone of depth 4.
+\end{proof}
+
+\begin{theorem}[Monotone approximation, M--R Result 1]\label{thm:mono-approx}
+  \lean{UniversalApproximation.MikulincerReichman.monotone_approximation}\leanok
+  \uses{thm:mono-interp}
+  Every continuous monotone $f$ on the unit cube is uniformly $\varepsilon$-approximated by a
+  monotone depth-4 \texttt{MonoNet}.
+\end{theorem}
+\begin{verbatim}
+theorem monotone_approximation {d : ℕ} (f : (Fin d → ℝ) → ℝ)
+    (hf : ContinuousOn f (Set.Icc 0 1))
+    (hmono : ∀ ⦃a b⦄, a ∈ Set.Icc (0 : Fin d → ℝ) 1 →
+      b ∈ Set.Icc (0 : Fin d → ℝ) 1 → a ≤ b → f a ≤ f b)
+    {ε : ℝ} (hε : 0 < ε) :
+    ∃ N : MonoNet d, N.IsMonotone ∧ N.depth = 4 ∧
+      ∀ x ∈ Set.Icc (0 : Fin d → ℝ) 1, |N.toFun x - f x| ≤ ε
+\end{verbatim}
+\begin{proof}\leanok
+  \uses{thm:mono-interp}
+  Sample $f$ on a fine grid of the cube and interpolate the grid values exactly with
+  \cref{thm:mono-interp}. Uniform continuity of $f$ bounds the gap between grid nodes by
+  $\varepsilon$; the interpolant is monotone of depth 4.
+\end{proof}

@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Saturating
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Equivalence
-import NeuralNetworkProofs.UniversalApproximation.Monotone.SaturatingInterp
+import NeuralNetworkProofs.UniversalApproximation.Sartor.Saturating
+import NeuralNetworkProofs.UniversalApproximation.Sartor.Equivalence
+import NeuralNetworkProofs.UniversalApproximation.Sartor.SaturatingInterp
 
 /-!
 # Non-positive-weight monotone networks (Proposition 3.11, `𝒮⁺` case)
@@ -29,14 +29,16 @@ into the read-out weights, so the new net `Nneg` has denotation identical to `Np
 * `nonpos_weight_universal` — Proposition 3.11 (`𝒮⁺` case).
 -/
 
-namespace UniversalApproximation.Monotone
+namespace UniversalApproximation.Sartor
 
+open UniversalApproximation.Monotone
 open NeuralNetwork
 
 open scoped BigOperators
 
 /-- All layers of a stack have non-positive weights (dual of `ActStack.WeightsNonneg`). -/
-def ActStack.WeightsNonpos : {a b : ℕ} → ActStack a b → Prop
+def _root_.UniversalApproximation.Monotone.ActStack.WeightsNonpos :
+    {a b : ℕ} → ActStack a b → Prop
   | _, _, .nil _ => True
   | _, _, .cons L _ rest => (∀ i j, L.W i j ≤ 0) ∧ rest.WeightsNonpos
 
@@ -148,4 +150,4 @@ theorem nonpos_weight_universal {d n : ℕ} (x : Fin n → (Fin d → ℝ)) (y :
         rw [hNtoFun (x i)]; rfl
       rw [heq]; exact hposEps i
 
-end UniversalApproximation.Monotone
+end UniversalApproximation.Sartor

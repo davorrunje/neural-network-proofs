@@ -12,7 +12,8 @@ Code CLI are provisioned automatically). You can also set up a local machine dir
 ## Formalized results: `NeuralNetworkProofs`
 
 `NeuralNetworkProofs` formalizes universal approximation theorems for neural networks, all
-`sorry`-free. Four developments are complete:
+`sorry`-free. Five developments are complete, all re-exported by the single aggregator import
+`NeuralNetworkProofs.UniversalApproximation`:
 
 - **Cybenko (1989)** — a single-hidden-layer network with a continuous sigmoidal activation is dense
   in `C(K, ℝ)`.
@@ -20,17 +21,17 @@ Code CLI are provisioned automatically). You can also set up a local machine dir
 - **Leshno–Lin–Pinkus–Schocken (1993)** — an `M`-class activation densely approximates iff it is not
   (a.e.) a polynomial.
   Headline: `UniversalApproximation.Leshno.leshno_dense_iff`.
-- **Monotone networks** — universal approximation under monotonicity constraints, on a shared
-  activation-generic core:
-  - *Mikulincer–Reichman (2022):* a depth-4 monotone threshold network exactly interpolates, and
-    uniformly approximates, any monotone function.
-    Headlines: `…Monotone.monotone_interpolation`, `…Monotone.monotone_approximation`.
-  - *Sartor et al. (2025):* monotone networks with **one-sided-saturating** activations — a finite
-    limit on just *one* side (Def 3.3), which crucially admits **unbounded** activations such as
-    ReLU (the paper's *"beyond bounded activations"*: saturating on one side is enough, boundedness
-    is not required). Results: Theorem 3.5 (`…Monotone.saturating_interpolation`), the
-    point-reflection / weight-sign equivalence (Props 3.8 & 3.10), and non-positive-weight
-    universality (Prop 3.11, `…Monotone.nonpos_weight_universal`).
+- **Mikulincer–Reichman (2022)** — a depth-4 monotone threshold network exactly interpolates, and
+  uniformly approximates, any monotone function, on the shared activation-generic core under
+  `UniversalApproximation.Monotone`.
+  Headlines: `…MikulincerReichman.monotone_interpolation`,
+  `…MikulincerReichman.monotone_approximation`.
+- **Sartor et al. (2025)** — monotone networks with **one-sided-saturating** activations — a finite
+  limit on just *one* side (Def 3.3), which crucially admits **unbounded** activations such as ReLU
+  (the paper's *"beyond bounded activations"*: saturating on one side is enough, boundedness is not
+  required). Results: Theorem 3.5 (`…Sartor.saturating_interpolation`), the point-reflection /
+  weight-sign equivalence (Props 3.8 & 3.10), and non-positive-weight universality (Prop 3.11,
+  `…Sartor.nonpos_weight_universal`).
 - **Runje et al. (2026)** — universal approximation for **partially monotone** networks: a
   non-monotone feature block is embedded by an unconstrained single-hidden-layer network (Leshno
   UAP), clamped into `[0,1]`, concatenated with the monotone block, and fed to a monotone network
@@ -103,9 +104,11 @@ succeeds and you can rerun the script by hand.
 - **`lakefile.toml`** / **`lake-manifest.json`** — the Lake package definition
   and its pinned dependency revisions.
 - **`NeuralNetworkProofs/`** — the formalization library (the *Formalized results* above).
-  `NeuralNetworkProofs.lean` is the root module and re-exports every development, so a plain
-  `lake build` verifies all headlines. Mathlib-upstream candidates live under
-  `NeuralNetworkProofs/ForMathlib/`.
+  `NeuralNetworkProofs.lean` is the root module and imports the results aggregator
+  `NeuralNetworkProofs/UniversalApproximation.lean`, which re-exports every development, so a plain
+  `lake build` verifies all headlines. The shared `ActStack` core lives under
+  `UniversalApproximation.Monotone` (infrastructure, no headline). Mathlib-upstream candidates live
+  under `NeuralNetworkProofs/ForMathlib/`.
 - **`scripts/check_sorry_free.lean`** — the correctness gate (see below).
 - **`CLAUDE.md`** — contributor guide (layout, conventions, build/verify workflow).
 

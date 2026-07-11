@@ -5,8 +5,8 @@ Authors: Davor Runje
 -/
 import Mathlib.Tactic
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Indicator
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Basic
+import NeuralNetworkProofs.UniversalApproximation.MikulincerReichman.Indicator
 
 /-!
 # Monotone interpolation (Theorem 1)
@@ -33,8 +33,9 @@ the exact (`ε = 0`) domination indicators consumed by the level-set layer.
   level-set vector is `𝟙(i ≤ j)` on the nose (`η = 0`) and the read-out is exact.
 -/
 
-namespace UniversalApproximation.Monotone
+namespace UniversalApproximation.MikulincerReichman
 
+open UniversalApproximation.Monotone
 open scoped BigOperators
 
 section Reindex
@@ -347,4 +348,4 @@ theorem monotone_interpolation (x : Fin n → (Fin d → ℝ)) (y : Fin n → �
 
 end Main
 
-end UniversalApproximation.Monotone
+end UniversalApproximation.MikulincerReichman

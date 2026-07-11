@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 import Mathlib.Tactic
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Approximation
+import NeuralNetworkProofs.UniversalApproximation.MikulincerReichman.Approximation
 import NeuralNetworkProofs.UniversalApproximation.Runje.Defs
 import NeuralNetworkProofs.UniversalApproximation.Runje.PartitionOfUnity
 import NeuralNetworkProofs.UniversalApproximation.Runje.JointTarget
@@ -30,7 +30,8 @@ error, and partition-of-unity collapse) closes the bound.
 
 namespace UniversalApproximation.Runje
 
-open UniversalApproximation.Monotone UniversalApproximation.Leshno
+open UniversalApproximation.Monotone UniversalApproximation.MikulincerReichman
+  UniversalApproximation.Leshno
 
 /-- Appending two cube points gives a cube point of the concatenated dimension. -/
 private lemma append_mem_cube {N dm : ℕ} {z : Fin N → ℝ} {x : Fin dm → ℝ}

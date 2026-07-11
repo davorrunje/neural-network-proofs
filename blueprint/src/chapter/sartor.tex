@@ -1,93 +1,23 @@
-\chapter{Monotone networks: universality for monotone functions}
-
-\section{The threshold-network model (Mikulincer--Reichman)}
-
-\begin{definition}[Heaviside gate]\label{def:heaviside}
-  \lean{UniversalApproximation.Monotone.heaviside}\leanok
-  $\mathrm{heaviside}(z)=1$ if $z\ge 0$ and $0$ otherwise.
-\end{definition}
-
-\begin{definition}[Activation stack]\label{def:actstack}
-  \lean{UniversalApproximation.Monotone.ActStack}\leanok
-  \uses{def:heaviside}
-  An \texttt{ActStack} is an inductively-built chain of affine layers, each followed by a
-  one-dimensional activation.
-\end{definition}
-
-\begin{definition}[Monotone network]\label{def:mononet}
-  \lean{UniversalApproximation.Monotone.MonoNet}\leanok
-  \uses{def:actstack}
-  A \texttt{MonoNet} is an activation stack together with an affine read-out (weights
-  \texttt{readW} and bias \texttt{readBias}).
-\end{definition}
-
-\begin{definition}[Domination gadget]\label{def:domination}
-  \lean{UniversalApproximation.Monotone.dominationStack}\leanok
-  \uses{def:actstack, def:heaviside}
-  A two-layer threshold gadget whose output is the indicator $\indicator(x\ge x_j)$ of
-  coordinatewise domination of a fixed point $x_j$.
-\end{definition}
-
-\begin{theorem}[Monotone interpolation, M--R Result 1]\label{thm:mono-interp}
-  \lean{UniversalApproximation.Monotone.monotone_interpolation}\leanok
-  \uses{def:mononet, def:heaviside, def:domination}
-  For injective points $x$ and targets $y$ monotone along the coordinatewise order, some monotone
-  depth-4 \texttt{MonoNet} agrees with $y$ on every $x_i$ exactly.
-\end{theorem}
-\begin{verbatim}
-theorem monotone_interpolation (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
-    (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x) :
-    ∃ N : MonoNet d, N.IsMonotone ∧ N.depth = 4 ∧ ∀ i, N.toFun (x i) = y i
-\end{verbatim}
-\begin{proof}\leanok
-  \uses{def:domination}
-  The hidden layers compute, for each index $j$, the domination indicator
-  $\indicator(x\ge x_j)$ via the two-layer gadget (\cref{def:domination}). Monotonicity of $y$
-  along the order lets the read-out take a non-negative combination of these indicators that
-  reproduces $y$ exactly on the injective points. The exact ($\varepsilon=0$) engine gives level
-  sets on the nose, so the read-out is exact and the whole net is monotone of depth 4.
-\end{proof}
-
-\begin{theorem}[Monotone approximation, M--R Result 1]\label{thm:mono-approx}
-  \lean{UniversalApproximation.Monotone.monotone_approximation}\leanok
-  \uses{thm:mono-interp}
-  Every continuous monotone $f$ on the unit cube is uniformly $\varepsilon$-approximated by a
-  monotone depth-4 \texttt{MonoNet}.
-\end{theorem}
-\begin{verbatim}
-theorem monotone_approximation {d : ℕ} (f : (Fin d → ℝ) → ℝ)
-    (hf : ContinuousOn f (Set.Icc 0 1))
-    (hmono : ∀ ⦃a b⦄, a ∈ Set.Icc (0 : Fin d → ℝ) 1 →
-      b ∈ Set.Icc (0 : Fin d → ℝ) 1 → a ≤ b → f a ≤ f b)
-    {ε : ℝ} (hε : 0 < ε) :
-    ∃ N : MonoNet d, N.IsMonotone ∧ N.depth = 4 ∧
-      ∀ x ∈ Set.Icc (0 : Fin d → ℝ) 1, |N.toFun x - f x| ≤ ε
-\end{verbatim}
-\begin{proof}\leanok
-  \uses{thm:mono-interp}
-  Sample $f$ on a fine grid of the cube and interpolate the grid values exactly with
-  \cref{thm:mono-interp}. Uniform continuity of $f$ bounds the gap between grid nodes by
-  $\varepsilon$; the interpolant is monotone of depth 4.
-\end{proof}
+\chapter{Monotone networks --- Sartor et al.}
 
 \section{Beyond thresholds: saturating activations (Sartor et al.\ 2025)}
 
 \begin{definition}[One-sided saturation, Def 3.3]\label{def:saturating}
-  \lean{UniversalApproximation.Monotone.RightSaturating}
-  \lean{UniversalApproximation.Monotone.LeftSaturating}\leanok
+  \lean{UniversalApproximation.Sartor.RightSaturating}
+  \lean{UniversalApproximation.Sartor.LeftSaturating}\leanok
   $\sigma$ is \emph{right-saturating} ($\mathcal{S}^+$) if it has a finite limit at $+\infty$, and
   \emph{left-saturating} ($\mathcal{S}^-$) if it has a finite limit at $-\infty$. This admits
   unbounded activations such as ReLU on one side.
 \end{definition}
 
 \begin{definition}[Point reflection, Prop 3.8]\label{def:reflect}
-  \lean{UniversalApproximation.Monotone.reflect}\leanok
+  \lean{UniversalApproximation.Sartor.reflect}\leanok
   $\mathrm{reflect}(\sigma)(x) = -\sigma(-x)$. It is an involution, preserves monotonicity, and
   swaps the two saturation sides.
 \end{definition}
 
 \begin{lemma}[Saturation gain estimate, Lemma 3.6]\label{lem:sat-scaled}
-  \lean{UniversalApproximation.Monotone.rightSaturating_scaled_approx}\leanok
+  \lean{UniversalApproximation.Sartor.rightSaturating_scaled_approx}\leanok
   \uses{def:saturating}
   For a right-saturating $\sigma$ with limit $L$, and any $\varepsilon,m>0$, there is a gain
   $\Lambda$ so that for all $\lambda\ge\Lambda$ and $t\ge m$, $|\sigma(\lambda t)-L|\le\varepsilon$.
@@ -98,7 +28,7 @@ theorem monotone_approximation {d : ℕ} (f : (Fin d → ℝ) → ℝ)
 \end{proof}
 
 \begin{lemma}[Interior continuity, approx value]\label{lem:approx-interior}
-  \lean{UniversalApproximation.Monotone.approx_interior_value}\leanok
+  \lean{UniversalApproximation.Sartor.approx_interior_value}\leanok
   If $\sigma$ is continuous at $b$, then for any $\varepsilon>0$ there is $\delta>0$ with
   $|\sigma(t)-\sigma(b)|\le\varepsilon$ whenever $|t-b|\le\delta$.
 \end{lemma}
@@ -107,7 +37,7 @@ theorem monotone_approximation {d : ℕ} (f : (Fin d → ℝ) → ℝ)
 \end{proof}
 
 \begin{proposition}[Weight-sign / saturation, Prop 3.10]\label{prop:sign-sat}
-  \lean{UniversalApproximation.Monotone.prop_3_10_two_layer}\leanok
+  \lean{UniversalApproximation.Sartor.prop_3_10_two_layer}\leanok
   \uses{def:reflect}
   Negating a layer's input and using the reflected activation $\mathrm{reflect}(\sigma)$ equals
   negating the next layer's weights and using $\sigma$: the weight-sign flip is absorbed by point
@@ -120,7 +50,7 @@ theorem monotone_approximation {d : ℕ} (f : (Fin d → ℝ) → ℝ)
 \end{proof}
 
 \begin{theorem}[Saturating interpolation, Sartor Thm 3.5]\label{thm:sat-interp}
-  \lean{UniversalApproximation.Monotone.saturating_interpolation}\leanok
+  \lean{UniversalApproximation.Sartor.saturating_interpolation}\leanok
   \uses{def:mononet, def:saturating, lem:sat-scaled, lem:approx-interior}
   For alternating monotone one-sided-saturating activations
   $[\sigma_1,\sigma_2,\sigma_3]=[\mathcal{S}^-,\mathcal{S}^+,\mathcal{S}^-]$, each non-constant,
@@ -152,7 +82,7 @@ theorem saturating_interpolation {d n : ℕ} (x : Fin n → (Fin d → ℝ))
 \end{proof}
 
 \begin{proposition}[Non-positive weights, Prop 3.11]\label{prop:nonpos}
-  \lean{UniversalApproximation.Monotone.nonpos_weight_universal}\leanok
+  \lean{UniversalApproximation.Sartor.nonpos_weight_universal}\leanok
   \uses{thm:sat-interp, def:reflect, prop:sign-sat}
   For a monotone, non-constant, right-saturating $\sigma$, any monotone dataset is
   $\varepsilon$-interpolated by a depth-4 network with all non-positive weights and the single

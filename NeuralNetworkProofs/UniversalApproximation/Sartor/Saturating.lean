@@ -26,7 +26,7 @@ right-saturating, and dually.
 * `reflect_rightSaturating` / `reflect_leftSaturating` — `reflect` swaps the saturation side.
 -/
 
-namespace UniversalApproximation.Monotone
+namespace UniversalApproximation.Sartor
 
 open Filter Topology
 
@@ -330,4 +330,4 @@ theorem approx_interior_value {σ : ℝ → ℝ} {b : ℝ} (hcont : ContinuousAt
   rw [Real.dist_eq] at hdist_out
   exact le_of_lt hdist_out
 
-end UniversalApproximation.Monotone
+end UniversalApproximation.Sartor
