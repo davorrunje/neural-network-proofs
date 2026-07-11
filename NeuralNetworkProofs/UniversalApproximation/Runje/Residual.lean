@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 import Mathlib.Analysis.SpecialFunctions.Exp
+import Mathlib.Data.Matrix.Mul
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 
 /-!

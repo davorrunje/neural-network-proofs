@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 import NeuralNetworkProofs.UniversalApproximation.Leshno.Family
-import NeuralNetworkProofs.UniversalApproximation.Leshno.Theorem
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Topology.ContinuousMap.Compact
 import Mathlib.LinearAlgebra.Finsupp.LinearCombination

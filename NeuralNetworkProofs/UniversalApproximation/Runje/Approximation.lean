@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 import Mathlib.Tactic
+import NeuralNetworkProofs.UniversalApproximation.Leshno.Theorem
 import NeuralNetworkProofs.UniversalApproximation.MikulincerReichman.Approximation
 import NeuralNetworkProofs.UniversalApproximation.Runje.Defs
 import NeuralNetworkProofs.UniversalApproximation.Runje.PartitionOfUnity

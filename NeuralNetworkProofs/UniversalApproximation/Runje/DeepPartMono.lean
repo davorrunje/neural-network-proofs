@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 import NeuralNetworkProofs.UniversalApproximation.Runje.DeepMono
+import NeuralNetworkProofs.UniversalApproximation.Runje.Defs
+import NeuralNetworkProofs.UniversalApproximation.Runje.Embedding
 import NeuralNetworkProofs.UniversalApproximation.Runje.Approximation
 
 /-!
