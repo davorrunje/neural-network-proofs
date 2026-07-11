@@ -32,9 +32,9 @@ monotonicity as a secondary result.
 * `UniversalApproximation.Runje.ResNet.monotone_toFun` — deep residual stack is monotone
   (soundness).
 * `UniversalApproximation.Runje.rsDense_monotone` — R–S dense layer is monotone.
-* `UniversalApproximation.Runje.partial_monotone_approximation` — Runje et al. (2026),
+* `UniversalApproximation.Runje.partial_monotone_approximation` — Runje et al. (forthcoming),
   partial-monotone UAP (secondary).
-* `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al. (2026), soundness
+* `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al. (forthcoming), soundness
   (secondary).
 
 The shared `ActStack` core lives in `UniversalApproximation.Monotone`.
