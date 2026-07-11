@@ -2,11 +2,18 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Formalize, sorry-free, skip-connections for deep monotone networks in
+**Goal:** Formalize, sorry-free, skip-connections for deep constrained monotone networks in
 `UniversalApproximation.Runje`: the Runje–Shankaranarayana dense layer as a monotone map, an
 abstract residual combinator (+ concrete `mononet` instances), any-depth soundness of a residual
 stack, deep UAP by exact subsumption of the shallow depth-4 net, and the deep-core PartMonoNet
-integration.
+integration — **and** reframe all Runje documentation (docstrings, README, CLAUDE.md, blueprint) to
+present this as the centerpiece of the development.
+
+**Framing (see spec §1 / the `runje-development-framing` memory):** `UniversalApproximation.Runje`
+is Runje et al., **"Deep Constrained Monotonic Neural Networks"** (forthcoming), extending
+Runje–Shankaranarayana 2023. This deep-skip work is the paper's **main** result (soundness + UAP);
+partial monotonicity is *secondary*. Existing docs mis-cast Runje as "the partial-monotone
+development" — correcting that is part of this PR (Tasks 5–6).
 
 **Architecture:** Reuse the existing monotone abstraction (`Monotone.Layer`/`ActStack`/`MonoNet`,
 `Sartor.reflect`, `MikulincerReichman.monotone_approximation`, `Runje.partial_monotone_approximation`).
@@ -562,17 +569,35 @@ git commit -m "feat(runje): DeepPartMonoNet soundness + deep-core partial-monoto
 
 ---
 
-### Task 5: Wire into re-export, aggregator, root docstring, and gate
+### Task 5: Wire in + reframe prose documentation
+
+Reframe every prose description of the Runje development to lead with **deep constrained monotone
+networks via skip connections** (soundness + UAP), with partial monotonicity as *secondary* — the
+existing docs mis-cast Runje as "the partial-monotone development." (The leanblueprint chapter is
+Task 6.)
 
 **Files:**
-- Modify: `NeuralNetworkProofs/UniversalApproximation/Runje.lean`
-- Modify: `NeuralNetworkProofs/UniversalApproximation.lean` (aggregator)
-- Modify: `NeuralNetworkProofs.lean`
+- Modify: `NeuralNetworkProofs/UniversalApproximation/Runje.lean` (imports + reframed docstring)
+- Modify: `NeuralNetworkProofs/UniversalApproximation.lean` (aggregator docstring: reframe + bullets)
+- Modify: `NeuralNetworkProofs.lean` (root docstring: reframe + bullets)
 - Modify: `scripts/check_sorry_free.lean`
+- Modify: `README.md` (reframe the Runje developments entry)
+- Modify: `CLAUDE.md` ("What this is" Runje bullet + layout-table description)
+- Modify (docstrings only, no proof changes): `Runje/Clamp.lean`, `Runje/Defs.lean`,
+  `Runje/Approximation.lean`, `Runje/Embedding.lean`, `Runje/PartitionOfUnity.lean`,
+  `Runje/JointTarget.lean` — wherever the module doc calls the development "partial-monotone" as if
+  it were the headline, reframe (partial monotonicity is one part of the deep-constrained-monotonic
+  development).
 
 **Interfaces:**
-- Consumes: all four new Runje modules.
-- Produces: the new headlines reachable by the default `lake build` and checked by the gate.
+- Consumes: all four new Runje modules (Tasks 1–4).
+- Produces: the new headlines reachable by the default `lake build` and checked by the gate; a
+  consistent "Deep Constrained Monotonic Neural Networks" framing across all Runje prose.
+
+**Reframing wording (reuse consistently):** *"`UniversalApproximation.Runje` — Runje et al., Deep
+Constrained Monotonic Neural Networks (forthcoming; extends Runje–Shankaranarayana 2023). Skip
+connections make deep constrained monotone networks trainable; formalized soundness (monotone at
+any depth) + UAP. Includes partial monotonicity as a secondary result."*
 
 - [ ] **Step 1: Extend the Runje re-export root.**
 
@@ -594,11 +619,14 @@ Extend its module docstring's headline list with:
 * `UniversalApproximation.Runje.deep_partial_monotone_approximation` — deep-core partial UAP.
 ```
 
-- [ ] **Step 2: Update the aggregator + top root docstrings.**
+- [ ] **Step 2: Reframe + extend the aggregator + top root docstrings.**
 
-In `NeuralNetworkProofs/UniversalApproximation.lean` and `NeuralNetworkProofs.lean`, add the five
-new headline bullets above to the Runje section of each module docstring (no import changes needed —
-they already import `…Runje` / the aggregator transitively).
+In `NeuralNetworkProofs/UniversalApproximation.lean` and `NeuralNetworkProofs.lean`, (a) reframe the
+Runje entry to the "Deep Constrained Monotonic Neural Networks" wording above, and (b) add the five
+new headline bullets to the Runje section, listing the deep-monotone headlines
+(`deep_monotone_approximation`, `ResNet.monotone_toFun`, `rsDense_monotone`) *first* and
+`partial_monotone_approximation` / `PartMonoNet.monotone_snd` as secondary. No import changes needed
+(they already import `…Runje` / the aggregator transitively).
 
 - [ ] **Step 3: Extend the sorry-free gate.**
 
@@ -612,7 +640,21 @@ In `scripts/check_sorry_free.lean` (which already `open`s `UniversalApproximatio
 #print axioms deep_partial_monotone_approximation
 ```
 
-- [ ] **Step 4: Full build + gate + commit.**
+- [ ] **Step 4: Reframe `README.md`, `CLAUDE.md`, and existing Runje docstrings.**
+
+Read each file first; edit prose only; do not churn unrelated lines.
+- `README.md`: change the Runje developments entry from a partial-monotone headline to the
+  reframing wording (deep constrained monotone networks via skip connections; soundness + UAP;
+  partial monotonicity secondary).
+- `CLAUDE.md`: update the Runje bullet in "What this is" and the `Runje/` layout-table description
+  to the same framing.
+- Existing Runje module docstrings (`Runje/Clamp.lean`, `Defs.lean`, `Approximation.lean`,
+  `Embedding.lean`, `PartitionOfUnity.lean`, `JointTarget.lean`): where a module doc frames the
+  development as "partial-monotone" as if that were the headline, adjust so partial monotonicity
+  reads as one part of the deep-constrained-monotonic development. **Docstrings/comments only — no
+  code, statement, or proof changes** (the sorry-free axioms must be unchanged).
+
+- [ ] **Step 5: Full build + gate + commit.**
 
 Run:
 ```bash
@@ -625,10 +667,91 @@ EMFILE, build the new Runje modules serially (RunjeShankaranarayana → Residual
 DeepPartMono → Runje → UniversalApproximation → NeuralNetworkProofs) then rerun `lake build`.
 
 ```bash
-git add NeuralNetworkProofs/UniversalApproximation/Runje.lean \
-  NeuralNetworkProofs/UniversalApproximation.lean NeuralNetworkProofs.lean \
-  scripts/check_sorry_free.lean
-git commit -m "feat(runje): wire deep-residual monotone headlines into build + gate"
+git add -A
+git commit -m "feat(runje): wire deep-residual headlines + reframe Runje as deep constrained monotone nets"
+```
+
+---
+
+### Task 6: Reframe + extend the leanblueprint Runje chapter
+
+**Files:**
+- Modify: `blueprint/src/chapter/runje.tex`
+
+**Interfaces:**
+- Consumes: the renamed/added Runje declarations (Tasks 1–4) for `\lean{}` refs.
+- Produces: a Runje chapter that leads with the deep-constrained-monotone results and passes
+  `checkdecls`.
+
+- [ ] **Step 1: Reframe the chapter + add the deep-residual nodes.**
+
+Rewrite `blueprint/src/chapter/runje.tex` so it presents the development as **"Deep Constrained
+Monotonic Neural Networks"** (extends R–S 2023; skip connections → trainable deep monotone nets;
+soundness + UAP), with the existing partial-monotone material as a *secondary* section. Add
+environments (each `\lean{}` verified in Step 2) for the new results, e.g.:
+
+```tex
+\chapter{Deep constrained monotonic networks --- Runje et al.}
+
+\section{Constrained monotone dense layers}
+\begin{lemma}[R--S dense layer is monotone]\label{lem:rs-dense}
+  \lean{UniversalApproximation.Runje.rsDense_monotone}\leanok
+  \uses{def:mononet}
+  The Runje--Shankaranarayana absolute-mode dense layer (nonneg weights $|W|$, convex neurons with
+  $\rho$ and concave neurons with $\mathrm{reflect}\,\rho$) is monotone.
+\end{lemma}
+
+\section{Skip connections and deep monotone networks}
+\begin{definition}[Residual block]\label{def:residual}
+  \lean{UniversalApproximation.Runje.residual}\leanok
+  $x \mapsto g_\alpha\,\mathrm{skip}(x) + g_\beta\,F(x)$, gates $g_\alpha,g_\beta \ge 0$.
+\end{definition}
+\begin{theorem}[Deep soundness: any-depth residual stack is monotone]\label{thm:resnet-mono}
+  \lean{UniversalApproximation.Runje.ResNet.monotone_toFun}\leanok
+  \uses{def:residual}
+  A composition of monotone residual blocks (a \texttt{ResNet}) of any depth is monotone.
+\end{theorem}
+\begin{theorem}[Deep monotone UAP (retains UAP)]\label{thm:deep-mono-uap}
+  \lean{UniversalApproximation.Runje.deep_monotone_approximation}\leanok
+  \uses{thm:resnet-mono, thm:mono-approx}
+  Every continuous monotone $f$ on the cube is uniformly $\varepsilon$-approximated by a monotone
+  \texttt{DeepMonoNet}; the witness is a single residual block over the depth-4 core, so no depth
+  beyond 4 is needed to retain UAP.
+\end{theorem}
+
+\section{Partial monotonicity (secondary)}
+% keep the existing partial-monotone definitions/theorems here, re-titled as a secondary section:
+% def:genspanpi, def:partmononet, thm:runje-sound, lem:leshno-bridge, thm:runje-uap,
+% plus the deep-core variant:
+\begin{theorem}[Deep-core partial-monotone UAP]\label{thm:deep-part-uap}
+  \lean{UniversalApproximation.Runje.deep_partial_monotone_approximation}\leanok
+  \uses{thm:deep-mono-uap, def:partmononet}
+  The partial-monotone architecture with a deep-residual monotone core retains partial UAP.
+\end{theorem}
+```
+
+Preserve the existing partial-monotone environments (`def:genspanpi`, `def:partmononet`,
+`thm:runje-sound`, `lem:leshno-bridge`, `thm:runje-uap`) — just move them under the "secondary"
+section and keep their `\lean`/`\uses`. `def:mononet`, `thm:mono-approx`, `thm:leshno-dense` are
+cross-chapter labels defined in the Mikulincer–Reichman / Leshno chapters.
+
+- [ ] **Step 2: Verify (blueprint build + checkdecls).**
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"    # leanblueprint installed via scripts/setup-dev.sh
+leanblueprint web
+lake exe checkdecls blueprint/lean_decls
+```
+Expected: `leanblueprint web` succeeds; `checkdecls` exit 0 (every `\lean{}` ref — including the new
+`rsDense_monotone`, `residual`, `ResNet.monotone_toFun`, `deep_monotone_approximation`,
+`deep_partial_monotone_approximation` — resolves). If `leanblueprint` is unavailable, fall back to
+`#check @UniversalApproximation.Runje.<name>` for each new ref and note CI will run the full build.
+
+- [ ] **Step 3: Commit.**
+
+```bash
+git add blueprint/src/chapter/runje.tex
+git commit -m "docs(blueprint): reframe Runje chapter as deep constrained monotone nets + add results"
 ```
 
 ---
@@ -642,9 +765,11 @@ git commit -m "feat(runje): wire deep-residual monotone headlines into build + g
 - §8 `DeepMonoNet` + `MonoNet.toDeep` (exact) + single-block witness + `deep_monotone_approximation`
   → Task 3. ✓
 - §9 `DeepPartMonoNet` soundness + `deep_partial_monotone_approximation` → Task 4. ✓
-- §10 wiring + gate → Task 5. ✓
-- §11 non-goals (no blueprint chapter, no trainability claim, no heavy depth arithmetic, no re-derived
-  R–S UAP) → respected: no task adds those. ✓
+- §10 wiring + gate → Task 5 (Steps 1–3, 5). ✓
+- §11 in-scope docs reframing (module docstrings + `README`/`CLAUDE` + aggregator/root) → Task 5
+  (Steps 2, 4); blueprint Runje chapter reframe + extend + `checkdecls` → Task 6. ✓
+- §11 non-goals (no trainability claim, no heavy depth arithmetic, no re-derived R–S UAP) →
+  respected: no task adds those. ✓
 
 **Placeholder scan:** Definitions/statements are given in full; each `sorry` in a code block is
 scaffolding discharged by that step's proof strategy (named Mathlib lemmas), and **no task commits

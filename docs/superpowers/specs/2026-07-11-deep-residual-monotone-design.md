@@ -6,8 +6,16 @@
 
 ## 1. Goal
 
-Extend the Runje development with **skip connections** enabling **deep monotone networks**, and
-formalize:
+**Framing (see the `runje-development-framing` note).** `UniversalApproximation.Runje` is Runje et
+al., **"Deep Constrained Monotonic Neural Networks"** (forthcoming), extending Runje–Shankaranarayana
+2023 ("Constrained Monotonic Neural Networks", ICML 2023). The paper's **main contribution is this
+work**: skip connections that make **deep constrained monotone networks** trainable, with soundness
++ UAP. Partial monotonicity (`partial_monotone_approximation`, already formalized) is a *secondary*
+result. So this deliverable is the **centerpiece** of the Runje development, and part of it is to
+**correct the existing documentation**, which mis-casts Runje as "the partial-monotone development."
+
+This deliverable adds **skip connections** enabling **deep constrained monotone networks**, and
+formalizes:
 
 - **Soundness** — a residual block, and a stack of them of *any depth*, is monotone; hence deep
   monotone networks are monotone, and (integrated) deep partial-monotone networks are monotone in
@@ -259,8 +267,15 @@ docstring updated to list the new headlines.
 - **In scope:** §5–§9 (R–S monotone instance; residual combinator + concrete instances; deep stack
   + soundness; deep UAP by subsumption with a single-block structural witness; PartMonoNet
   integration).
+- **In scope — documentation reframing (this PR).** Correct the framing of the Runje development
+  everywhere to lead with *deep constrained monotone networks via skip connections* (soundness +
+  UAP), with partial monotonicity as secondary: the module docstrings of the existing and new Runje
+  files, the `Runje.lean` re-export + `UniversalApproximation` aggregator + `NeuralNetworkProofs.lean`
+  docstrings, `README.md`, `CLAUDE.md`, and the leanblueprint Runje chapter
+  (`blueprint/src/chapter/runje.tex`) — reframed *and* extended with the deep-residual results
+  (`rsDense`, residual combinator, `ResNet` soundness, `deep_monotone_approximation`,
+  `DeepPartMonoNet`), verified via `leanblueprint web` + `checkdecls`.
 - **Non-goals (recorded follow-ups):**
-  - A leanblueprint chapter/section for this work (add after the Lean lands; separate doc task).
   - Any *trainability* claim (empirical; not formalized).
   - Heavy depth arithmetic / a formal `depth ≤ 4` clause (the structural single-block witness +
     remark is the agreed level).
