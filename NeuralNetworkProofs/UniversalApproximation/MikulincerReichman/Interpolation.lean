@@ -158,7 +158,7 @@ gadget output for the reindexed points.  This is what makes the shared `dominati
 `dominationStack_apply` indicator identity) available to the level-set layer. -/
 private theorem stack₃_toFun (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (z : Fin d → ℝ) :
     (stack₃ x y).toFun z =
-      (revPrefixLayer n).toFun heaviside ((dominationStack (x ∘ reindex x y)).toFun z) := by
+      (revPrefixLayer n).toFun heaviside ((dominationStack (x ∘ reindex x y)).toFun z) :=
   rfl
 
 open Classical in
@@ -204,7 +204,7 @@ private theorem revPrefix_apply (x : Fin n → (Fin d → ℝ)) (y : Fin n → �
           * (if x (reindex x y r) ≤ x (reindex x y j) then 1 else 0))
         (fun r _ => by positivity) (Finset.mem_univ j)
     rw [hterm] at hle
-    rw [if_pos hij, heaviside, if_pos (by linarith)]
+    rw [if_pos hij, heaviside_of_nonneg (by linarith)]
   · -- every `r ≥ i > j` fails domination (linear extension), so the sum is `0`, output `0`
     have hzero : ∀ r, (if i ≤ r then (1 : ℝ) else 0)
         * (if x (reindex x y r) ≤ x (reindex x y j) then 1 else 0) = 0 := by
@@ -216,7 +216,7 @@ private theorem revPrefix_apply (x : Fin n → (Fin d → ℝ)) (y : Fin n → �
         exact hij (le_trans hir this)
       · rw [if_neg hir, zero_mul]
     rw [Finset.sum_eq_zero (fun r _ => hzero r)]
-    rw [if_neg hij, heaviside, if_neg (by norm_num)]
+    rw [if_neg hij, heaviside_of_neg (by norm_num)]
 
 /-- The telescoping read-out identity on the *exact* prefix indicator: with the forward-difference
 weights and base bias, `∑ i, readW i · 𝟙(i ≤ j) + readBias = y' j`.  This is the sound engine core
