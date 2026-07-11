@@ -33,12 +33,6 @@ open scoped BigOperators
 
 variable {d n : ℕ}
 
-/-- The list of per-layer activations of a stack (for stating which activations a net uses). -/
-def _root_.UniversalApproximation.Monotone.ActStack.activations :
-    {a b : ℕ} → ActStack a b → List (ℝ → ℝ)
-  | _, _, .nil _ => []
-  | _, _, .cons _ σ rest => σ :: rest.activations
-
 /-- Self-contained reindexing permutation: sort indices by the lexicographic key
 `(y i, toLinearExtension (x i))`. Identical body to M-R's `reindex`, redefined here so this file
 depends only on public API. -/

@@ -17,11 +17,11 @@ activations denotes a monotone function.
 
 The hidden stack is generalized so that each layer carries its own activation `σ : ℝ → ℝ`.
 The threshold (Heaviside) construction of the Mikulincer–Reichman model is recovered as the
-special case where every layer uses `heaviside` (see `ActStack.threshold`).
+special case where every layer uses `heaviside`.
 
 * `heaviside` — the threshold (Heaviside) gate.
-* `ActStack` — a stack of activation layers, with denotation `toFun`, `depth`, `IsMonotone`.
-* `ActStack.threshold` — the threshold specialization: a stack using `heaviside` at every layer.
+* `ActStack` — a stack of activation layers, with `toFun`, `depth`, `activations`, `IsMonotone`,
+  `WeightsNonpos`.
 * `ActStack.toOrderHom` — a monotone stack bundled as an order homomorphism.
 * `MonoNet` — a monotone network (a monotone-activation stack + non-negative linear read-out).
 * `MonoNet.monotone_toFun` — a monotone network denotes a monotone function.
@@ -52,6 +52,19 @@ theorem heaviside_nonneg (z : ℝ) : 0 ≤ heaviside z := by
 theorem heaviside_le_one (z : ℝ) : heaviside z ≤ 1 := by
   unfold heaviside; split_ifs <;> norm_num
 
+/-- The threshold gate is `1` on non-negative inputs. -/
+theorem heaviside_of_nonneg (h : 0 ≤ z) : heaviside z = 1 := if_pos h
+
+/-- The threshold gate is `0` on negative inputs. -/
+theorem heaviside_of_neg (h : z < 0) : heaviside z = 0 := if_neg (not_le.2 h)
+
+/-- The threshold gate equals `1` exactly on the non-negative inputs. -/
+theorem heaviside_eq_one_iff : heaviside z = 1 ↔ 0 ≤ z := by
+  refine ⟨fun h => ?_, heaviside_of_nonneg⟩
+  by_contra hz
+  rw [heaviside_of_neg (not_le.1 hz)] at h
+  exact zero_ne_one h
+
 /-- A single layer with non-negative weights and a monotone activation `σ` denotes a monotone
 function. The affine map `x ↦ W.mulVec x + c` is monotone in `x` because each output coordinate
 is a dot product of a non-negative weight row with `x`, and the pointwise `σ` gate is monotone. -/
@@ -80,40 +93,20 @@ def ActStack.depth : {a b : ℕ} → ActStack a b → ℕ
   | _, _, .nil _ => 0
   | _, _, .cons _ _ rest => rest.depth + 1
 
+/-- The list of per-layer activations of a stack (for stating which activations a net uses). -/
+def ActStack.activations : {a b : ℕ} → ActStack a b → List (ℝ → ℝ)
+  | _, _, .nil _ => []
+  | _, _, .cons _ σ rest => σ :: rest.activations
+
 /-- Every layer has non-negative weights and a monotone activation. -/
 def ActStack.IsMonotone : {a b : ℕ} → ActStack a b → Prop
   | _, _, .nil _ => True
   | _, _, .cons L σ rest => (Monotone σ ∧ ∀ i j, 0 ≤ L.W i j) ∧ rest.IsMonotone
 
-/-- Every layer has non-negative weights (independent of the activations). This is the residual
-obligation for a threshold-specialized stack, whose activations are uniformly `heaviside` and
-hence automatically monotone. -/
-def ActStack.WeightsNonneg : {a b : ℕ} → ActStack a b → Prop
+/-- Every layer of a stack has non-positive weights. -/
+def ActStack.WeightsNonpos : {a b : ℕ} → ActStack a b → Prop
   | _, _, .nil _ => True
-  | _, _, .cons L _ rest => (∀ i j, 0 ≤ L.W i j) ∧ rest.WeightsNonneg
-
-/-- The threshold specialization: rebuild a stack using `heaviside` as the activation at every
-layer, preserving the weights and biases. This recovers the Mikulincer–Reichman threshold model
-as a `cons`-chain whose per-layer activation is uniformly `heaviside`. -/
-noncomputable def ActStack.threshold : {a b : ℕ} → ActStack a b → ActStack a b
-  | _, _, .nil n => .nil n
-  | _, _, .cons L _ rest => .cons L heaviside rest.threshold
-
-/-- The threshold specialization has the same per-layer weights as the original stack, so it
-inherits the `WeightsNonneg` predicate. -/
-theorem ActStack.threshold_weightsNonneg : {a b : ℕ} → (S : ActStack a b) →
-    S.WeightsNonneg → S.threshold.WeightsNonneg
-  | _, _, .nil _, _ => trivial
-  | _, _, .cons _ _ rest, hW => ⟨hW.1, rest.threshold_weightsNonneg hW.2⟩
-
-/-- A threshold-specialized stack is `IsMonotone` as soon as its weights are non-negative: each
-layer's activation is `heaviside`, which discharges the per-layer `Monotone` obligation via
-`heaviside_monotone`. -/
-theorem ActStack.threshold_isMonotone : {a b : ℕ} → (S : ActStack a b) →
-    S.WeightsNonneg → S.threshold.IsMonotone
-  | _, _, .nil _, _ => trivial
-  | _, _, .cons _ _ rest, hW =>
-      ⟨⟨heaviside_monotone, hW.1⟩, rest.threshold_isMonotone hW.2⟩
+  | _, _, .cons L _ rest => (∀ i j, L.W i j ≤ 0) ∧ rest.WeightsNonpos
 
 /-- A monotone activation stack bundled as an order homomorphism, built by induction over the
 stack with `OrderHom.comp`: `nil` is the identity and `cons L σ rest` is `rest`'s order
