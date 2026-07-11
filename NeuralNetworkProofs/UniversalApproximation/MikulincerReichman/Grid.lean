@@ -28,8 +28,9 @@ which is exactly the hypothesis consumed by the interpolation theorem.
   per-coordinate gap at most `1 / (m + 1)`.
 -/
 
-namespace UniversalApproximation.Monotone
+namespace UniversalApproximation.MikulincerReichman
 
+open UniversalApproximation.Monotone
 open scoped BigOperators
 
 /-- The grid point of index `k : Fin d → Fin (m + 2)` at resolution `m + 1`: coordinate `i` has
@@ -136,4 +137,4 @@ theorem grid_neighbors {d : ℕ} (m : ℕ) (x : Fin d → ℝ)
       exact_mod_cast Nat.ceil_le_floor_add_one (((m : ℝ) + 1) * x i)
     linarith
 
-end UniversalApproximation.Monotone
+end UniversalApproximation.MikulincerReichman

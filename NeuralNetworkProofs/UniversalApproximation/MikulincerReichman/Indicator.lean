@@ -33,8 +33,9 @@ boundary via `finProdFinEquiv`.  The `_apply` proofs then reindex the middle sum
 * `dominationStack_isEpsIndicator` — the gadget is an *exact* (`ε = 0`) indicator for `p`.
 -/
 
-namespace UniversalApproximation.Monotone
+namespace UniversalApproximation.MikulincerReichman
 
+open UniversalApproximation.Monotone
 open scoped BigOperators
 
 open Classical in
@@ -155,4 +156,4 @@ theorem dominationStack_isEpsIndicator {d n : ℕ} (p : Fin n → (Fin d → ℝ
   intro x i
   rw [dominationStack_apply, sub_self, abs_zero]
 
-end UniversalApproximation.Monotone
+end UniversalApproximation.MikulincerReichman

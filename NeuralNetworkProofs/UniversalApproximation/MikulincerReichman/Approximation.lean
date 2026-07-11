@@ -5,8 +5,8 @@ Authors: Davor Runje
 -/
 import Mathlib.Tactic
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Interpolation
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Grid
+import NeuralNetworkProofs.UniversalApproximation.MikulincerReichman.Interpolation
+import NeuralNetworkProofs.UniversalApproximation.MikulincerReichman.Grid
 
 /-!
 # Monotone universal approximation (Theorem 2)
@@ -24,8 +24,9 @@ and `f x` land in an interval of `f`-width at most `ε`.
 * `monotone_approximation` — the headline.
 -/
 
-namespace UniversalApproximation.Monotone
+namespace UniversalApproximation.MikulincerReichman
 
+open UniversalApproximation.Monotone
 open scoped BigOperators
 
 /-- On the compact unit cube, a `ContinuousOn` function is uniformly continuous: for `ε > 0` there
@@ -108,4 +109,4 @@ theorem monotone_approximation {d : ℕ} (f : (Fin d → ℝ) → ℝ)
   rw [abs_le]
   constructor <;> linarith [hNl, hNr, hfl, hfr, hwidth]
 
-end UniversalApproximation.Monotone
+end UniversalApproximation.MikulincerReichman

@@ -6,6 +6,7 @@ Authors: Davor Runje
 import NeuralNetworkProofs.UniversalApproximation.Cybenko
 import NeuralNetworkProofs.UniversalApproximation.Leshno
 import NeuralNetworkProofs.UniversalApproximation.Monotone
+import NeuralNetworkProofs.UniversalApproximation.MikulincerReichman
 import NeuralNetworkProofs.UniversalApproximation.Sartor
 import NeuralNetworkProofs.UniversalApproximation.Runje
 import NeuralNetworkProofs.NeuralNetwork.Network
