@@ -9,6 +9,17 @@ need only Docker and the Dev Containers extension (the Lean toolchain, Mathlib c
 Code CLI are provisioned automatically). You can also set up a local machine directly with
 `scripts/setup-dev.sh`; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Documentation
+
+Rendered documentation is published at
+**[davorrunje.github.io/neural-network-proofs](https://davorrunje.github.io/neural-network-proofs/)**:
+
+- [Blueprint](https://davorrunje.github.io/neural-network-proofs/blueprint/) — human-readable
+  statements and proof sketches for every development, with a
+  [dependency graph](https://davorrunje.github.io/neural-network-proofs/blueprint/dep_graph.html).
+- [API documentation](https://davorrunje.github.io/neural-network-proofs/docs/) — `doc-gen4`
+  reference for every declaration.
+
 ## Formalized results: `NeuralNetworkProofs`
 
 `NeuralNetworkProofs` formalizes universal approximation theorems for neural networks, all
