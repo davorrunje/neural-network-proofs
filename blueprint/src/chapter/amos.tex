@@ -23,7 +23,8 @@
   \uses{def:icnn}
   Let $f$ be convex and differentiable on $\mathbb{R}^d$, and let $K$ be compact. For every
   $\varepsilon>0$ there is a fully input-convex network, with nonnegative propagation weights and
-  the ReLU activation, that is within $\varepsilon$ of $f$ uniformly on $K$.
+  convex nondecreasing (ReLU and identity) activations, that is within $\varepsilon$ of $f$
+  uniformly on $K$.
 \end{theorem}
 \begin{proof}\leanok
   \uses{def:icnn}
@@ -32,6 +33,7 @@
   $y \mapsto f(x_i) + \nabla f(x_i)\cdot(y-x_i)$ minorizes $f$ by convexity, and equals $f$ at
   $x_i$; taking the pointwise maximum of these tangent planes over $i$ therefore stays below $f$
   everywhere and comes within $\varepsilon$ of $f$ on $K$. This max-of-affine-functions is realized
-  exactly by a nonnegative-weight ReLU ICNN (a max of two affine functions is
+  exactly by a nonnegative-weight ICNN with ReLU and identity activations (a max of two affine
+  functions is
   $\mathrm{ReLU}(u-v)+v$, iterated), giving the network witness.
 \end{proof}
