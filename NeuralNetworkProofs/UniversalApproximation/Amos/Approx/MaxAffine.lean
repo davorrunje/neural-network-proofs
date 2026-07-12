@@ -134,4 +134,71 @@ theorem maxNet_isConvex {d : ℕ} (n : ℕ) (a : Fin (n + 1) → (Fin d → ℝ)
     (maxNet (d := d) n a b).IsConvex :=
   ⟨initLayer_isConvex _ _, maxNetTail_isConvex n a b⟩
 
+/-- Real-arithmetic identity behind one running-max step: `max u v = v + relu (u - v)`. -/
+theorem max_eq_add_relu (u v : ℝ) : max u v = v + relu (u - v) := by
+  rw [relu]
+  rcases le_total u v with h | h
+  · rw [max_eq_right h, max_eq_left (by linarith : u - v ≤ 0)]; ring
+  · rw [max_eq_left h, max_eq_right (by linarith : (0 : ℝ) ≤ u - v)]; ring
+
+/-- The running max computed by `maxNetTail`, seeded by `r` and folding the affine pieces in the
+same `Fin.last`-first peel order as `eval` (index `0` is left for the seed). -/
+def foldMax {d : ℕ} : (n : ℕ) → (Fin (n + 1) → (Fin d → ℝ)) → (Fin (n + 1) → ℝ) →
+    (Fin d → ℝ) → ℝ → ℝ
+  | 0, _, _, _, r => r
+  | n + 1, a, b, y, r =>
+      foldMax n (fun i => a i.castSucc) (fun i => b i.castSucc) y
+        (max r (dotAffine (a (Fin.last (n + 1))) (b (Fin.last (n + 1))) y))
+
+/-- `maxNetTail` starting from a running hidden value `r` computes `foldMax`. -/
+theorem maxNetTail_eval {d : ℕ} : (n : ℕ) → (a : Fin (n + 1) → (Fin d → ℝ)) →
+    (b : Fin (n + 1) → ℝ) → (y : Fin d → ℝ) → (r : ℝ) →
+    (maxNetTail n a b).eval y (fun _ => r) 0 = foldMax n a b y r
+  | 0, _, _, _, _ => rfl
+  | n + 1, a, b, y, r => by
+      simp only [maxNetTail, ICNN.eval]
+      have hz : (idStep (a (Fin.last (n + 1))) (b (Fin.last (n + 1)))).toFun
+            ((reluStep (a (Fin.last (n + 1))) (b (Fin.last (n + 1)))).toFun (fun _ => r) y) y
+          = fun _ => max r (dotAffine (a (Fin.last (n + 1))) (b (Fin.last (n + 1))) y) := by
+        funext j
+        have hj : j = 0 := Fin.fin_one_eq_zero j
+        subst hj
+        rw [idStep_toFun, reluStep_toFun, max_eq_add_relu, add_comm]
+      rw [hz, maxNetTail_eval n _ _ y _, foldMax]
+
+/-- Folding the pieces `1 … n` onto `max (piece 0) t` yields `max (maxAffine …) t`. -/
+theorem foldMax_maxAffine {d : ℕ} : (n : ℕ) → (a : Fin (n + 1) → (Fin d → ℝ)) →
+    (b : Fin (n + 1) → ℝ) → (y : Fin d → ℝ) → (t : ℝ) →
+    foldMax n a b y (max (dotAffine (a 0) (b 0) y) t) = max (maxAffine n a b y) t
+  | 0, _, _, _, _ => by simp only [foldMax, maxAffine]
+  | n + 1, a, b, y, t => by
+      have h0 : dotAffine ((fun i : Fin (n + 1) => a i.castSucc) 0)
+          ((fun i : Fin (n + 1) => b i.castSucc) 0) y = dotAffine (a 0) (b 0) y := by simp
+      rw [foldMax, max_assoc, ← h0,
+        foldMax_maxAffine n (fun i => a i.castSucc) (fun i => b i.castSucc) y
+          (max t (dotAffine (a (Fin.last (n + 1))) (b (Fin.last (n + 1))) y)),
+        maxAffine]
+      rw [max_comm t (dotAffine (a (Fin.last (n + 1))) (b (Fin.last (n + 1))) y), ← max_assoc]
+
+/-- The max-of-affine network denotes exactly the max-of-affine function. -/
+theorem maxNet_toFun {d : ℕ} (n : ℕ) (a : Fin (n + 1) → (Fin d → ℝ)) (b : Fin (n + 1) → ℝ)
+    (y : Fin d → ℝ) : (maxNet n a b).toFun y = maxAffine n a b y := by
+  rw [ICNN.toFun, maxNet]
+  simp only [ICNN.eval]
+  have hinit : (initLayer (a 0) (b 0)).toFun (0 : Fin 0 → ℝ) y
+      = fun _ => dotAffine (a 0) (b 0) y := by
+    funext j
+    have hj : j = 0 := Fin.fin_one_eq_zero j
+    subst hj
+    exact initLayer_toFun (a 0) (b 0) 0 y
+  rw [hinit, maxNetTail_eval n a b y (dotAffine (a 0) (b 0) y),
+    ← max_self (dotAffine (a 0) (b 0) y),
+    foldMax_maxAffine n a b y (dotAffine (a 0) (b 0) y)]
+  exact max_eq_left (le_maxAffine n a b y 0)
+
+/-- `maxAffine` is realized by a convex ICNN. Packages `maxNet_isConvex` with `maxNet_toFun`. -/
+theorem maxAffine_isICNN {d n : ℕ} (a : Fin (n + 1) → (Fin d → ℝ)) (b : Fin (n + 1) → ℝ) :
+    ∃ N : ICNN d 0 1, N.IsConvex ∧ N.toFun = fun y => maxAffine n a b y :=
+  ⟨maxNet n a b, maxNet_isConvex n a b, funext (maxNet_toFun n a b)⟩
+
 end UniversalApproximation.Amos
