@@ -1,15 +1,24 @@
 \chapter{Introduction}
 
-This blueprint presents three formalized universal approximation theorems (UATs) for neural
-networks, developed in Lean~4 and Mathlib. Each result is stated informally, accompanied by its
-formal Lean statement and a prose proof, and is cross-linked to the formal API. Every item marked
-green is fully formalized and \texttt{sorry}-free.
+This blueprint presents the formalized universal approximation theorems (UATs) for neural networks
+developed in Lean~4 and Mathlib, across five developments. Each result is stated informally,
+accompanied by its formal Lean statement and a prose proof, and is cross-linked to the formal API.
+Every item marked green is fully formalized and \texttt{sorry}-free.
 
 \begin{itemize}
   \item \textbf{Cybenko (1989)}: a single-hidden-layer network with a continuous sigmoidal
     activation is dense in $\Ck$.
   \item \textbf{Leshno--Lin--Pinkus--Schocken (1993)}: an $M$-class activation densely
     approximates iff it is not (a.e.) a polynomial.
-  \item \textbf{Monotone networks}: depth-4 monotone networks are universal for monotone functions
-    (Mikulincer--Reichman 2022; Sartor et al.\ 2025).
+  \item \textbf{Mikulincer--Reichman (2022)}: depth-4 monotone threshold networks exactly
+    interpolate and uniformly approximate any monotone function.
+  \item \textbf{Sartor et al.\ (2025)}: monotone one-sided-saturating activations are universal,
+    extending beyond bounded activations.
+  \item \textbf{Runje et al.\ (forthcoming)}: \emph{Deep Constrained Monotonic Neural Networks} ---
+    skip connections make deep constrained monotone networks trainable, with formalized soundness
+    (a residual stack of any depth is monotone) and universal approximation; partial monotonicity
+    is a secondary result. Extends Runje--Shankaranarayana 2023.
 \end{itemize}
+
+The three monotone developments (Mikulincer--Reichman, Sartor, Runje) share a common,
+activation-generic \texttt{ActStack} core.
