@@ -4,8 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 
-import Mathlib.Algebra.Order.Ring.Star
-import Mathlib.Algebra.Order.Star.Real
 import Mathlib.MeasureTheory.Measure.Haar.Unique
 
 /-! # Uniform Riemann-sum approximation of a convolution against a continuous kernel.
@@ -172,7 +170,7 @@ theorem tendstoUniformly_riemannSum_continuous
         simp only [dist_self]
         have : dist y (a i) ≤ Δ := by
           rw [Real.dist_eq, abs_le]
-          constructor <;> [skip; skip] <;>
+          constructor <;>
             [(have := hy.1; have := hastep i; linarith);
              (have := hy.2; have := hastep i; linarith)]
         exact lt_of_le_of_lt (by simpa using this) hΔlt
@@ -201,7 +199,7 @@ theorem tendstoUniformly_riemannSum_continuous
           nlinarith [hε, hM]
 
 private theorem exists_uniform_bound {f : ℝ → ℝ}
-    (hbdd : ∀ R, ∃ C, ∀ t, |t| ≤ R → |f t| ≤ C) {M : ℝ} (_hM : 0 < M)
+    (hbdd : ∀ R, ∃ C, ∀ t, |t| ≤ R → |f t| ≤ C) {M : ℝ}
     {S : Set ℝ} (hS : IsCompact S) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ s ∈ S, ∀ y ∈ Set.Icc (-M) M, |f (s - y)| ≤ C := by
   obtain ⟨R₀, hR₀⟩ := hS.isBounded.subset_closedBall (0 : ℝ)
@@ -297,20 +295,9 @@ private theorem intervalIntegrable_comp_sub {f : ℝ → ℝ} {s : ℝ}
   intro y hy
   rw [Set.uIcc_eq_union, Set.mem_union, Set.mem_Icc, Set.mem_Icc] at hy
   have hyb : |y| ≤ |p| ⊔ |q| := by
-    rcases hy with ⟨h1, h2⟩ | ⟨h1, h2⟩ <;> rw [abs_le] <;> constructor <;>
-      first
-        | (calc -(|p| ⊔ |q|) ≤ -|p| := by simp [le_sup_left]
-              _ ≤ p := neg_abs_le p
-              _ ≤ y := h1)
-        | (calc -(|p| ⊔ |q|) ≤ -|q| := by simp [le_sup_right]
-              _ ≤ q := neg_abs_le q
-              _ ≤ y := h1)
-        | (calc y ≤ q := h2
-              _ ≤ |q| := le_abs_self q
-              _ ≤ |p| ⊔ |q| := le_sup_right)
-        | (calc y ≤ p := h2
-              _ ≤ |p| := le_abs_self p
-              _ ≤ |p| ⊔ |q| := le_sup_left)
+    rcases hy with ⟨h1, h2⟩ | ⟨h1, h2⟩
+    · exact abs_le_max_abs_abs h1 h2
+    · exact (abs_le_max_abs_abs h1 h2).trans_eq (max_comm _ _)
   have : |s - y| ≤ |s| + (|p| ⊔ |q|) :=
     calc |s - y| ≤ |s| + |y| := abs_sub _ _
       _ ≤ |s| + (|p| ⊔ |q|) := by linarith
@@ -535,7 +522,7 @@ theorem tendstoUniformly_riemannSum_aeContinuous
       (Set.nonempty_Icc.mpr hMM) (continuous_abs.comp hφ).continuousOn
     exact ⟨|φ x|, abs_nonneg _, fun y hy => hx hy⟩
   -- uniform bound on `f (s - y)` for `s ∈ S`, `y ∈ Icc (-M) M`
-  obtain ⟨C, hC0, hCbd⟩ := exists_uniform_bound hbdd hM hS
+  obtain ⟨C, hC0, hCbd⟩ := exists_uniform_bound (M := M) hbdd hS
   -- The discontinuity-closure `D` is null.
   set D : Set ℝ := closure {t : ℝ | ¬ ContinuousAt f t} with hDdef
   have hDclosed : IsClosed D := isClosed_closure

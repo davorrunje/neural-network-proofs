@@ -25,8 +25,8 @@ into the read-out weights, so the new net `Nneg` has denotation identical to `Np
 (`Nneg.toFun = Npos.toFun` exactly). The left-saturating (`𝒮⁻`) case is the exact `reflect`-dual
 (as with Theorem 3.5's Case 2) and is not formalized here.
 
-* `ActStack.WeightsNonpos` — every layer of a stack has non-positive weights.
-* `nonpos_weight_universal` — Proposition 3.11 (`𝒮⁺` case).
+* `nonpos_weight_universal` — Proposition 3.11 (`𝒮⁺` case), stated with the
+  `ActStack.WeightsNonpos` predicate (defined in `Monotone.Defs`).
 -/
 
 namespace UniversalApproximation.Sartor
@@ -35,12 +35,6 @@ open UniversalApproximation.Monotone
 open NeuralNetwork
 
 open scoped BigOperators
-
-/-- All layers of a stack have non-positive weights (dual of `ActStack.WeightsNonneg`). -/
-def _root_.UniversalApproximation.Monotone.ActStack.WeightsNonpos :
-    {a b : ℕ} → ActStack a b → Prop
-  | _, _, .nil _ => True
-  | _, _, .cons L _ rest => (∀ i j, L.W i j ≤ 0) ∧ rest.WeightsNonpos
 
 /-- **Proposition 3.11 (non-positive weights, 𝒮⁺ case).** For a monotone non-decreasing,
 non-constant, right-saturating activation `σ`, any monotone dataset is ε-interpolated by a depth-4

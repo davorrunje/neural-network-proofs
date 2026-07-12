@@ -102,4 +102,68 @@ theorem sort_key_linear_extension {n : ℕ} {β : Type*} [PartialOrder β]
   have : π s = π t := hinj hbeq
   exact absurd (π.injective this) (ne_of_gt hst)
 
+/-!
+## Shared reindex / potential machinery
+
+The reindexing permutation and the telescoping-potential read-out scaffold are shared (up to
+definitional equality) by the Mikulincer–Reichman (`Interpolation.lean`) and Sartor
+(`Sartor/SaturatingInterp.lean`) interpolation constructions.  Hoisting them here lets both files
+depend on a single copy.  The
+γ-normalized read-out weights of the Sartor construction (`satReadW`) stay local to that file, as
+does M-R's own `readW`; only the γ-independent scaffold lives here.
+-/
+
+section Reindex
+
+variable {d n : ℕ}
+
+/-- The reindexing permutation for a monotone dataset: sort the indices by the lexicographic key
+`(y i, toLinearExtension (x i))`.  The resulting order both makes `y` nondecreasing and refines the
+coordinatewise order on the points. -/
+noncomputable def reindex (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : Equiv.Perm (Fin n) :=
+  Tuple.sort (fun i => toLex (y i, toLinearExtension (x i)))
+
+/-- Along `reindex`, `y` is nondecreasing (via `Tuple.monotone_sort` + `Prod.Lex.le_iff`). -/
+theorem reindex_y_monotone (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) {a b : Fin n}
+    (hab : a ≤ b) : y (reindex x y a) ≤ y (reindex x y b) := by
+  have h := Tuple.monotone_sort (fun i => toLex (y i, toLinearExtension (x i))) hab
+  simp only [Function.comp_apply, Prod.Lex.le_iff, ofLex_toLex] at h
+  rcases h with h | h
+  · exact le_of_lt h
+  · exact le_of_eq h.1
+
+/-- `reindex` linearly extends the coordinatewise order: comparability of the reindexed points
+forces the index order.  Direct application of `sort_key_linear_extension y x hmono hinj`
+(definitionally the same sort). -/
+theorem reindex_linear_extension (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ)
+    (hmono : ∀ i j, x i ≤ x j → y i ≤ y j) (hinj : Function.Injective x) {a b : Fin n}
+    (hx : x (reindex x y a) ≤ x (reindex x y b)) : a ≤ b :=
+  sort_key_linear_extension y x hmono hinj hx
+
+/-- The reindexed targets `y' i = y (reindex x y i)` along the reindexing permutation. -/
+noncomputable def reTarget (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (i : Fin n) : ℝ :=
+  y (reindex x y i)
+
+/-- The telescoping potential: `Y k = y' (k − 1)` at index `k − 1` when it is in range, and `0`
+otherwise (`Nat` subtraction makes `Y 0 = y' 0`).  A forward-difference read-out on this potential
+telescopes over prefixes `i ≤ j` (via `Finset.sum_range_sub`) to `y' j − y' 0`. -/
+noncomputable def potential (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ℕ → ℝ :=
+  fun k => if hk : k - 1 < n then reTarget x y ⟨k - 1, hk⟩ else 0
+
+/-- On the range that the read-out samples, the potential reads the reindexed target `y' k` at
+shift `k + 1`. -/
+theorem potential_succ (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) (k : Fin n) :
+    potential x y (k + 1) = reTarget x y k := by
+  unfold potential
+  have hk' : (k : ℕ) + 1 - 1 < n := by simp only [Nat.add_sub_cancel]; exact k.2
+  rw [dif_pos hk']
+  congr 1
+
+/-- The read-out bias: the potential base `Y 0`, i.e. the smallest reindexed target `y' 0`
+(or `0` if the dataset is empty). -/
+noncomputable def readBias (x : Fin n → (Fin d → ℝ)) (y : Fin n → ℝ) : ℝ :=
+  potential x y 0
+
+end Reindex
+
 end UniversalApproximation.Monotone

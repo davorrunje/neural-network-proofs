@@ -47,6 +47,7 @@ variable {df : ℕ}
 /-- 1-D hat centred at node `k/m`, width `1/m`. -/
 noncomputable def hat1 (m k : ℕ) (t : ℝ) : ℝ := max 0 (1 - m * |t - k / m|)
 
+/-- The 1-D hat is nonnegative. -/
 lemma hat1_nonneg (m k : ℕ) (t : ℝ) : 0 ≤ hat1 m k t := le_max_left _ _
 
 /-- Off its support the hat is zero. (Uses `1 ≤ m`; for `m = 0` the hat is constantly `1`.) -/
@@ -66,6 +67,7 @@ lemma hat1_support {m k : ℕ} (hm : 1 ≤ m) {t : ℝ} (h : hat1 m k t ≠ 0) :
   by_contra hcon
   exact h (hat1_eq_zero_of_far hm (not_lt.mp hcon))
 
+/-- The 1-D hat is continuous. -/
 lemma hat1_continuous (m k : ℕ) : Continuous (hat1 m k) := by
   unfold hat1
   fun_prop
@@ -111,21 +113,26 @@ noncomputable def tentDenom (m : ℕ) (u : Fin df → ℝ) : ℝ := ∑ k, tent 
 noncomputable def psi (m : ℕ) (k : Fin df → Fin (m + 1)) (u : Fin df → ℝ) : ℝ :=
   tent m k u / tentDenom m u
 
+/-- The tensor-product tent is nonnegative. -/
 lemma tent_nonneg (m : ℕ) (k : Fin df → Fin (m + 1)) (u : Fin df → ℝ) : 0 ≤ tent m k u :=
   Finset.prod_nonneg (fun _ _ => hat1_nonneg _ _ _)
 
+/-- The normalized tent is nonnegative. -/
 lemma psi_nonneg (m : ℕ) (k : Fin df → Fin (m + 1)) (u : Fin df → ℝ) : 0 ≤ psi m k u :=
   div_nonneg (tent_nonneg _ _ _) (Finset.sum_nonneg fun _ _ => tent_nonneg _ _ _)
 
+/-- The tensor-product tent is continuous. -/
 lemma tent_continuous (m : ℕ) (k : Fin df → Fin (m + 1)) : Continuous (tent m k) := by
   unfold tent
   exact continuous_finsetProd _
     (fun c _ => (hat1_continuous m (k c)).comp (continuous_apply c))
 
+/-- The tent denominator is continuous. -/
 lemma tentDenom_continuous (m : ℕ) : Continuous (tentDenom (df := df) m) := by
   unfold tentDenom
   exact continuous_finsetSum _ (fun k _ => tent_continuous m k)
 
+/-- The tent denominator is strictly positive on the cube. -/
 lemma tentDenom_pos {m : ℕ} (hm : 1 ≤ m) {u : Fin df → ℝ}
     (hu : u ∈ Set.Icc (0 : Fin df → ℝ) 1) : 0 < tentDenom m u := by
   have hmem : ∀ c, u c ∈ Set.Icc (0 : ℝ) 1 := fun c => ⟨hu.1 c, hu.2 c⟩
@@ -134,6 +141,7 @@ lemma tentDenom_pos {m : ℕ} (hm : 1 ≤ m) {u : Fin df → ℝ}
   unfold tentDenom
   exact Finset.sum_pos' (fun k' _ => tent_nonneg m k' u) ⟨k, Finset.mem_univ k, htent_pos⟩
 
+/-- The normalized tents sum to `1` on the cube. -/
 lemma sum_psi_eq_one {m : ℕ} (hm : 1 ≤ m) {u : Fin df → ℝ}
     (hu : u ∈ Set.Icc (0 : Fin df → ℝ) 1) : (∑ k, psi m k u) = 1 := by
   have hpos := tentDenom_pos hm hu
@@ -141,12 +149,14 @@ lemma sum_psi_eq_one {m : ℕ} (hm : 1 ≤ m) {u : Fin df → ℝ}
   rw [← Finset.sum_div]
   rw [show (∑ k, tent m k u) = tentDenom m u from rfl, div_self hpos.ne']
 
+/-- Each normalized tent is at most `1` on the cube. -/
 lemma psi_le_one {m : ℕ} (hm : 1 ≤ m) (k : Fin df → Fin (m + 1)) {u : Fin df → ℝ}
     (hu : u ∈ Set.Icc (0 : Fin df → ℝ) 1) : psi m k u ≤ 1 :=
   calc psi m k u ≤ ∑ k', psi m k' u :=
         Finset.single_le_sum (fun k' _ => psi_nonneg m k' u) (Finset.mem_univ k)
     _ = 1 := sum_psi_eq_one hm hu
 
+/-- Every grid node lies in the unit cube. -/
 lemma tentNode_mem_Icc (m : ℕ) (k : Fin df → Fin (m + 1)) :
     tentNode m k ∈ Set.Icc (0 : Fin df → ℝ) 1 := by
   refine Set.mem_Icc.mpr ⟨fun c => ?_, fun c => ?_⟩
@@ -155,6 +165,7 @@ lemma tentNode_mem_Icc (m : ℕ) (k : Fin df → Fin (m + 1)) :
   · simp only [Pi.one_apply, tentNode]
     exact div_le_one_of_le₀ (by exact_mod_cast (k c).is_le) (Nat.cast_nonneg _)
 
+/-- `psi m k` vanishes outside the sup-ball of radius `1/m` about its node. -/
 lemma psi_support {m : ℕ} (hm : 1 ≤ m) (k : Fin df → Fin (m + 1)) {u : Fin df → ℝ}
     (h : psi m k u ≠ 0) : dist (tentNode m k) u ≤ 1 / m := by
   have htent : tent m k u ≠ 0 := by
@@ -174,6 +185,7 @@ lemma psi_support {m : ℕ} (hm : 1 ≤ m) (k : Fin df → Fin (m + 1)) {u : Fin
   rw [abs_sub_comm]
   exact hlt.le
 
+/-- Each `psi m k` is continuous on the cube. -/
 lemma psi_continuousOn {m : ℕ} (hm : 1 ≤ m) (k : Fin df → Fin (m + 1)) :
     ContinuousOn (psi m k) (Set.Icc (0 : Fin df → ℝ) 1) := by
   unfold psi

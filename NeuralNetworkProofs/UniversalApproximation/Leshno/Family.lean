@@ -45,45 +45,48 @@ def genSpan (σ : ℝ → ℝ) (K : Set E) : Submodule ℝ (↥K → ℝ) :=
 def ApproxByGen (σ : ℝ → ℝ) (K : Set E) (h : ↥K → ℝ) : Prop :=
   ∀ ε, 0 < ε → ∃ g ∈ genSpan σ K, ∀ x, |h x - g x| < ε
 
+/-- The zero function is approximable (by `0 ∈ genSpan σ K`). -/
+theorem approxByGen_zero (σ : ℝ → ℝ) (K : Set E) : ApproxByGen σ K (0 : ↥K → ℝ) := by
+  intro ε hε
+  exact ⟨0, Submodule.zero_mem _, fun x => by simp [hε]⟩
+
+/-- Approximability is closed under addition (ε/2-triangle: pick each summand within `ε/2`). -/
+theorem ApproxByGen.add {σ : ℝ → ℝ} {K : Set E} {h₁ h₂ : ↥K → ℝ}
+    (H₁ : ApproxByGen σ K h₁) (H₂ : ApproxByGen σ K h₂) : ApproxByGen σ K (h₁ + h₂) := by
+  intro ε hε
+  obtain ⟨g₁, hg₁, hg₁ε⟩ := H₁ (ε / 2) (by linarith)
+  obtain ⟨g₂, hg₂, hg₂ε⟩ := H₂ (ε / 2) (by linarith)
+  refine ⟨g₁ + g₂, Submodule.add_mem _ hg₁ hg₂, fun x => ?_⟩
+  have hrw : (h₁ + h₂) x - (g₁ + g₂) x = (h₁ x - g₁ x) + (h₂ x - g₂ x) := by
+    simp only [Pi.add_apply]; ring
+  rw [hrw]
+  calc |(h₁ x - g₁ x) + (h₂ x - g₂ x)|
+      ≤ |h₁ x - g₁ x| + |h₂ x - g₂ x| := abs_add_le _ _
+    _ < ε / 2 + ε / 2 := add_lt_add (hg₁ε x) (hg₂ε x)
+    _ = ε := by ring
+
+/-- Approximability is closed under scalar multiplication (rescale the tolerance by `|c|`). -/
+theorem ApproxByGen.smul {σ : ℝ → ℝ} {K : Set E} (c : ℝ) {h : ↥K → ℝ}
+    (H : ApproxByGen σ K h) : ApproxByGen σ K (c • h) := by
+  intro ε hε
+  rcases eq_or_ne c 0 with hc | hc
+  · subst hc
+    exact ⟨0, Submodule.zero_mem _, fun x => by simp [hε]⟩
+  · obtain ⟨g, hg, hgε⟩ := H (ε / |c|) (by positivity)
+    refine ⟨c • g, Submodule.smul_mem _ c hg, fun x => ?_⟩
+    have heq : |(c • h) x - (c • g) x| = |c| * |h x - g x| := by
+      simp only [Pi.smul_apply, smul_eq_mul]; rw [← mul_sub, abs_mul]
+    rw [heq]
+    have hcpos : 0 < |c| := abs_pos.mpr hc
+    calc |c| * |h x - g x| < |c| * (ε / |c|) := mul_lt_mul_of_pos_left (hgε x) hcpos
+      _ = ε := by field_simp
+
 /-- The continuous core: continuous functions approximable by `genSpan σ K`. -/
 def T (σ : ℝ → ℝ) (K : Set E) : Submodule ℝ C(↥K, ℝ) where
   carrier := {h | ApproxByGen σ K (h : ↥K → ℝ)}
-  add_mem' := by
-    intro a b ha hb ε hε
-    obtain ⟨ga, hga, hgaε⟩ := ha (ε / 2) (by linarith)
-    obtain ⟨gb, hgb, hgbε⟩ := hb (ε / 2) (by linarith)
-    refine ⟨ga + gb, Submodule.add_mem _ hga hgb, fun x => ?_⟩
-    have hx : ((a + b : C(↥K, ℝ)) : ↥K → ℝ) x = a x + b x := rfl
-    have hgx : (ga + gb) x = ga x + gb x := rfl
-    rw [hx, hgx]
-    have hrw : a x + b x - (ga x + gb x) = (a x - ga x) + (b x - gb x) := by ring
-    rw [hrw]
-    calc |(a x - ga x) + (b x - gb x)|
-        ≤ |a x - ga x| + |b x - gb x| := abs_add_le _ _
-      _ < ε / 2 + ε / 2 := add_lt_add (hgaε x) (hgbε x)
-      _ = ε := by ring
-  zero_mem' := by
-    intro ε hε
-    refine ⟨0, Submodule.zero_mem _, fun x => ?_⟩
-    have hx : ((0 : C(↥K, ℝ)) : ↥K → ℝ) x = 0 := rfl
-    simp [hx, hε]
-  smul_mem' := by
-    intro c a ha ε hε
-    rcases eq_or_ne c 0 with hc | hc
-    · subst hc
-      refine ⟨0, Submodule.zero_mem _, fun x => ?_⟩
-      simp [hε]
-    · obtain ⟨g, hg, hgε⟩ := ha (ε / |c|) (by positivity)
-      refine ⟨c • g, Submodule.smul_mem _ c hg, fun x => ?_⟩
-      have hx : ((c • a : C(↥K, ℝ)) : ↥K → ℝ) x = c * a x := rfl
-      have hgx : (c • g) x = c * g x := rfl
-      rw [hx, hgx]
-      have : |c * a x - c * g x| = |c| * |a x - g x| := by
-        rw [← mul_sub, abs_mul]
-      rw [this]
-      have hcpos : 0 < |c| := abs_pos.mpr hc
-      calc |c| * |a x - g x| < |c| * (ε / |c|) := mul_lt_mul_of_pos_left (hgε x) hcpos
-        _ = ε := by field_simp
+  add_mem' ha hb := ApproxByGen.add ha hb
+  zero_mem' := approxByGen_zero _ _
+  smul_mem' c _ ha := ApproxByGen.smul c ha
 
 /-- The span is invariant under affine reparametrisation of the argument. -/
 theorem genFun_reparam_mem (σ : ℝ → ℝ) (K : Set E) (lam : ℝ) (w : E) (b c : ℝ) :

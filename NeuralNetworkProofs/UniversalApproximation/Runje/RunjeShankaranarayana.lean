@@ -3,6 +3,7 @@ Copyright (c) 2026 Davor Runje. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
+import NeuralNetworkProofs.NeuralNetwork.Network
 import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
 import NeuralNetworkProofs.UniversalApproximation.Sartor.Saturating
 import Mathlib.Analysis.SpecialFunctions.Log.Basic

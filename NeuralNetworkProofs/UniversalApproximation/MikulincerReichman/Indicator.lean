@@ -41,7 +41,9 @@ open scoped BigOperators
 open Classical in
 /-- An activation stack `S : ActStack d n` is an *ε-indicator* for the points
 `p : Fin n → (Fin d → ℝ)` when, for every input `x`, its output coordinate `i` approximates the
-domination indicator of `p i` — `1` if `p i ≤ x` coordinatewise, else `0` — to within `ε`. -/
+domination indicator of `p i` — `1` if `p i ≤ x` coordinatewise, else `0` — to within `ε`.
+
+Forward-facing API for the Sartor co-design: not consumed internally at present. -/
 def IsEpsIndicator {d n : ℕ} (S : ActStack d n) (p : Fin n → (Fin d → ℝ)) (ε : ℝ) : Prop :=
   ∀ x i, |S.toFun x i - (if p i ≤ x then 1 else 0)| ≤ ε
 
@@ -137,20 +139,13 @@ theorem dominationStack_apply {d n : ℕ} (p : Fin n → (Fin d → ℝ))
   simp only [sub_nonneg, hcard, sum_le_one_card_le_iff (fun r => heaviside_le_one _), Pi.le_def]
   -- both conditions are `∀`s; show them equivalent coordinatewise, branches are equal
   refine if_congr (forall_congr' fun r => ?_) rfl rfl
-  constructor
-  · intro h
-    unfold heaviside at h
-    by_contra hlt
-    rw [not_le] at hlt
-    rw [if_neg (by linarith)] at h
-    exact zero_ne_one h
-  · intro h
-    unfold heaviside
-    rw [if_pos (by linarith)]
+  rw [heaviside_eq_one_iff, sub_nonneg]
 
 /-- The domination gadget is an *exact* ε-indicator for `p`: each output coordinate equals the
 domination indicator on the nose, so the ε bound holds with `ε = 0`. Immediate from
-`dominationStack_apply`, since `|a - a| = 0 ≤ 0`. -/
+`dominationStack_apply`, since `|a - a| = 0 ≤ 0`.
+
+Forward-facing API for the Sartor co-design: not consumed internally at present. -/
 theorem dominationStack_isEpsIndicator {d n : ℕ} (p : Fin n → (Fin d → ℝ)) :
     IsEpsIndicator (dominationStack p) p 0 := by
   intro x i

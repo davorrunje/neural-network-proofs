@@ -46,7 +46,11 @@ open NeuralNetwork
 
 /-- The sign-flip of a layer: negate both the weight matrix and the bias, `(W, c) ↦ (−W, −c)`.
 This is the transformation trading a non-positive-weight layer for a non-negative-weight one (and
-back), used in Proposition 3.10 to swap the saturation side of the activation. -/
+back), used in Proposition 3.10 to swap the saturation side of the activation.
+
+Footgun: this is `UniversalApproximation.Sartor.Layer.neg`, but `L : NeuralNetwork.Layer`, so the
+dot-notation `L.neg` resolves to the `NeuralNetwork.Layer` namespace and will NOT find this
+definition — always call it as `Layer.neg L`. -/
 def Layer.neg {a b : ℕ} (L : Layer a b) : Layer a b where
   W := -L.W
   c := -L.c

@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 
-import Mathlib.AlgebraicTopology.SimplexCategory.Basic
 import Mathlib.Analysis.Distribution.AEEqOfIntegralContDiff
 import Mathlib.Topology.Algebra.Polynomial
 import NeuralNetworkProofs.ForMathlib.IteratedDerivPolynomial
@@ -70,13 +69,12 @@ private lemma integrable_pow_mul {g : ℝ → ℝ} (hg : ContDiff ℝ ∞ g)
 `ℓ w = ∑ k, w k * ℓ (Pi.single k 1)`. -/
 private lemma linFunctional_pi_eq_sum {n : ℕ} (ℓ : (Fin n → ℝ) →ₗ[ℝ] ℝ)
     (w : Fin n → ℝ) : ℓ w = ∑ k, w k * ℓ (Pi.single k 1) := by
-  conv_lhs => rw [← Finset.univ_sum_single w]
-  rw [map_sum]
-  apply Finset.sum_congr rfl
-  intro k _
-  rw [show Pi.single k (w k) = w k • Pi.single k (1 : ℝ) by
-    rw [← Pi.single_smul]; simp, map_smul]
-  simp
+  rw [ℓ.pi_apply_eq_sum_univ w]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  rw [smul_eq_mul]
+  congr 2 with j
+  rw [Pi.single_apply]
+  exact if_congr eq_comm rfl rfl
 
 /-- Integration of a test function against a polynomial expressed as weighted moment sum.
 `∫ g · p.eval = ∑ k, c k * ∫ y^k * g y` when `p.eval y = ∑ k, c k * y^k`. -/
@@ -97,6 +95,11 @@ private lemma integral_mul_poly_eq_sum {d : ℕ} (c : Fin (d + 1) → ℝ)
     _ = ∑ k : Fin (d + 1), c k * ∫ y, y ^ (k : ℕ) * g y := by
         apply Finset.sum_congr rfl; intro k _; rw [integral_const_mul]
 
+/-- Distributional characterization of polynomials of degree `≤ d`: if a locally integrable
+`f : ℝ → ℝ` annihilates (via `∫ g · f`) every `C^∞` compactly-supported test function `g` whose
+moments `∫ yʲ · g y` vanish for all `j ≤ d`, then `f` agrees a.e. with a polynomial. The test
+functions with vanishing moments are exactly those orthogonal to polynomials of degree `≤ d`, so
+this says the annihilator of that space consists of the polynomials themselves. -/
 theorem aePolynomial_of_annihilates_moment_vanishing {f : ℝ → ℝ} (d : ℕ)
     (hf : LocallyIntegrable f volume)
     (hann : ∀ g : ℝ → ℝ, ContDiff ℝ ∞ g → HasCompactSupport g →

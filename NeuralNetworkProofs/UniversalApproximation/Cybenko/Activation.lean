@@ -8,7 +8,6 @@ import Mathlib.Analysis.Normed.Lp.MeasurableSpace
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.MeasureTheory.VectorMeasure.Basic
 import Mathlib.MeasureTheory.VectorMeasure.Decomposition.Jordan
-import Mathlib.Topology.Filter
 
 /-!
 # Activation functions for the Universal Approximation Theorem
@@ -49,7 +48,7 @@ structure Sigmoidal (σ : ℝ → ℝ) : Prop where
 /-- The integral of `g : ↥K → ℝ` against a signed measure `μ`, defined through
 the Jordan decomposition of `μ` as the (Bochner) integral against the positive
 part minus the integral against the negative part. -/
-noncomputable def signedIntegral {n : ℕ} {K : Set (EuclideanSpace ℝ (Fin n))}
+noncomputable def signedIntegral {K : Set (EuclideanSpace ℝ (Fin n))}
     (μ : MeasureTheory.SignedMeasure ↥K) (g : ↥K → ℝ) : ℝ :=
   (∫ x, g x ∂μ.toJordanDecomposition.posPart) -
     (∫ x, g x ∂μ.toJordanDecomposition.negPart)

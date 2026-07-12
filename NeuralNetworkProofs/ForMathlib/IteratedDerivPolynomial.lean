@@ -4,10 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 
+import Mathlib.Analysis.Calculus.ContDiff.Deriv
 import Mathlib.Analysis.Calculus.Deriv.Polynomial
 import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
 import Mathlib.Analysis.Calculus.MeanValue
-import Mathlib.Analysis.InnerProductSpace.Basic
 
 /-! # A function with a vanishing iterated derivative is a polynomial.
 Intended Mathlib home: `Mathlib/Analysis/Calculus/IteratedDeriv/` (confirm with maintainers).
@@ -69,7 +69,7 @@ theorem exists_antideriv (q : Polynomial ℝ) :
 /-- Cast the `ContDiff` hypothesis from `↑(n+1)` to `(↑n : ℕ∞) + 1`. -/
 private lemma contDiff_succ_cast {f : ℝ → ℝ} {n : ℕ}
     (hf : ContDiff ℝ ((n + 1 : ℕ) : ℕ∞) f) : ContDiff ℝ ((n : ℕ∞) + 1) f := by
-  convert hf using 2; push_cast; rfl
+  exact_mod_cast hf
 
 /-- Extract `Differentiable ℝ f` from `ContDiff ℝ ((↑n) + 1) f`. -/
 private lemma differentiable_of_contDiff_succ {f : ℝ → ℝ} {n : ℕ}
@@ -167,22 +167,24 @@ theorem iteratedDeriv_eq_zero_imp_poly {f : ℝ → ℝ} {n : ℕ}
       rw [this]; simp
     · exact_mod_cast Nat.lt_succ_self n
 
+/-- The `n`-th iterate of `deriv` applied to a polynomial's evaluation map is the evaluation map of
+the `n`-th iterate of `Polynomial.derivative`:
+`deriv^[n] (fun x => q.eval x) = fun x => (derivative^[n] q).eval x`. -/
+theorem iteratedDeriv_eval (n : ℕ) (q : Polynomial ℝ) :
+    deriv^[n] (fun x => q.eval x) = fun x => (derivative^[n] q).eval x := by
+  induction n with
+  | zero => rfl
+  | succ k ih =>
+    rw [Function.iterate_succ', Function.comp_apply, ih]
+    funext x
+    rw [Polynomial.deriv, Function.iterate_succ', Function.comp_apply]
+
 /-- The converse direction: a polynomial of `natDegree ≤ d` has vanishing `(d+1)`-st iterated
 derivative (as a function `ℝ → ℝ`). -/
 theorem iteratedDeriv_succ_eq_zero_of_natDegree_le {p : Polynomial ℝ} {d : ℕ}
     (hp : p.natDegree ≤ d) :
     iteratedDeriv (d + 1) (fun x => p.eval x) = 0 := by
-  have key : ∀ (n : ℕ) (q : Polynomial ℝ),
-      deriv^[n] (fun x => q.eval x) = fun x => (derivative^[n] q).eval x := by
-    intro n
-    induction n with
-    | zero => intro q; rfl
-    | succ k ih =>
-      intro q
-      rw [Function.iterate_succ', Function.comp_apply, ih q]
-      funext x
-      rw [Polynomial.deriv, Function.iterate_succ', Function.comp_apply]
-  rw [iteratedDeriv_eq_iterate, key (d + 1) p,
+  rw [iteratedDeriv_eq_iterate, iteratedDeriv_eval (d + 1) p,
     Polynomial.iterate_derivative_eq_zero (Nat.lt_succ_of_le hp)]
   funext x
   rw [Polynomial.eval_zero]

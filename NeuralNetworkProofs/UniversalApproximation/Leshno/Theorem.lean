@@ -50,9 +50,9 @@ private lemma smoothMollify_span_le_T {σ φ : ℝ → ℝ} (hσ : ClassM σ) (h
     exact hcont.comp haff
   have hmem := mollify_ridge_mem_T hσ hφ hφc I hI (1 : ℝ) 0 lb.1 lb.2 hridge
   -- The generator equals this mollified ridge (using `⟪(1:ℝ), t⟫ = t`).
-  change (⟨fun t : ↥I => mollify σ φ (lb.1 * (t : ℝ) + lb.2), by exact hcont.comp (by fun_prop)⟩
+  change (⟨fun t : ↥I => mollify σ φ (lb.1 * (t : ℝ) + lb.2), hcont.comp (by fun_prop)⟩
       : C(↥I, ℝ)) ∈ T σ I
-  have heq : (⟨fun t : ↥I => mollify σ φ (lb.1 * (t : ℝ) + lb.2), by exact hcont.comp (by fun_prop)⟩
+  have heq : (⟨fun t : ↥I => mollify σ φ (lb.1 * (t : ℝ) + lb.2), hcont.comp (by fun_prop)⟩
       : C(↥I, ℝ))
       = (⟨fun t : ↥I => mollify σ φ (lb.1 * (⟪(1 : ℝ), (t : ℝ)⟫ + 0) + lb.2), hridge⟩
           : C(↥I, ℝ)) := by

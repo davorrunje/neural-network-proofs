@@ -4,7 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 
-import Mathlib.Analysis.Normed.Ring.Basic
+import Mathlib.Algebra.Module.LinearMap.Defs
+import Mathlib.Algebra.Module.Submodule.Basic
+import Mathlib.Algebra.Order.Archimedean.Real.Basic
+import Mathlib.Algebra.Order.Group.PosPart
+import Mathlib.Algebra.Order.Module.Defs
+import Mathlib.Tactic.Abel
 import Mathlib.Tactic.LinearCombination
 
 /-!
@@ -208,7 +213,7 @@ private lemma Lpos_rkSup_add_right (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded 
     rkSup_add L hL (negPart_nonneg _) (posPart_nonneg _)]
 
 omit [PosSMulMono ℝ E] in
-private lemma Lpos_map_add_proof (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) (x y : E) :
+private lemma Lpos_map_add (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) (x y : E) :
     rkSup L (x + y)⁺ - rkSup L (x + y)⁻ =
       (rkSup L x⁺ - rkSup L x⁻) + (rkSup L y⁺ - rkSup L y⁻) := by
   have hL1 := Lpos_rkSup_add_left L hL x y
@@ -235,7 +240,7 @@ private lemma Lpos_map_smul_neg (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) 
 `x ↦ rkSup L x⁺ - rkSup L x⁻`. It dominates both `L` and `0` on the positive cone. -/
 noncomputable def Lpos (L : E →ₗ[ℝ] ℝ) (hL : IsOrderBounded L) : E →ₗ[ℝ] ℝ where
   toFun x := rkSup L x⁺ - rkSup L x⁻
-  map_add' x y := Lpos_map_add_proof L hL x y
+  map_add' x y := Lpos_map_add L hL x y
   map_smul' c x := by
     change rkSup L (c • x)⁺ - rkSup L (c • x)⁻ = (RingHom.id ℝ) c * (rkSup L x⁺ - rkSup L x⁻)
     rw [RingHom.id_apply]
@@ -330,7 +335,7 @@ theorem IsOrderBounded.smul (c : ℝ) {L : E →ₗ[ℝ] ℝ} (hL : IsOrderBound
     IsOrderBounded (c • L) := by
   rcases le_or_gt 0 c with hc | hc
   · exact hL.smul_nonneg hc
-  · rw [show c • L = -((-c) • L) by have := neg_smul c L; rw [this, neg_neg]]
+  · rw [show c • L = -((-c) • L) by rw [neg_smul, neg_neg]]
     exact (hL.smul_nonneg (by linarith)).neg
 
 omit [IsOrderedAddMonoid E] [PosSMulMono ℝ E] in
