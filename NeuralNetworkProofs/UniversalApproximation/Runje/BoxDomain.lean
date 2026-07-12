@@ -3,26 +3,19 @@ Copyright (c) 2026 Davor Runje. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
-import Mathlib.Topology.Algebra.Order.Field
-import Mathlib.LinearAlgebra.Matrix.DotProduct
-import Mathlib.Data.Matrix.Mul
-import NeuralNetworkProofs.UniversalApproximation.Runje.Defs
-import NeuralNetworkProofs.UniversalApproximation.Runje.Embedding
-import NeuralNetworkProofs.UniversalApproximation.Monotone.Defs
+import Mathlib.Topology.Algebra.Ring.Real
 
 /-!
-# Affine box↔cube rescaling and the closure lemmas for the general-box partial-monotone UAP
+# Affine box↔cube rescaling for the general-box partial-monotone UAP
 
 `cubeOfBox a b` sends the box `Set.Icc a b` (non-degenerate: `a j < b j`) coordinatewise-affinely
 onto the unit cube `Set.Icc 0 1`; `boxOfCube a b` is its inverse. Both are increasing and
-continuous. This file also proves the two structural closure lemmas used by `PartMonoBox.lean`:
-`genSpanPi` is closed under affine input precomposition, and a `MonoNet` gains a coordinatewise
-suffix rescaling by prepending an identity-activation positive-diagonal layer.
+continuous. The structural closure lemmas used by `PartMonoBox.lean` (`genSpanPi` closed under
+affine input precomposition, and a `MonoNet` coordinatewise suffix rescaling) are added in later
+files/tasks.
 -/
 
 namespace UniversalApproximation.Runje
-
-open scoped Matrix
 
 /-- Affine map sending the box `Set.Icc a b` onto the unit cube, coordinatewise. -/
 noncomputable def cubeOfBox {d : ℕ} (a b x : Fin d → ℝ) : Fin d → ℝ :=
