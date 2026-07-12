@@ -1,7 +1,7 @@
 import NeuralNetworkProofs
 open UniversalApproximation.Cybenko UniversalApproximation.Leshno
 open UniversalApproximation.MikulincerReichman UniversalApproximation.Sartor
-  UniversalApproximation.Runje
+  UniversalApproximation.Runje UniversalApproximation.Amos
 #print axioms universal_approximation
 #print axioms universal_approximation_eps
 #print axioms leshno_dense_iff
@@ -16,3 +16,4 @@ open UniversalApproximation.MikulincerReichman UniversalApproximation.Sartor
 #print axioms deep_monotone_approximation
 #print axioms DeepPartMonoNet.monotone_snd
 #print axioms deep_partial_monotone_approximation
+#print axioms icnn_convex

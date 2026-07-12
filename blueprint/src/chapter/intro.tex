@@ -1,7 +1,7 @@
 \chapter{Introduction}
 
 This blueprint presents the formalized universal approximation theorems (UATs) for neural networks
-developed in Lean~4 and Mathlib, across five developments. Each result is stated informally,
+developed in Lean~4 and Mathlib, across six developments. Each result is stated informally,
 accompanied by its formal Lean statement and a prose proof, and is cross-linked to the formal API.
 Every item marked green is fully formalized and \texttt{sorry}-free.
 
@@ -18,6 +18,9 @@ Every item marked green is fully formalized and \texttt{sorry}-free.
     skip connections make deep constrained monotone networks trainable, with formalized soundness
     (a residual stack of any depth is monotone) and universal approximation; partial monotonicity
     is a secondary result. Extends Runje--Shankaranarayana 2023.
+  \item \textbf{Amos--Xu--Kolter (2017)}: \emph{Input-Convex Neural Networks} --- fully
+    input-convex networks (FICNNs) denote convex functions of their input; ICNN soundness is
+    formalized, with the convex universal approximation property forthcoming.
 \end{itemize}
 
 The three monotone developments (Mikulincer--Reichman, Sartor, Runje) share a common,

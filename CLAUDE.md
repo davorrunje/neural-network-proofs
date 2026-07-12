@@ -5,7 +5,7 @@ Guidance for working in this repository.
 ## What this is
 
 `NeuralNetworkProofs` formalizes **universal approximation theorems (UATs) for neural networks** in
-Lean 4 + Mathlib. Five developments are complete and `sorry`-free:
+Lean 4 + Mathlib. Six developments are complete and `sorry`-free:
 
 - **Cybenko (1989)** — a single-hidden-layer network with a continuous sigmoidal activation is dense
   in `C(K, ℝ)`. Headline: `UniversalApproximation.Cybenko.universal_approximation`.
@@ -28,6 +28,9 @@ Lean 4 + Mathlib. Five developments are complete and `sorry`-free:
   clamped, concatenated with the monotone block, and fed to a monotone network — soundness
   (`…Runje.PartMonoNet.monotone_snd`) and the UAP headline
   (`…Runje.partial_monotone_approximation`).
+- **Amos et al. (2017)** — **Input-Convex Neural Networks**: an ICNN with nonnegative propagation
+  weights and convex, nondecreasing activations denotes a convex function. Soundness now
+  (`UniversalApproximation.Amos.icnn_convex`); convex UAP forthcoming.
 
 ## Layout and namespaces
 
@@ -43,6 +46,7 @@ The Lean module-path prefix (`NeuralNetworkProofs`) is independent of the math n
 | `NeuralNetworkProofs/UniversalApproximation/MikulincerReichman/` + `MikulincerReichman.lean` | `UniversalApproximation.MikulincerReichman` | the Mikulincer–Reichman development |
 | `NeuralNetworkProofs/UniversalApproximation/Sartor/` + `Sartor.lean` | `UniversalApproximation.Sartor` | the Sartor et al. development |
 | `NeuralNetworkProofs/UniversalApproximation/Runje/` + `Runje.lean` | `UniversalApproximation.Runje` | the Runje et al. deep constrained monotonic development (partial monotonicity secondary) |
+| `NeuralNetworkProofs/UniversalApproximation/Amos/` + `Amos.lean` | `UniversalApproximation.Amos` | Input-Convex Neural Networks — soundness (convex UAP forthcoming) |
 | `NeuralNetworkProofs/UniversalApproximation.lean` | `NeuralNetworkProofs.UniversalApproximation` | results aggregator (re-exports all UAT roots) |
 | `NeuralNetworkProofs.lean` | — | root: imports the `UniversalApproximation` aggregator so `lake build` verifies all headlines |
 
@@ -70,7 +74,7 @@ A clean headline reports exactly `[propext, Classical.choice, Quot.sound]`. If a
 > changing a proof, rebuild (`lake build`) before trusting `#print axioms` / `lean_verify` — a stale
 > olean reports the *old* axioms. The default target must transitively include a theorem for
 > `lake build` to check it; the root `NeuralNetworkProofs.lean` imports the `UniversalApproximation`
-> aggregator, which re-exports all six UAT roots, for exactly this reason.
+> aggregator, which re-exports all seven UAT roots, for exactly this reason.
 
 ### Build gotcha: serialize after large file moves
 

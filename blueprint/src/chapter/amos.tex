@@ -1,0 +1,19 @@
+\chapter{Input-convex networks --- Amos et al.}
+
+\begin{definition}[Fully input-convex network]\label{def:icnn}
+  A FICNN threads the input $y$ into every layer, $z_{i+1}=\rho_i(W^z_i z_i + W^y_i y + b_i)$, with
+  nonnegative propagation weights $W^z_i\ge 0$, unconstrained input skip $W^y_i$, and convex
+  nondecreasing activations $\rho_i$.
+\end{definition}
+
+\begin{theorem}[ICNN soundness]\label{thm:icnn-convex}
+  \lean{UniversalApproximation.Amos.icnn_convex}\leanok
+  \uses{def:icnn}
+  Such a network denotes a convex function of its input.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{def:icnn}
+  By induction over the layer chain: each layer maps convex coordinates to convex coordinates ---
+  a nonnegative combination of convex functions plus the affine input skip is convex, and a convex
+  nondecreasing activation composed with a convex function is convex.
+\end{proof}
