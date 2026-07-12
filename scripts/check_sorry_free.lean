@@ -17,3 +17,4 @@ open UniversalApproximation.MikulincerReichman UniversalApproximation.Sartor
 #print axioms DeepPartMonoNet.monotone_snd
 #print axioms deep_partial_monotone_approximation
 #print axioms icnn_convex
+#print axioms icnn_approximation
