@@ -9,6 +9,8 @@ import NeuralNetworkProofs.UniversalApproximation.Runje.PartitionOfUnity
 import NeuralNetworkProofs.UniversalApproximation.Runje.JointTarget
 import NeuralNetworkProofs.UniversalApproximation.Runje.Embedding
 import NeuralNetworkProofs.UniversalApproximation.Runje.Approximation
+import NeuralNetworkProofs.UniversalApproximation.Runje.BoxDomain
+import NeuralNetworkProofs.UniversalApproximation.Runje.PartMonoBox
 import NeuralNetworkProofs.UniversalApproximation.Runje.RunjeShankaranarayana
 import NeuralNetworkProofs.UniversalApproximation.Runje.Residual
 import NeuralNetworkProofs.UniversalApproximation.Runje.DeepMono
@@ -33,4 +35,6 @@ result.
   (secondary).
 * `UniversalApproximation.Runje.partial_monotone_approximation` — shallow partial-monotone UAP
   (secondary).
+* `UniversalApproximation.Runje.partial_monotone_approximation_box` — shallow partial-monotone UAP
+  on a general box domain (secondary).
 -/

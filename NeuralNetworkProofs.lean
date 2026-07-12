@@ -36,6 +36,8 @@ monotonicity as a secondary result.
 * `UniversalApproximation.Runje.rsDense_monotone` — R–S dense layer is monotone.
 * `UniversalApproximation.Runje.partial_monotone_approximation` — Runje et al. (forthcoming),
   partial-monotone universal approximation (secondary).
+* `UniversalApproximation.Runje.partial_monotone_approximation_box` — Runje et al. (forthcoming),
+  partial-monotone universal approximation on a general box domain (secondary).
 * `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al. (forthcoming), soundness
   (secondary).
 * `UniversalApproximation.Amos.icnn_convex` — Amos et al. (2017), ICNN soundness.

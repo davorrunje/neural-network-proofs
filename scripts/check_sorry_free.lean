@@ -10,6 +10,7 @@ open UniversalApproximation.MikulincerReichman UniversalApproximation.Sartor
 #print axioms saturating_interpolation
 #print axioms nonpos_weight_universal
 #print axioms partial_monotone_approximation
+#print axioms partial_monotone_approximation_box
 #print axioms PartMonoNet.monotone_snd
 #print axioms rsDense_monotone
 #print axioms ResNet.monotone_toFun
