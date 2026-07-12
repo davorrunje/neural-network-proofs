@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Davor Runje
 -/
 import Mathlib.Topology.Algebra.Ring.Real
+import NeuralNetworkProofs.UniversalApproximation.Runje.Embedding
 
 /-!
 # Affine box↔cube rescaling for the general-box partial-monotone UAP
@@ -69,5 +70,37 @@ theorem monotone_boxOfCube {d} {a b : Fin d → ℝ} (hab : ∀ j, a j < b j) :
   simp only [boxOfCube]
   have := mul_le_mul_of_nonneg_left (hxy j) (sub_pos.mpr (hab j)).le
   linarith
+
+/-- A single Pi-side ridge unit precomposed with the affine `cubeOfBox` map is again a ridge
+unit, with rescaled weights `w c / (bF c - aF c)` and shifted bias. Pure functional identity — no
+non-degeneracy hypothesis on `bF - aF` is needed. -/
+theorem genFunPi_comp_cubeOfBox {σ : ℝ → ℝ} {df} {aF bF : Fin df → ℝ}
+    (w : Fin df → ℝ) (b : ℝ) :
+    (fun u => genFunPi σ w b (cubeOfBox aF bF u))
+      = genFunPi σ (fun c => w c / (bF c - aF c))
+          (b - ∑ c, w c * aF c / (bF c - aF c)) := by
+  funext u
+  simp only [genFunPi, cubeOfBox]
+  congr 1
+  rw [show (∑ c, w c * ((u c - aF c) / (bF c - aF c)))
+        = ∑ c, (w c / (bF c - aF c) * u c - w c * aF c / (bF c - aF c))
+      from Finset.sum_congr rfl fun c _ => by ring,
+    Finset.sum_sub_distrib]
+  ring
+
+/-- **Feature-block closure.** The Leshno single-hidden-layer span `genSpanPi σ df` is closed under
+precomposition with the affine box→cube map `cubeOfBox aF bF`. -/
+theorem genSpanPi_comp_cubeOfBox {σ : ℝ → ℝ} {df} {aF bF : Fin df → ℝ}
+    (_hab : ∀ j, aF j < bF j) {g : (Fin df → ℝ) → ℝ} (hg : g ∈ genSpanPi σ df) :
+    (fun u => g (cubeOfBox aF bF u)) ∈ genSpanPi σ df := by
+  have hmap : Submodule.map (LinearMap.funLeft ℝ ℝ (cubeOfBox aF bF)) (genSpanPi σ df)
+      ≤ genSpanPi σ df := by
+    rw [genSpanPi, Submodule.map_span, Submodule.span_le]
+    rintro _ ⟨_, ⟨wb, rfl⟩, rfl⟩
+    rw [show (LinearMap.funLeft ℝ ℝ (cubeOfBox aF bF)) (genFunPi σ wb.1 wb.2)
+          = (fun u => genFunPi σ wb.1 wb.2 (cubeOfBox aF bF u)) from rfl,
+      genFunPi_comp_cubeOfBox wb.1 wb.2]
+    exact Submodule.subset_span ⟨(_, _), rfl⟩
+  exact hmap ⟨g, hg, rfl⟩
 
 end UniversalApproximation.Runje
