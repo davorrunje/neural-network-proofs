@@ -9,6 +9,7 @@ import NeuralNetworkProofs.UniversalApproximation.Monotone
 import NeuralNetworkProofs.UniversalApproximation.MikulincerReichman
 import NeuralNetworkProofs.UniversalApproximation.Sartor
 import NeuralNetworkProofs.UniversalApproximation.Runje
+import NeuralNetworkProofs.UniversalApproximation.Amos
 
 /-!
 # Universal approximation theorems — results aggregator
@@ -36,6 +37,8 @@ monotonicity as a secondary result.
   partial-monotone UAP (secondary).
 * `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al. (forthcoming), soundness
   (secondary).
+* `UniversalApproximation.Amos.icnn_convex` — Amos et al. (2017), ICNN soundness (convex UAP
+  forthcoming).
 
 The shared `ActStack` core lives in `UniversalApproximation.Monotone`.
 -/

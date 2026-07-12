@@ -23,7 +23,7 @@ Rendered documentation is published at
 ## Formalized results: `NeuralNetworkProofs`
 
 `NeuralNetworkProofs` formalizes universal approximation theorems for neural networks, all
-`sorry`-free. Five developments are complete, all re-exported by the single aggregator import
+`sorry`-free. Six developments are complete, all re-exported by the single aggregator import
 `NeuralNetworkProofs.UniversalApproximation`:
 
 - **Cybenko (1989)** — a single-hidden-layer network with a continuous sigmoidal activation is dense
@@ -53,6 +53,10 @@ Rendered documentation is published at
   UAP), clamped into `[0,1]`, concatenated with the monotone block, and fed to a monotone network
   (the Mikulincer–Reichman / Sartor line above) — soundness (`…Runje.PartMonoNet.monotone_snd`)
   and the partial-monotone UAP (`…Runje.partial_monotone_approximation`).
+- **Amos et al. (2017)** — **Input-Convex Neural Networks**: a fully-input-convex network (FICNN)
+  with nonnegative propagation weights and convex, nondecreasing activations denotes a convex
+  function. Soundness now; universal approximation of convex functions is forthcoming.
+  Headline: `UniversalApproximation.Amos.icnn_convex`.
 
 **Correctness gate.** Every headline is machine-checked to depend only on the axioms
 `[propext, Classical.choice, Quot.sound]` — no `sorry`/`sorryAx`, no extra axioms (see
