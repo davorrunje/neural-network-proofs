@@ -38,8 +38,8 @@ monotonicity as a secondary result.
   partial-monotone universal approximation (secondary).
 * `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al. (forthcoming), soundness
   (secondary).
-* `UniversalApproximation.Amos.icnn_convex` — Amos et al. (2017), ICNN soundness (convex UAP
-  forthcoming).
+* `UniversalApproximation.Amos.icnn_convex` — Amos et al. (2017), ICNN soundness.
+* `UniversalApproximation.Amos.icnn_approximation` — Amos et al. (2017), convex UAP.
 
 General neural-network infrastructure lives under `NeuralNetwork` (`NeuralNetwork.Layer`,
 `NeuralNetwork.Network`); Mathlib-upstream candidates under `NeuralNetworkProofs.ForMathlib`. -/

@@ -37,8 +37,8 @@ monotonicity as a secondary result.
   partial-monotone UAP (secondary).
 * `UniversalApproximation.Runje.PartMonoNet.monotone_snd` — Runje et al. (forthcoming), soundness
   (secondary).
-* `UniversalApproximation.Amos.icnn_convex` — Amos et al. (2017), ICNN soundness (convex UAP
-  forthcoming).
+* `UniversalApproximation.Amos.icnn_convex` — Amos et al. (2017), ICNN soundness.
+* `UniversalApproximation.Amos.icnn_approximation` — Amos et al. (2017), convex UAP.
 
 The shared `ActStack` core lives in `UniversalApproximation.Monotone`.
 -/

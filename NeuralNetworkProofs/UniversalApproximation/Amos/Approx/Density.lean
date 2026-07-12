@@ -121,4 +121,19 @@ theorem maxTangent_approx {d : ℕ} {f : (Fin d → ℝ) → ℝ}
       have hmax := le_maxAffine n a b y i
       linarith
 
+/-- **Universal approximation.** A convex, differentiable function is uniformly approximated on any
+compact set by a fully input-convex network (with nonnegative propagation weights and convex
+nondecreasing activations). -/
+theorem icnn_approximation {d : ℕ} (f : (Fin d → ℝ) → ℝ)
+    (hf : ConvexOn ℝ Set.univ f) (hd : Differentiable ℝ f)
+    (K : Set (Fin d → ℝ)) (hK : IsCompact K) {ε : ℝ} (hε : 0 < ε) :
+    ∃ N : ICNN d 0 1, N.IsConvex ∧ ∀ y ∈ K, |N.toFun y - f y| ≤ ε := by
+  obtain ⟨n, a, b, hle, hunif⟩ := maxTangent_approx hf hd hK hε
+  obtain ⟨N, hNconv, hNeq⟩ := maxAffine_isICNN a b
+  refine ⟨N, hNconv, fun y hy => ?_⟩
+  rw [hNeq]
+  have h1 : maxAffine n a b y - f y ≤ 0 := sub_nonpos.mpr (hle y)
+  have h2 : f y - maxAffine n a b y ≤ ε := hunif y hy
+  rw [abs_le]; constructor <;> [linarith; linarith]
+
 end UniversalApproximation.Amos
