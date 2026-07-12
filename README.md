@@ -55,8 +55,9 @@ Rendered documentation is published at
   and the partial-monotone UAP (`…Runje.partial_monotone_approximation`).
 - **Amos et al. (2017)** — **Input-Convex Neural Networks**: a fully-input-convex network (FICNN)
   with nonnegative propagation weights and convex, nondecreasing activations denotes a convex
-  function. Soundness now; universal approximation of convex functions is forthcoming.
-  Headline: `UniversalApproximation.Amos.icnn_convex`.
+  function (soundness), and any convex, differentiable function is uniformly approximated on any
+  compact set by such a network (convex UAP); the general non-differentiable case is forthcoming.
+  Headlines: `UniversalApproximation.Amos.icnn_convex`, `…Amos.icnn_approximation`.
 
 **Correctness gate.** Every headline is machine-checked to depend only on the axioms
 `[propext, Classical.choice, Quot.sound]` — no `sorry`/`sorryAx`, no extra axioms (see

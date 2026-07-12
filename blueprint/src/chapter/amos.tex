@@ -17,3 +17,21 @@
   a nonnegative combination of convex functions plus the affine input skip is convex, and a convex
   nondecreasing activation composed with a convex function is convex.
 \end{proof}
+
+\begin{theorem}[Convex universal approximation]\label{thm:icnn-uap}
+  \lean{UniversalApproximation.Amos.icnn_approximation}\leanok
+  \uses{def:icnn}
+  Let $f$ be convex and differentiable on $\mathbb{R}^d$, and let $K$ be compact. For every
+  $\varepsilon>0$ there is a fully input-convex network, with nonnegative propagation weights and
+  the ReLU activation, that is within $\varepsilon$ of $f$ uniformly on $K$.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{def:icnn}
+  Cover $K$ by finitely many points $x_1,\dots,x_n$ close enough that $f$'s modulus of continuity
+  is below $\varepsilon/2$ at that scale. At each $x_i$, the tangent plane
+  $y \mapsto f(x_i) + \nabla f(x_i)\cdot(y-x_i)$ minorizes $f$ by convexity, and equals $f$ at
+  $x_i$; taking the pointwise maximum of these tangent planes over $i$ therefore stays below $f$
+  everywhere and comes within $\varepsilon$ of $f$ on $K$. This max-of-affine-functions is realized
+  exactly by a nonnegative-weight ReLU ICNN (a max of two affine functions is
+  $\mathrm{ReLU}(u-v)+v$, iterated), giving the network witness.
+\end{proof}
