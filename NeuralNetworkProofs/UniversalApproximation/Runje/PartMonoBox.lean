@@ -78,7 +78,7 @@ theorem partial_monotone_approximation_box {df dm : ℕ}
   refine ⟨⟨Pt.embWidth, fun u => Pt.emb (cubeOfBox aF bF u), Pt.mono.rescaleSuffix s t⟩,
     Pt.mono.rescaleSuffix_isMonotone hPtmono hs_nonneg, fun i => ?_, ?_⟩
   · -- feature-embedding membership, closed under the affine precomposition
-    exact genSpanPi_comp_cubeOfBox haF (hPtemb i)
+    exact genSpanPi_comp_cubeOfBox (hPtemb i)
   · -- the uniform bound, transported through the change of variables
     intro u hu x hx
     have hst : (fun j => s j * x j + t j) = cubeOfBox aM bM x := by

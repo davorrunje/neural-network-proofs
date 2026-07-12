@@ -33,6 +33,7 @@ def maxAffine {d : ℕ} :
       max (maxAffine n (fun i => a i.castSucc) (fun i => b i.castSucc) y)
         (dotAffine (a (Fin.last (n + 1))) (b (Fin.last (n + 1))) y)
 
+/-- Each affine piece `i` never exceeds the max over all `n + 1` pieces. -/
 theorem le_maxAffine {d : ℕ} : (n : ℕ) → (a : Fin (n + 1) → (Fin d → ℝ)) → (b : Fin (n + 1) → ℝ) →
     (y : Fin d → ℝ) → (i : Fin (n + 1)) → dotAffine (a i) (b i) y ≤ maxAffine n a b y
   | 0, a, b, y, i => by
@@ -46,6 +47,7 @@ theorem le_maxAffine {d : ℕ} : (n : ℕ) → (a : Fin (n + 1) → (Fin d → �
         exact le_trans
           (le_maxAffine n (fun i => a i.castSucc) (fun i => b i.castSucc) y j) (le_max_left _ _)
 
+/-- Any common upper bound `c` on all affine pieces also bounds their max `maxAffine`. -/
 theorem maxAffine_le {d : ℕ} : (n : ℕ) → (a : Fin (n + 1) → (Fin d → ℝ)) → (b : Fin (n + 1) → ℝ) →
     (y : Fin d → ℝ) → (c : ℝ) → (∀ i, dotAffine (a i) (b i) y ≤ c) → maxAffine n a b y ≤ c
   | 0, a, b, y, c, h => by simpa only [maxAffine] using h 0
@@ -75,19 +77,27 @@ def idStep {d : ℕ} (a : Fin d → ℝ) (c : ℝ) : ICNNLayer d 1 1 where
   bias := fun _ => c
   act := id
 
+/-- `initLayer`'s output on (the empty) hidden input `z` and data `y` is `a ⬝ᵥ y + c`. -/
 theorem initLayer_toFun {d : ℕ} (a : Fin d → ℝ) (c : ℝ) (z : Fin 0 → ℝ) (y : Fin d → ℝ) :
     (initLayer a c).toFun z y 0 = dotAffine a c y := by
   simp [ICNNLayer.toFun, initLayer, dotAffine, Matrix.mulVec, dotProduct]
 
+/-- `reluStep`'s output on hidden input `z` and data `y` is `relu (z 0 - (a ⬝ᵥ y + c))`. -/
 theorem reluStep_toFun {d : ℕ} (a : Fin d → ℝ) (c : ℝ) (z : Fin 1 → ℝ) (y : Fin d → ℝ) :
     (reluStep a c).toFun z y 0 = relu (z 0 - dotAffine a c y) := by
-  simp [ICNNLayer.toFun, reluStep, dotAffine, Matrix.mulVec, dotProduct]
-  ring_nf
+  simp only [ICNNLayer.toFun, reluStep, Matrix.mulVec, dotProduct, Finset.univ_unique,
+    Fin.default_eq_zero, Fin.isValue, Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_fin_one,
+    one_mul, Finset.sum_singleton, Pi.neg_apply, neg_mul, Finset.sum_neg_distrib, dotAffine]
+  congr 1
+  ring
 
+/-- `idStep`'s output on hidden input `z` and data `y` is `z 0 + (a ⬝ᵥ y + c)`. -/
 theorem idStep_toFun {d : ℕ} (a : Fin d → ℝ) (c : ℝ) (z : Fin 1 → ℝ) (y : Fin d → ℝ) :
     (idStep a c).toFun z y 0 = z 0 + dotAffine a c y := by
-  simp [ICNNLayer.toFun, idStep, dotAffine, Matrix.mulVec, dotProduct]
-  ring_nf
+  simp only [ICNNLayer.toFun, idStep, Matrix.mulVec, dotProduct, Finset.univ_unique,
+    Fin.default_eq_zero, Fin.isValue, Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_fin_one,
+    one_mul, Finset.sum_singleton, id_eq, dotAffine]
+  ring
 
 /-- `n` max-steps folded onto a running hidden max (width 1 → 1). -/
 def maxNetTail {d : ℕ} :
@@ -102,12 +112,14 @@ def maxNetTail {d : ℕ} :
 def maxNet {d : ℕ} (n : ℕ) (a : Fin (n + 1) → (Fin d → ℝ)) (b : Fin (n + 1) → ℝ) : ICNN d 0 1 :=
   .cons (initLayer (a 0) (b 0)) (maxNetTail n a b)
 
+/-- `initLayer` is convex: it has no hidden input, and `act = id` is monotone and convex. -/
 theorem initLayer_isConvex {d : ℕ} (a : Fin d → ℝ) (c : ℝ) : (initLayer a c).IsConvex := by
   refine ⟨?_, ?_, ?_⟩
   · intro i j; exact j.elim0
   · exact id_monotone
   · exact id_convexOn
 
+/-- `reluStep` is convex: its `Wz` entry is nonnegative, and `relu` is monotone and convex. -/
 theorem reluStep_isConvex {d : ℕ} (a : Fin d → ℝ) (c : ℝ) : (reluStep a c).IsConvex := by
   refine ⟨?_, ?_, ?_⟩
   · intro i j
@@ -115,6 +127,7 @@ theorem reluStep_isConvex {d : ℕ} (a : Fin d → ℝ) (c : ℝ) : (reluStep a 
   · exact relu_monotone
   · exact relu_convexOn
 
+/-- `idStep` is convex: its `Wz` entry is nonnegative, and `act = id` is monotone and convex. -/
 theorem idStep_isConvex {d : ℕ} (a : Fin d → ℝ) (c : ℝ) : (idStep a c).IsConvex := by
   refine ⟨?_, ?_, ?_⟩
   · intro i j
@@ -122,6 +135,7 @@ theorem idStep_isConvex {d : ℕ} (a : Fin d → ℝ) (c : ℝ) : (idStep a c).I
   · exact id_monotone
   · exact id_convexOn
 
+/-- `maxNetTail`'s `n` max-steps are all convex, hence the whole tail is convex. -/
 theorem maxNetTail_isConvex {d : ℕ} :
     (n : ℕ) → (a : Fin (n + 1) → (Fin d → ℝ)) → (b : Fin (n + 1) → ℝ) →
     (maxNetTail (d := d) n a b).IsConvex
@@ -130,6 +144,7 @@ theorem maxNetTail_isConvex {d : ℕ} :
       refine ⟨reluStep_isConvex _ _, idStep_isConvex _ _, ?_⟩
       exact maxNetTail_isConvex n _ _
 
+/-- `maxNet` is convex: its initial layer and max-step tail are both convex. -/
 theorem maxNet_isConvex {d : ℕ} (n : ℕ) (a : Fin (n + 1) → (Fin d → ℝ)) (b : Fin (n + 1) → ℝ) :
     (maxNet (d := d) n a b).IsConvex :=
   ⟨initLayer_isConvex _ _, maxNetTail_isConvex n a b⟩
