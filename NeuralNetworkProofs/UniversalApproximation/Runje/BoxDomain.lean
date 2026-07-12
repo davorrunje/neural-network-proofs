@@ -98,7 +98,7 @@ theorem genFunPi_comp_cubeOfBox {σ : ℝ → ℝ} {df} {aF bF : Fin df → ℝ}
 /-- **Feature-block closure.** The Leshno single-hidden-layer span `genSpanPi σ df` is closed under
 precomposition with the affine box→cube map `cubeOfBox aF bF`. -/
 theorem genSpanPi_comp_cubeOfBox {σ : ℝ → ℝ} {df} {aF bF : Fin df → ℝ}
-    (_hab : ∀ j, aF j < bF j) {g : (Fin df → ℝ) → ℝ} (hg : g ∈ genSpanPi σ df) :
+    {g : (Fin df → ℝ) → ℝ} (hg : g ∈ genSpanPi σ df) :
     (fun u => g (cubeOfBox aF bF u)) ∈ genSpanPi σ df := by
   have hmap : Submodule.map (LinearMap.funLeft ℝ ℝ (cubeOfBox aF bF)) (genSpanPi σ df)
       ≤ genSpanPi σ df := by
