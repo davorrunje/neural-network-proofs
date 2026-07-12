@@ -52,7 +52,8 @@ Rendered documentation is published at
   non-monotone feature block is embedded by an unconstrained single-hidden-layer network (Leshno
   UAP), clamped into `[0,1]`, concatenated with the monotone block, and fed to a monotone network
   (the Mikulincer–Reichman / Sartor line above) — soundness (`…Runje.PartMonoNet.monotone_snd`)
-  and the partial-monotone UAP (`…Runje.partial_monotone_approximation`).
+  and the partial-monotone UAP (`…Runje.partial_monotone_approximation`), now extended from the
+  unit cube to any non-degenerate box domain (`…Runje.partial_monotone_approximation_box`).
 - **Amos et al. (2017)** — **Input-Convex Neural Networks**: a fully-input-convex network (FICNN)
   with nonnegative propagation weights and convex, nondecreasing activations denotes a convex
   function (soundness), and any convex, differentiable function is uniformly approximated on any

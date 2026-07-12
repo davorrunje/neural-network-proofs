@@ -155,6 +155,20 @@ theorem partial_monotone_approximation {df dm : ℕ}
   (\cref{thm:runje-sound}) makes the resulting network monotone in $x$.
 \end{proof}
 
+\subsection{Box-domain variant}
+
+\begin{theorem}[Partial-monotone UAP on a general box]\label{thm:runje-uap-box}
+  \lean{UniversalApproximation.Runje.partial_monotone_approximation_box}\leanok
+  \uses{thm:runje-uap}
+  The unit-cube partial-monotone UAP (\cref{thm:runje-uap}) extends to any non-degenerate box
+  $[a_F,b_F]\times[a_M,b_M]$ (i.e.\ $a_F<b_F$ and $a_M<b_M$ coordinatewise) by an affine change of
+  variables: pull $f$ back to the unit cube, apply \cref{thm:runje-uap} there, then push the
+  witness forward --- the feature embedding through the affine box$\to$cube map on the $u$-side,
+  and the monotone core through a coordinatewise affine rescaling of its trailing (monotone) block
+  on the $x$-side --- to recover a \texttt{PartMonoNet} that approximates $f$ within $\varepsilon$
+  uniformly on the box.
+\end{theorem}
+
 \subsection{Deep-core variant}
 
 \begin{theorem}[Deep-core partial-monotone UAP]\label{thm:deep-part-uap}

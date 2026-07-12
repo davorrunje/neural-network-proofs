@@ -27,7 +27,8 @@ Lean 4 + Mathlib. Six developments are complete and `sorry`-free:
   non-monotone feature block is embedded via an unconstrained single-hidden-layer Leshno network,
   clamped, concatenated with the monotone block, and fed to a monotone network — soundness
   (`…Runje.PartMonoNet.monotone_snd`) and the UAP headline
-  (`…Runje.partial_monotone_approximation`).
+  (`…Runje.partial_monotone_approximation`), now proven on general non-degenerate box domains
+  as well as the unit cube (`…Runje.partial_monotone_approximation_box`).
 - **Amos et al. (2017)** — **Input-Convex Neural Networks**: an ICNN with nonnegative propagation
   weights and convex, nondecreasing activations denotes a convex function — soundness
   (`UniversalApproximation.Amos.icnn_convex`) — and any convex, differentiable function is
