@@ -33,9 +33,7 @@ noncomputable def gradVec {d : ℕ} (f : (Fin d → ℝ) → ℝ) (x : Fin d →
 differentiability hypothesis: `fderiv` is `ℝ`-linear unconditionally. -/
 theorem gradVec_dotProduct {d : ℕ} {f : (Fin d → ℝ) → ℝ} {x : Fin d → ℝ}
     (v : Fin d → ℝ) : gradVec f x ⬝ᵥ v = fderiv ℝ f x v := by
-  have hv : v = ∑ j, v j • Pi.single j (1 : ℝ) := by
-    ext k; simp [Pi.single_apply]
-  conv_rhs => rw [hv]
+  conv_rhs => rw [pi_eq_sum_univ' v]
   rw [map_sum]
   simp only [map_smul, smul_eq_mul, gradVec, dotProduct]
   exact Finset.sum_congr rfl (fun j _ => by ring)
