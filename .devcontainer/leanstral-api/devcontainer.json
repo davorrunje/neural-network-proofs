@@ -1,0 +1,17 @@
+{
+  "name": "Leanstral (API) + Vibe",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/python:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
+    "../features/no-gpg": {}
+  },
+  "customizations": { "vscode": { "extensions": ["leanprover.lean4"] } },
+  "mounts": [
+    "source=neural-network-proofs-claude-config,target=/home/vscode/.claude,type=volume"
+  ],
+  "remoteEnv": { "MISTRAL_API_KEY": "${localEnv:MISTRAL_API_KEY}" },
+  "onCreateCommand": "bash .devcontainer/leanstral-api/on-create.sh"
+}
