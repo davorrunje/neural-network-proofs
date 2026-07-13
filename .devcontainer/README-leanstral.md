@@ -38,7 +38,9 @@ base image (no CUDA, no GPU passthrough).
 - A host directory `~/models/leanstral` — bind-mounted into the container at
   `/models/leanstral` and shared across all three local flavors, so a weight
   file downloaded/converted once is reused by the others and survives
-  rebuilds. The directory is created for you if it does not exist.
+  rebuilds. **Create it before the first build** (`mkdir -p ~/models/leanstral`);
+  Docker will not auto-create a bind-mount source and the container fails to
+  start with `bind source path does not exist` if it is missing.
 - Optionally, an **`HF_TOKEN`** in your host environment if a HuggingFace repo
   you pull from requires auth; it is passed through as `HF_TOKEN` in
   `containerEnv`.
