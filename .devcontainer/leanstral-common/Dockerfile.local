@@ -19,7 +19,15 @@ RUN useradd -m -s /bin/bash ${USERNAME} \
     && chmod 0440 /etc/sudoers.d/${USERNAME}
 
 # Build llama.cpp with CUDA for both GPU architectures.
-RUN git clone --depth 1 --branch ${LLAMA_CPP_REF} \
+# The devel image ships only the unversioned CUDA driver *stub* (libcuda.so) and
+# has no GPU at build time, so linking the executables against libggml-cuda (which
+# pulls in the driver API: cuMemCreate, cuDeviceGet, cuGetErrorString, …) can't
+# resolve the transitive libcuda.so.1. Symlink the stub to the SONAME and point ld
+# at it with -rpath-link — link-time only; at runtime `--gpus all` injects the real
+# driver lib, so the binaries load the actual libcuda.so.1.
+RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so \
+          /usr/local/cuda/lib64/stubs/libcuda.so.1 \
+    && git clone --depth 1 --branch ${LLAMA_CPP_REF} \
       https://github.com/ggml-org/llama.cpp ${LLAMA_CPP_DIR} \
     && cmake -S ${LLAMA_CPP_DIR} -B ${LLAMA_CPP_DIR}/build -G Ninja \
          -DGGML_CUDA=ON \
@@ -27,6 +35,7 @@ RUN git clone --depth 1 --branch ${LLAMA_CPP_REF} \
          -DGGML_CUDA_FORCE_CUBLAS=OFF \
          -DLLAMA_CURL=ON \
          -DCMAKE_BUILD_TYPE=Release \
+         -DCMAKE_EXE_LINKER_FLAGS="-L/usr/local/cuda/lib64/stubs -Wl,-rpath-link,/usr/local/cuda/lib64/stubs" \
     && cmake --build ${LLAMA_CPP_DIR}/build --target llama-server llama-quantize \
     && pip3 install --break-system-packages -r ${LLAMA_CPP_DIR}/requirements.txt
 
