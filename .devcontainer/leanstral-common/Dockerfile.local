@@ -1,0 +1,32 @@
+# Blackwell (RTX 5090, sm_120) requires CUDA 12.8 for llama.cpp — do NOT bump
+# to 13.x (MMQ kernel segfault). 86 = RTX 3090 (Ampere), 120 = RTX 5090.
+FROM nvidia/cuda:12.8.0-devel-ubuntu24.04
+
+ARG USERNAME=vscode
+ENV DEBIAN_FRONTEND=noninteractive \
+    LLAMA_CPP_DIR=/opt/llama.cpp \
+    PATH=/home/${USERNAME}/.local/bin:/usr/local/cuda/bin:$PATH
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git curl ca-certificates build-essential cmake ninja-build \
+      python3 python3-pip python3-venv sudo libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Non-root dev user (the CUDA image is root by default).
+RUN useradd -m -s /bin/bash ${USERNAME} \
+    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME}
+
+# Build llama.cpp with CUDA for both GPU architectures.
+RUN git clone --depth 1 https://github.com/ggml-org/llama.cpp ${LLAMA_CPP_DIR} \
+    && cmake -S ${LLAMA_CPP_DIR} -B ${LLAMA_CPP_DIR}/build -G Ninja \
+         -DGGML_CUDA=ON \
+         -DCMAKE_CUDA_ARCHITECTURES="86;120" \
+         -DGGML_CUDA_FORCE_CUBLAS=OFF \
+         -DLLAMA_CURL=ON \
+    && cmake --build ${LLAMA_CPP_DIR}/build --target llama-server llama-quantize \
+    && pip3 install --break-system-packages -r ${LLAMA_CPP_DIR}/requirements.txt
+
+USER ${USERNAME}
+# uv provides `uv`/`uvx`; used later to install mistral-vibe and run lean-lsp-mcp.
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
