@@ -23,5 +23,5 @@
     "HF_TOKEN": "${localEnv:HF_TOKEN}"
   },
   "onCreateCommand": "bash .devcontainer/leanstral-common/on-create-local.sh",
-  "postStartCommand": "nohup bash .devcontainer/leanstral-common/start-llama-server.sh >/tmp/llama-start.log 2>&1 &"
+  "postStartCommand": "bash .devcontainer/leanstral-common/poststart.sh"
 }
