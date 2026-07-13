@@ -65,7 +65,7 @@ you want (`Leanstral (API) + Vibe`, `Leanstral (local Q4_K_M) + Vibe`, etc.).
 
 For the local flavors, weigh disk space and quality against download time:
 
-- **Q4_K_M ≈ 65 GB** — downloaded directly from the community GGUF repo
+- **Q4_K_M ≈ 72 GB** — downloaded directly from the community GGUF repo
   (fastest to provision).
 - **Q5_K_M ≈ 85 GB** and **Q8_0 ≈ 127 GB** — no official GGUF exists at these
   quants, so the container downloads the **BF16 base once (≈ 238 GB,

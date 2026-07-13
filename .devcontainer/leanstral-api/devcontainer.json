@@ -13,5 +13,6 @@
     "source=neural-network-proofs-claude-config,target=/home/vscode/.claude,type=volume"
   ],
   "remoteEnv": { "MISTRAL_API_KEY": "${localEnv:MISTRAL_API_KEY}" },
+  "containerEnv": { "LEANSTRAL_BACKEND": "api" },
   "onCreateCommand": "bash .devcontainer/leanstral-api/on-create.sh"
 }

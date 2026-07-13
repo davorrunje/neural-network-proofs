@@ -31,10 +31,14 @@ timeout 60 uvx lean-lsp-mcp --help >/dev/null 2>&1 \
        timeout 60 uvx --from lean-lsp-mcp python -c "import lean_lsp_mcp" ; }
 
 check "repo sorry-free gate"
-# Standalone pipeline (not left of &&) so pipefail+set -e abort on a broken
-# gate or a failing `lake env lean`; the success log runs only if grep matched.
-( . "$HOME/.elan/env" && lake env lean scripts/check_sorry_free.lean ) \
-  | grep -q "propext"
+# Mirror .github/workflows/ci.yml: run the axiom print, then FAIL on sorryAx.
+# (#print axioms always emits propext, so grepping propext detects nothing —
+# a sorry only ADDS sorryAx.) Command substitution under set -e also aborts if
+# `lake env lean` itself fails.
+out="$( . "$HOME/.elan/env" && lake env lean scripts/check_sorry_free.lean )"
+if echo "$out" | grep -q 'sorryAx'; then
+  log "ERROR: a headline theorem depends on sorryAx (admitted proof)"; exit 1
+fi
 log "axioms clean"
 
 log "ALL CHECKS PASSED ($backend)"

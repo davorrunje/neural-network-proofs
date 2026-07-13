@@ -16,6 +16,13 @@ command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 
 bash "$COMMON/gen-vibe-config.sh" local "$REPO_ROOT/.vibe/config.toml"
 
+# The host bind-mount dir may be auto-created root-owned by dockerd; claim it
+# for the vscode user so fetch-weights.sh can write the (large) GGUF files.
+MODELS_DIR="${LEANSTRAL_MODELS_DIR:-/models/leanstral}"
+if [ -d "$MODELS_DIR" ] && [ ! -w "$MODELS_DIR" ]; then
+  sudo chown "$(id -u):$(id -g)" "$MODELS_DIR" || true
+fi
+
 # Fetch (or convert) the GGUF for this flavor's quant into the bind mount.
 bash "$COMMON/fetch-weights.sh" "$LEANSTRAL_QUANT"
 

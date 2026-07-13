@@ -21,3 +21,6 @@ blueprint/src/*.out
 blueprint/src/*.pdf
 blueprint/src/*.paux
 blueprint/src/*.pdfpc
+
+# Vibe config generated at container provisioning time (gen-vibe-config.sh)
+.vibe/
