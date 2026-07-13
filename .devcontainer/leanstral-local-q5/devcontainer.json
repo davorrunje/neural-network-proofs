@@ -1,0 +1,27 @@
+{
+  "name": "Leanstral (local Q5_K_M) + Vibe",
+  "build": {
+    "dockerfile": "../leanstral-common/Dockerfile.local",
+    "context": "../leanstral-common"
+  },
+  "runArgs": ["--gpus", "all"],
+  "hostRequirements": { "gpu": true },
+  "remoteUser": "vscode",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+  },
+  "customizations": { "vscode": { "extensions": ["leanprover.lean4"] } },
+  "mounts": [
+    "source=neural-network-proofs-claude-config,target=/home/vscode/.claude,type=volume",
+    "source=${localEnv:HOME}/models/leanstral,target=/models/leanstral,type=bind"
+  ],
+  "containerEnv": {
+    "LEANSTRAL_QUANT": "q5_k_m",
+    "LEANSTRAL_BACKEND": "local",
+    "LEANSTRAL_MODELS_DIR": "/models/leanstral",
+    "HF_TOKEN": "${localEnv:HF_TOKEN}"
+  },
+  "onCreateCommand": "bash .devcontainer/leanstral-common/on-create-local.sh",
+  "postStartCommand": "nohup bash .devcontainer/leanstral-common/start-llama-server.sh >/tmp/llama-start.log 2>&1 &"
+}
