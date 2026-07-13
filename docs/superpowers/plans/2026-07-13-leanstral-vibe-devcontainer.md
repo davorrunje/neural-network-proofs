@@ -726,6 +726,7 @@ git commit -m "feat(devcontainer): Leanstral API flavor (thin Vibe client + lean
 
 **Files:**
 - Create: `.devcontainer/leanstral-common/on-create-local.sh`
+- Create: `.devcontainer/leanstral-common/poststart.sh`
 - Create: `.devcontainer/leanstral-local-q4/devcontainer.json`
 - Create: `.devcontainer/leanstral-local-q5/devcontainer.json`
 - Create: `.devcontainer/leanstral-local-q8/devcontainer.json`
@@ -793,8 +794,21 @@ Create `.devcontainer/leanstral-local-q4/devcontainer.json`:
     "HF_TOKEN": "${localEnv:HF_TOKEN}"
   },
   "onCreateCommand": "bash .devcontainer/leanstral-common/on-create-local.sh",
-  "postStartCommand": "nohup bash .devcontainer/leanstral-common/start-llama-server.sh >/tmp/llama-start.log 2>&1 &"
+  "postStartCommand": "bash .devcontainer/leanstral-common/poststart.sh"
 }
+```
+
+The `postStartCommand` delegates to a wrapper (keeps the JSON line ≤ 100 cols and
+the backgrounding logic in one place). Create
+`.devcontainer/leanstral-common/poststart.sh`:
+
+```bash
+#!/usr/bin/env bash
+# Launch the model server in the background so container attach isn't blocked
+# by start-llama-server.sh's foreground health-wait. Log to /tmp/llama-start.log.
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+nohup bash "$HERE/start-llama-server.sh" >/tmp/llama-start.log 2>&1 &
 ```
 
 - [ ] **Step 3: Write q5 and q8 by copying q4 and changing two lines**
