@@ -3,6 +3,7 @@
 FROM nvidia/cuda:12.8.0-devel-ubuntu24.04
 
 ARG USERNAME=vscode
+ARG LLAMA_CPP_REF=b8967
 ENV DEBIAN_FRONTEND=noninteractive \
     LLAMA_CPP_DIR=/opt/llama.cpp \
     PATH=/home/${USERNAME}/.local/bin:/usr/local/cuda/bin:$PATH
@@ -18,15 +19,19 @@ RUN useradd -m -s /bin/bash ${USERNAME} \
     && chmod 0440 /etc/sudoers.d/${USERNAME}
 
 # Build llama.cpp with CUDA for both GPU architectures.
-RUN git clone --depth 1 https://github.com/ggml-org/llama.cpp ${LLAMA_CPP_DIR} \
+RUN git clone --depth 1 --branch ${LLAMA_CPP_REF} \
+      https://github.com/ggml-org/llama.cpp ${LLAMA_CPP_DIR} \
     && cmake -S ${LLAMA_CPP_DIR} -B ${LLAMA_CPP_DIR}/build -G Ninja \
          -DGGML_CUDA=ON \
          -DCMAKE_CUDA_ARCHITECTURES="86;120" \
          -DGGML_CUDA_FORCE_CUBLAS=OFF \
          -DLLAMA_CURL=ON \
+         -DCMAKE_BUILD_TYPE=Release \
     && cmake --build ${LLAMA_CPP_DIR}/build --target llama-server llama-quantize \
     && pip3 install --break-system-packages -r ${LLAMA_CPP_DIR}/requirements.txt
 
 USER ${USERNAME}
 # uv provides `uv`/`uvx`; used later to install mistral-vibe and run lean-lsp-mcp.
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+# HuggingFace CLI (`hf`) — fetch-weights.sh uses `hf download`.
+RUN uv tool install "huggingface_hub[cli]"
