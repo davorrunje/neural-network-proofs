@@ -3,6 +3,9 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMMON="$REPO_ROOT/.devcontainer/leanstral-common"
 
+# Claim the ~/.claude config volume for the runtime user (see script header).
+bash "$COMMON/fix-claude-volume-perms.sh"
+
 git config --global commit.gpgsign false
 git config --global tag.gpgsign false
 
