@@ -334,17 +334,6 @@ backend="${1:?usage: gen-vibe-config.sh <local|api> <out_path>}"
 out="${2:?usage: gen-vibe-config.sh <local|api> <out_path>}"
 mkdir -p "$(dirname "$out")"
 
-mcp_block() {
-  cat <<'TOML'
-
-[[mcp_servers]]
-name = "lean-lsp"
-transport = "stdio"
-command = "uvx"
-args = ["lean-lsp-mcp"]
-TOML
-}
-
 case "$backend" in
   local)
     cat > "$out" <<'TOML'
@@ -388,22 +377,18 @@ TOML
   *) log "unknown backend: $backend (want local|api)"; exit 2 ;;
 esac
 
-mcp_block() { :; }; # (placeholder guard; real append below)
-{
-  echo ""
-  echo "[[mcp_servers]]"
-  echo 'name = "lean-lsp"'
-  echo 'transport = "stdio"'
-  echo 'command = "uvx"'
-  echo 'args = ["lean-lsp-mcp"]'
-} >> "$out"
+# Shared MCP block appended for both backends (one copy).
+cat >> "$out" <<'TOML'
+
+[[mcp_servers]]
+name = "lean-lsp"
+transport = "stdio"
+command = "uvx"
+args = ["lean-lsp-mcp"]
+TOML
 
 log "wrote Vibe config ($backend): $out"
 ```
-
-> Note: the heredoc `mcp_block` above is intentionally not called — the MCP
-> section is appended directly so both backends share one copy. Keep the direct
-> append; remove the unused `mcp_block` definitions if a linter complains.
 
 - [ ] **Step 4: Run test to verify it passes**
 
