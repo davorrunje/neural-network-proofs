@@ -28,7 +28,7 @@ hf_token_args=()
 [ -n "${HF_TOKEN:-}" ] && hf_token_args=(--token "$HF_TOKEN")
 
 if [ "$quant" = "q4_k_m" ]; then
-  log "fetching Q4_K_M (~65GB) from $Q4_REPO"
+  log "fetching Q4_K_M (~72GB) from $Q4_REPO"
   run hf download "$Q4_REPO" "$fname" \
     --local-dir "$LEANSTRAL_MODELS_DIR" "${hf_token_args[@]}"
 else
