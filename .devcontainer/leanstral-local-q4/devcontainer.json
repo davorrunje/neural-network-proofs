@@ -22,7 +22,16 @@
     "LEANSTRAL_QUANT": "q4_k_m",
     "LEANSTRAL_BACKEND": "local",
     "LEANSTRAL_MODELS_DIR": "/models/leanstral",
-    "HF_TOKEN": "${localEnv:HF_TOKEN}"
+    "HF_TOKEN": "${localEnv:HF_TOKEN}",
+    // GPU-split tuning. Device 0 is the 32GB RTX 5090, device 1 the 24GB RTX 3090 (both in
+    // `nvidia-smi -L` and llama.cpp; confirmed by which card OOMs). The shipped default split
+    // (0.42,0.58) puts 58% on the 24GB 3090 and OOMs at load, so give the 5090 the larger
+    // share. n_cpu_moe=28 offloads that many MoE expert layers to the (ample, ~250GB) system
+    // RAM so the rest fits in VRAM (~151 tok/s prefill, ~25 tok/s gen at Q4). Lower n_cpu_moe
+    // for more speed if VRAM allows (the 5090 has headroom); raise it if you hit OOM. Retune
+    // per your hardware — see README-leanstral.md "Retuning the GPU split".
+    "LLAMA_TENSOR_SPLIT": "0.57,0.43",
+    "LLAMA_N_CPU_MOE": "28"
   },
   "onCreateCommand": "bash .devcontainer/leanstral-common/on-create-local.sh",
   "postStartCommand": "bash .devcontainer/leanstral-common/poststart.sh"

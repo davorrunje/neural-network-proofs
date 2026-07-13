@@ -85,12 +85,26 @@ Once the container is up (weights fetched, `llama-server` healthy for local
 flavors), run:
 
 ```bash
-vibe --agent lean
+vibe                     # local flavors: uses the `lean-local` agent by default
+# or explicitly:
+vibe --agent lean-local  # local (Q4/Q5/Q8) — runs against llama-server
+vibe --agent lean        # API flavor only — Mistral-cloud leanstral endpoint
 ```
 
-This launches Mistral Vibe with the `lean` agent profile, pointed at the
-flavor's model endpoint, with the `lean-lsp` MCP server (`uvx lean-lsp-mcp`)
-already wired in via the generated `.vibe/config.toml`.
+This launches Mistral Vibe with the `lean-lsp` MCP server (`uvx lean-lsp-mcp`)
+wired in, pointed at the flavor's model endpoint.
+
+**Why the local flavors use a custom `lean-local` agent, not the builtin `lean`.**
+Vibe ships a builtin `lean` agent, but its profile *hardwires* `active_model` to a
+Mistral-cloud provider (`https://api.mistral.ai/v1` + `MISTRAL_API_KEY`) — an agent
+override that wins over any config, so `vibe --agent lean` always demands a cloud key
+and cannot target the local server. The local flavors therefore install a custom
+`lean-local` agent (`$VIBE_HOME/agents/lean-local.toml`, from
+`leanstral-common/lean-local.agent.toml`, written by `on-create-local.sh`) that reuses
+the same Lean system prompt but points at `llama-server`, and set it as
+`default_agent`. Note also that vibe reads its config from `$VIBE_HOME/config.toml`
+(default `~/.vibe/config.toml`); the generated `.vibe/config.toml` in the repo is a
+project-level layer merged on top when you run vibe from the repo root.
 
 ## Verifying
 

@@ -19,6 +19,14 @@ command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 
 bash "$COMMON/gen-vibe-config.sh" local "$REPO_ROOT/.vibe/config.toml"
 
+# Install the custom `lean-local` agent into $VIBE_HOME so `vibe --agent lean-local`
+# (and plain `vibe`, via default_agent) runs against the local server. vibe's builtin
+# `lean` agent hardwires the Mistral-cloud endpoint and cannot be used locally.
+VIBE_AGENTS_DIR="${VIBE_HOME:-$HOME/.vibe}/agents"
+mkdir -p "$VIBE_AGENTS_DIR"
+sed "s/__LLAMA_PORT__/${LLAMA_PORT:-8080}/g" \
+  "$COMMON/lean-local.agent.toml" > "$VIBE_AGENTS_DIR/lean-local.toml"
+
 # The host bind-mount dir may be auto-created root-owned by dockerd; claim it
 # for the vscode user so fetch-weights.sh can write the (large) GGUF files.
 MODELS_DIR="${LEANSTRAL_MODELS_DIR:-/models/leanstral}"

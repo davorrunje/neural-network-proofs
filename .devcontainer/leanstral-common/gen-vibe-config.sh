@@ -13,8 +13,11 @@ case "$backend" in
   local)
     cat > "$out" <<'TOML'
 # Leanstral local flavor — llama-server on 127.0.0.1:8080 (OpenAI-compatible).
+# default_agent is the custom `lean-local` agent (installed by on-create-local.sh):
+# vibe's builtin `lean` agent forces the Mistral-cloud endpoint via its profile
+# overrides, so it cannot be used against the local server.
 active_model = "leanstral-local"
-default_agent = "lean"
+default_agent = "lean-local"
 enable_telemetry = false
 enable_auto_update = false
 
