@@ -752,7 +752,8 @@ bash "$REPO_ROOT/scripts/setup-dev.sh" --no-build --no-cache
 
 command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 "$HOME/.local/bin/uv" tool install mistral-vibe
-"$HOME/.local/bin/uv" tool install "huggingface_hub[cli]"   # provides `hf`
+# Note: `hf` (huggingface CLI) is baked into Dockerfile.local (Task 4), so no
+# install needed here; fetch-weights.sh below relies on it.
 
 bash "$COMMON/gen-vibe-config.sh" local "$REPO_ROOT/.vibe/config.toml"
 
