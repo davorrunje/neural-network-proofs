@@ -5,6 +5,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$HERE/common.sh"
 backend="${LEANSTRAL_BACKEND:?set LEANSTRAL_BACKEND=local|api}"
 port="${LLAMA_PORT:-8080}"
+case "$backend" in local|api) ;; *) log "invalid backend: $backend"; exit 2 ;; esac
 
 check() { log "CHECK: $1"; }
 
@@ -30,7 +31,10 @@ timeout 60 uvx lean-lsp-mcp --help >/dev/null 2>&1 \
        timeout 60 uvx --from lean-lsp-mcp python -c "import lean_lsp_mcp" ; }
 
 check "repo sorry-free gate"
+# Standalone pipeline (not left of &&) so pipefail+set -e abort on a broken
+# gate or a failing `lake env lean`; the success log runs only if grep matched.
 ( . "$HOME/.elan/env" && lake env lean scripts/check_sorry_free.lean ) \
-  | grep -q "propext" && log "axioms clean"
+  | grep -q "propext"
+log "axioms clean"
 
 log "ALL CHECKS PASSED ($backend)"
