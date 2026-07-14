@@ -22,7 +22,16 @@
     "LEANSTRAL_QUANT": "q8_0",
     "LEANSTRAL_BACKEND": "local",
     "LEANSTRAL_MODELS_DIR": "/models/leanstral",
-    "HF_TOKEN": "${localEnv:HF_TOKEN}"
+    "HF_TOKEN": "${localEnv:HF_TOKEN}",
+    // GPU-split tuning — see the Q4 devcontainer.json / README-leanstral.md for the full
+    // rationale. Device 0 is the 32GB RTX 5090, device 1 the 24GB RTX 3090; the shipped
+    // default split (0.42,0.58) overloads the 3090 and OOMs, so favor the 5090. This is a
+    // ~127GB Q8 model (deepseek2 MoE, ~60 layers) — far larger than the 56GB combined VRAM,
+    // so most MoE experts must live in system RAM: n_cpu_moe=52 is an UNTESTED estimate (Q4
+    // uses 28) and this quant will be slow. llama.cpp auto-fits to free VRAM; raise n_cpu_moe
+    // (up to ~60) if it OOMs at load, lower it for speed if VRAM allows.
+    "LLAMA_TENSOR_SPLIT": "0.57,0.43",
+    "LLAMA_N_CPU_MOE": "52"
   },
   "onCreateCommand": "bash .devcontainer/leanstral-common/on-create-local.sh",
   "postStartCommand": "bash .devcontainer/leanstral-common/poststart.sh"
