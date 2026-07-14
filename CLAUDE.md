@@ -97,6 +97,13 @@ lake build   # final full build confirms green (all cached by now)
 A module may print `error: build failed` (transient EMFILE) standalone yet succeed as a dependency
 of the next — that is expected. Incremental builds (a few changed modules) do not need this.
 
+### Leanstral + Vibe dev containers (optional)
+
+Alternative dev containers run the Leanstral 1.5 proof agent via Mistral Vibe
+(local GPU or Mistral API) with lean-lsp MCP. See
+`.devcontainer/README-leanstral.md`. The default `Lean 4 + Mathlib` container is
+unchanged.
+
 ## Conventions
 
 - **Line length ≤ 100 codepoints.** Mathlib glyphs (`≤ ∞ ℝ • ⋆ ∫ ⟪⟫`) are one codepoint each;

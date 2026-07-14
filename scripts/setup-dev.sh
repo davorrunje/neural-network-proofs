@@ -93,7 +93,16 @@ ensure_uv() {
 
 ensure_blueprint_venv() {
   log "Installing the blueprint toolchain into a repo-local venv (.venv)"
-  [ -d "$REPO_ROOT/.venv" ] || uv venv "$REPO_ROOT/.venv"
+  # A .venv carried in on the bind-mounted workspace from a previous container
+  # points its python symlink at that container's uv-managed interpreter, which
+  # is gone after a rebuild — leaving a dangling symlink that later `uv pip`
+  # calls reject. Recreate whenever the interpreter isn't executable (covers
+  # both "absent" and "stale/broken"). -x follows the symlink, so a dangling
+  # link tests false.
+  if [ ! -x "$REPO_ROOT/.venv/bin/python" ]; then
+    rm -rf "$REPO_ROOT/.venv"
+    uv venv "$REPO_ROOT/.venv"
+  fi
   local py="$REPO_ROOT/.venv/bin/python"
   uv pip install --python "$py" "leanblueprint==$LEANBLUEPRINT_VERSION"
   # Override plasTeX with the git-master commit that renders the dependency

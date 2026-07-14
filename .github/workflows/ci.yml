@@ -40,3 +40,17 @@ jobs:
             exit 1
           fi
           echo "All files use minimal imports (no whole-library 'import Mathlib')."
+
+  devcontainer-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run devcontainer shell unit tests
+        run: |
+          set -euo pipefail
+          for t in tests/devcontainer/*.sh; do
+            echo "== $t =="
+            bash "$t"
+          done

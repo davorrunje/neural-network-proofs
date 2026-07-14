@@ -1,0 +1,54 @@
+# Custom Vibe agent: Lean 4 proof assistant running fully locally on llama-server.
+#
+# Installed to $VIBE_HOME/agents/lean-local.toml by on-create-local.sh (with
+# __LLAMA_PORT__ substituted). Use: `vibe --agent lean-local` (or plain `vibe`,
+# since the local flavor sets default_agent = "lean-local").
+#
+# Why this exists: vibe's *builtin* `lean` agent hardwires active_model="leanstral"
+# onto a Mistral-cloud provider (api.mistral.ai + MISTRAL_API_KEY) in its profile
+# overrides, so `--agent lean` always demands a cloud key regardless of config. This
+# custom agent reuses the same specialized Lean system prompt (system_prompt_id="lean")
+# and long bash timeout, but is self-contained on the local OpenAI-compatible endpoint.
+display_name = "Lean (local)"
+description = "Lean 4 proof assistance on local llama-server (Leanstral), no cloud."
+safety = "neutral"
+agent_type = "agent"
+
+system_prompt_id = "lean"
+active_model = "leanstral-local"
+disabled_tools = ["exit_plan_mode"]
+
+[[providers]]
+name = "local"
+api_base = "http://127.0.0.1:__LLAMA_PORT__/v1"
+api_key_env_var = ""
+api_style = "openai"
+backend = "generic"
+reasoning_field_name = "reasoning_content"
+
+[[models]]
+name = "leanstral-1.5"
+provider = "local"
+alias = "leanstral-local"
+thinking = "high"
+temperature = 1.0
+# Must stay below the server's context window (LLAMA_CTX, default 131072) so Vibe
+# compacts the history *before* a request overruns it (a 500→400 "exceeds context
+# size" otherwise). ~31k tokens of headroom absorbs a large tool result + reply.
+auto_compact_threshold = 100000
+
+[compaction_model]
+name = "leanstral-1.5"
+provider = "local"
+alias = "leanstral-compact-local"
+temperature = 0.2
+thinking = "off"
+
+[tools.bash]
+default_timeout = 1200
+
+[[mcp_servers]]
+name = "lean-lsp"
+transport = "stdio"
+command = "uvx"
+args = ["lean-lsp-mcp"]

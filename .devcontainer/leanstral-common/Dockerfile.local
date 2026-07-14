@@ -1,0 +1,56 @@
+# Blackwell (RTX 5090, sm_120) requires CUDA 12.8 for llama.cpp — do NOT bump
+# to 13.x (MMQ kernel segfault). 86 = RTX 3090 (Ampere), 120 = RTX 5090.
+FROM nvidia/cuda:12.8.0-devel-ubuntu24.04
+
+ARG USERNAME=vscode
+ARG LLAMA_CPP_REF=b8967
+ENV DEBIAN_FRONTEND=noninteractive \
+    LLAMA_CPP_DIR=/opt/llama.cpp \
+    PATH=/home/${USERNAME}/.local/bin:/usr/local/cuda/bin:$PATH
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git curl ca-certificates build-essential cmake ninja-build \
+      python3 python3-pip python3-venv sudo libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Non-root dev user (the CUDA image is root by default). The ubuntu:24.04 base
+# ships a default `ubuntu` user/group at UID/GID 1000; free that slot and pin
+# vscode to 1000. This matches the conventional devcontainer UID (as in the API
+# flavor's base image), the claude-code config volume's ownership, the workspace
+# bind mount, and the typical host UID for the /models bind mount. Without it,
+# useradd would assign vscode UID 1001 and it could not write the 1000-owned
+# ~/.claude volume — the harness then fails to create ~/.claude/session-env
+# (EACCES) — nor the workspace/models bind mounts.
+RUN userdel -r ubuntu 2>/dev/null || true \
+    && groupdel ubuntu 2>/dev/null || true \
+    && groupadd -g 1000 ${USERNAME} \
+    && useradd -m -u 1000 -g 1000 -s /bin/bash ${USERNAME} \
+    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME}
+
+# Build llama.cpp with CUDA for both GPU architectures.
+# The devel image ships only the unversioned CUDA driver *stub* (libcuda.so) and
+# has no GPU at build time, so linking the executables against libggml-cuda (which
+# pulls in the driver API: cuMemCreate, cuDeviceGet, cuGetErrorString, …) can't
+# resolve the transitive libcuda.so.1. Symlink the stub to the SONAME and point ld
+# at it with -rpath-link — link-time only; at runtime `--gpus all` injects the real
+# driver lib, so the binaries load the actual libcuda.so.1.
+RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so \
+          /usr/local/cuda/lib64/stubs/libcuda.so.1 \
+    && git clone --depth 1 --branch ${LLAMA_CPP_REF} \
+      https://github.com/ggml-org/llama.cpp ${LLAMA_CPP_DIR} \
+    && cmake -S ${LLAMA_CPP_DIR} -B ${LLAMA_CPP_DIR}/build -G Ninja \
+         -DGGML_CUDA=ON \
+         -DCMAKE_CUDA_ARCHITECTURES="86;120" \
+         -DGGML_CUDA_FORCE_CUBLAS=OFF \
+         -DLLAMA_CURL=ON \
+         -DCMAKE_BUILD_TYPE=Release \
+         -DCMAKE_EXE_LINKER_FLAGS="-L/usr/local/cuda/lib64/stubs -Wl,-rpath-link,/usr/local/cuda/lib64/stubs" \
+    && cmake --build ${LLAMA_CPP_DIR}/build --target llama-server llama-quantize \
+    && pip3 install --break-system-packages -r ${LLAMA_CPP_DIR}/requirements.txt
+
+USER ${USERNAME}
+# uv provides `uv`/`uvx`; used later to install mistral-vibe and run lean-lsp-mcp.
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+# HuggingFace CLI (`hf`) — fetch-weights.sh uses `hf download`.
+RUN uv tool install "huggingface_hub[cli]"
