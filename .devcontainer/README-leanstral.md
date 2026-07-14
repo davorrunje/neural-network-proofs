@@ -173,3 +173,11 @@ split is misbehaving (the background launcher also writes `/tmp/llama-start.log`
 - **NVIDIA Container Toolkit must be installed on the host** for the local
   flavors — GPUs must be visible inside the container or the health-check gate
   in `start-llama-server.sh` will fail.
+- **Chat-template override**: the GGUF's embedded chat template raises a Jinja
+  exception (`roles must alternate…`) on valid tool-calling agent histories —
+  its alternating-roles guard miscounts across tool call/result turns — which
+  surfaces in Vibe as a `500 Internal Server Error`. `start-llama-server.sh`
+  therefore passes `--chat-template-file leanstral-chat-template.jinja`, a copy
+  of the embedded template with that guard removed (rendering is otherwise
+  identical). If a future GGUF ships a fixed template, drop the override file
+  and the flag can be removed.

@@ -11,6 +11,15 @@ model="$LEANSTRAL_MODELS_DIR/$fname"
 port="${LLAMA_PORT:-8080}"
 bin="${LLAMA_CPP_DIR:-/opt/llama.cpp}/build/bin/llama-server"
 
+# The GGUF's embedded chat template raises a Jinja exception on valid tool-calling
+# agent histories (its alternating-roles guard miscounts across tool call/result
+# turns), which breaks Vibe with a 500. Override it with a patched copy that drops
+# that guard (render logic unchanged). Fall back to the embedded template if the
+# file is somehow missing.
+tmpl="$HERE/leanstral-chat-template.jinja"
+tmpl_args=()
+[ -f "$tmpl" ] && tmpl_args=(--chat-template-file "$tmpl")
+
 [ -f "$model" ] || { log "ERROR: weights missing: $model (run fetch-weights.sh)"; exit 1; }
 
 # Already up? (idempotent across container restarts)
@@ -30,6 +39,7 @@ nohup "$bin" \
   --n-cpu-moe "${LLAMA_N_CPU_MOE:-24}" \
   --ctx-size "${LLAMA_CTX:-32768}" \
   --jinja \
+  "${tmpl_args[@]}" \
   >/tmp/llama-server.log 2>&1 &
 
 log "waiting for /health ..."
