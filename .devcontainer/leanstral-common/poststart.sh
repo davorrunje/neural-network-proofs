@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# Launch the model server in the background so container attach isn't blocked
-# by start-llama-server.sh's foreground health-wait. Log to /tmp/llama-start.log.
+# Devcontainer postStartCommand: bring the model server up (idempotently,
+# non-blocking) so container attach isn't blocked by the health-wait. The real
+# work — and the concurrency/idempotency guards — live in ensure-llama-server.sh,
+# which is also invoked from ~/.bashrc so the server survives restart paths that
+# don't re-run this hook (e.g. a plain `docker start`).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-nohup bash "$HERE/start-llama-server.sh" >/tmp/llama-start.log 2>&1 &
+exec bash "$HERE/ensure-llama-server.sh"

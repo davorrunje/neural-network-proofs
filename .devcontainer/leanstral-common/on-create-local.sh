@@ -45,4 +45,23 @@ fi
 # Fetch (or convert) the GGUF for this flavor's quant into the bind mount.
 bash "$COMMON/fetch-weights.sh" "$LEANSTRAL_QUANT"
 
-echo "Leanstral local ($LEANSTRAL_QUANT) provisioned. Server starts on attach."
+# Ensure the local server is (re)started on every interactive shell, not just on
+# a full devcontainer attach: postStartCommand does not fire on a plain
+# `docker start`, so relying on it alone leaves vibe pointed at a dead endpoint
+# after such a restart. ensure-llama-server.sh is idempotent and non-blocking, so
+# this is a cheap no-op once the server is up. Marker-guarded to stay idempotent
+# across repeated onCreate runs.
+BASHRC="$HOME/.bashrc"
+MARKER="# >>> leanstral ensure-llama-server >>>"
+if ! grep -qF "$MARKER" "$BASHRC" 2>/dev/null; then
+  {
+    echo ""
+    echo "$MARKER"
+    echo "[ -x \"$COMMON/ensure-llama-server.sh\" ] && \\"
+    echo "  bash \"$COMMON/ensure-llama-server.sh\" >/dev/null 2>&1 || true"
+    echo "# <<< leanstral ensure-llama-server <<<"
+  } >> "$BASHRC"
+fi
+
+echo "Leanstral local ($LEANSTRAL_QUANT) provisioned. Server auto-starts on"
+echo "attach and on every new shell (idempotent)."

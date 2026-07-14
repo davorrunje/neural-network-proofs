@@ -128,9 +128,13 @@ sorry-free gate (`lake env lean scripts/check_sorry_free.lean`) still passes.
 
 ## Retuning the GPU split (local flavors)
 
-`llama-server` is started by `.devcontainer/leanstral-common/start-llama-server.sh`
-(invoked in the background from `postStartCommand`), reading these env vars
-(defaults shown):
+`llama-server` is started by `.devcontainer/leanstral-common/start-llama-server.sh`,
+wrapped by `ensure-llama-server.sh` — an idempotent, concurrency-safe, non-blocking
+launcher invoked both from `postStartCommand` and from every interactive shell (via a
+`~/.bashrc` hook installed by `on-create-local.sh`). This means the server comes up on
+any restart path — including a plain `docker start`, which does **not** re-run
+`postStartCommand` — and self-heals if it ever dies: the next terminal (or `vibe`
+launched from one) relaunches it. It reads these env vars (defaults shown):
 
 - `LLAMA_TENSOR_SPLIT` (default `0.42,0.58`) — fraction of layers placed on
   each GPU, in the order `nvidia-smi -L` reports them. The default is a
@@ -146,10 +150,10 @@ sorry-free gate (`lake env lean scripts/check_sorry_free.lean`) still passes.
 
 Set the env var(s) you want to change (e.g. in `containerEnv` in the flavor's
 `devcontainer.json`, or by exporting before restart) and restart the
-container, or re-run `bash .devcontainer/leanstral-common/start-llama-server.sh`
-manually. The server log is at **`/tmp/llama-server.log`** — check it if
-`/health` never turns green or the split is misbehaving (the background
-launcher also writes `/tmp/llama-start.log`).
+container, or re-run `bash .devcontainer/leanstral-common/ensure-llama-server.sh`
+manually (a no-op if the server is already up). The server log is at
+**`/tmp/llama-server.log`** — check it if `/health` never turns green or the
+split is misbehaving (the background launcher also writes `/tmp/llama-start.log`).
 
 ## Risks / known issues
 
