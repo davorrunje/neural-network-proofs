@@ -144,7 +144,11 @@ launched from one) relaunches it. It reads these env vars (defaults shown):
   hardware. Check `nvidia-smi -L` first to confirm which index is which card.
 - `LLAMA_N_CPU_MOE` (default `24`) — number of MoE expert layers offloaded to
   system RAM instead of GPU.
-- `LLAMA_CTX` (default `32768`) — context size (`--ctx-size`).
+- `LLAMA_CTX` (default `131072`) — context size (`--ctx-size`). The model trains
+  to 1M tokens (YaRN); 128k is a comfortable agentic window whose DeepSeek2/MLA KV
+  cache is only ≈ 2.9 GB. Keep the Vibe agent's `auto_compact_threshold`
+  (`lean-local.agent.toml`) safely below this, or long sessions overrun the window
+  with a `400 exceeds context size`.
 - `LLAMA_PORT` (default `8080`) — the port `llama-server` listens on
   (`127.0.0.1:<port>`, OpenAI-compatible, `--alias leanstral-1.5`).
 

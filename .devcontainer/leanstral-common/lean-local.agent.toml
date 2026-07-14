@@ -32,7 +32,10 @@ provider = "local"
 alias = "leanstral-local"
 thinking = "high"
 temperature = 1.0
-auto_compact_threshold = 200000
+# Must stay below the server's context window (LLAMA_CTX, default 131072) so Vibe
+# compacts the history *before* a request overruns it (a 500→400 "exceeds context
+# size" otherwise). ~31k tokens of headroom absorbs a large tool result + reply.
+auto_compact_threshold = 100000
 
 [compaction_model]
 name = "leanstral-1.5"

@@ -28,7 +28,7 @@ if curl -sf "http://127.0.0.1:${port}/health" >/dev/null 2>&1; then
 fi
 
 log "starting llama-server: $fname (tensor-split=${LLAMA_TENSOR_SPLIT:-0.42,0.58},"
-log "  n-cpu-moe=${LLAMA_N_CPU_MOE:-24}, ctx=${LLAMA_CTX:-32768})"
+log "  n-cpu-moe=${LLAMA_N_CPU_MOE:-24}, ctx=${LLAMA_CTX:-131072})"
 nohup "$bin" \
   --model "$model" \
   --alias leanstral-1.5 \
@@ -37,7 +37,7 @@ nohup "$bin" \
   --split-mode layer \
   --tensor-split "${LLAMA_TENSOR_SPLIT:-0.42,0.58}" \
   --n-cpu-moe "${LLAMA_N_CPU_MOE:-24}" \
-  --ctx-size "${LLAMA_CTX:-32768}" \
+  --ctx-size "${LLAMA_CTX:-131072}" \
   --jinja \
   "${tmpl_args[@]}" \
   >/tmp/llama-server.log 2>&1 &
