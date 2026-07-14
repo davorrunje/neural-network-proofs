@@ -103,8 +103,12 @@ and cannot target the local server. The local flavors therefore install a custom
 `leanstral-common/lean-local.agent.toml`, written by `on-create-local.sh`) that reuses
 the same Lean system prompt but points at `llama-server`, and set it as
 `default_agent`. Note also that vibe reads its config from `$VIBE_HOME/config.toml`
-(default `~/.vibe/config.toml`); the generated `.vibe/config.toml` in the repo is a
-project-level layer merged on top when you run vibe from the repo root.
+(default `~/.vibe/config.toml`), **not** the repo's `./.vibe/config.toml` (that path is
+only merged as a project layer when vibe runs from the repo root, and vibe's default
+global config carries a Mistral provider it falls back to). So `on-create-local.sh` writes
+the generated local config — which has only the local provider — to
+`$VIBE_HOME/config.toml`, letting plain `vibe` run locally from any directory; a repo copy
+is kept for project-root runs.
 
 ## Verifying
 

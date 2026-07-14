@@ -17,12 +17,20 @@ command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 # Note: `hf` (huggingface CLI) is baked into Dockerfile.local (Task 4), so no
 # install needed here; fetch-weights.sh below relies on it.
 
+# vibe reads $VIBE_HOME/config.toml (default ~/.vibe/config.toml), NOT the repo's
+# ./.vibe/config.toml — the latter is only merged as a project layer when vibe runs from
+# the repo root. Write the local config to the global path so plain `vibe` works from any
+# directory with no Mistral fallback (the generated config has only the local provider);
+# also keep the repo copy for project-root runs.
+VIBE_HOME_DIR="${VIBE_HOME:-$HOME/.vibe}"
+mkdir -p "$VIBE_HOME_DIR"
+bash "$COMMON/gen-vibe-config.sh" local "$VIBE_HOME_DIR/config.toml"
 bash "$COMMON/gen-vibe-config.sh" local "$REPO_ROOT/.vibe/config.toml"
 
 # Install the custom `lean-local` agent into $VIBE_HOME so `vibe --agent lean-local`
 # (and plain `vibe`, via default_agent) runs against the local server. vibe's builtin
 # `lean` agent hardwires the Mistral-cloud endpoint and cannot be used locally.
-VIBE_AGENTS_DIR="${VIBE_HOME:-$HOME/.vibe}/agents"
+VIBE_AGENTS_DIR="$VIBE_HOME_DIR/agents"
 mkdir -p "$VIBE_AGENTS_DIR"
 sed "s/__LLAMA_PORT__/${LLAMA_PORT:-8080}/g" \
   "$COMMON/lean-local.agent.toml" > "$VIBE_AGENTS_DIR/lean-local.toml"
